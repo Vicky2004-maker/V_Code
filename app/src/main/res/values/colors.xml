@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="standard_background">#121212</color>
+
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -7,7 +9,8 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    
+
+    <!--- Monokai Theme Colors -->
     <color name="monokai_background">#272822</color>
     <color name="monokai_foreground">#F8F8F2</color>
     <color name="monokai_comment">#75715E</color>
@@ -17,5 +20,5 @@
     <color name="monokai_yellow">#E69F66</color>
     <color name="monokai_green">#A6E22E</color>
     <color name="monokai_blue">#66D9EF</color>
-    <color name="monomkai_purple">#AE81FF</color>
+    <color name="monokai_purple">#AE81FF</color>
 </resources>
