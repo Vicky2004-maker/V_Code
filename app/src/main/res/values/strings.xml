@@ -8,4 +8,9 @@
     <string name="unableToSave">Save failed</string>
     <string name="copySuccess">Copied</string>
     <string name="copyFalied">Copy failed</string>
+    <string name="privacyPolicy">Privacy Policy</string>
+    <string name="privacyPolicyMessage">Accept the privacy policy ?</string>
+    <string name="agree">Agree</string>
+    <string name="disagree">Disagree</string>
+    <string name="view">View Policy</string>
 </resources>
