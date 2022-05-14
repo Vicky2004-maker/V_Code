@@ -13,4 +13,7 @@
     <string name="agree">Agree</string>
     <string name="disagree">Disagree</string>
     <string name="view">View Policy</string>
+    <string name="pick_File_Text">Pick a file !</string>
+    <string name="addFile_TextMenu"><![CDATA[Open & Add File]]></string>
+    <string name="setting">Settings</string>
 </resources>

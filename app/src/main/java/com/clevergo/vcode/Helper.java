@@ -40,13 +40,13 @@ public class Helper {
     public static final String[] PERMISSIONS =
             {"android.permission.READ_EXTERNAL_STORAGE",
                     "android.permission.WRITE_EXTERNAL_STORAGE"};
+    private static final String SETTING_DELIMITER = "-";
 
+    public static HashMap<String, String> settingsMap;
     private static File settingsFile;
     private static BufferedWriter bufferedWriter;
 
-    public static HashMap<String, String> settingsMap;
-
-    public static void initializeFile(AppCompatActivity activity){
+    public static void initializeFile(AppCompatActivity activity) {
         settingsFile = new File(activity.getExternalFilesDir("Settings"), "settings.txt");
     }
 
@@ -58,7 +58,7 @@ public class Helper {
             String receiveString;
 
             while ((receiveString = br.readLine()) != null) {
-                String[] keyValuePair = receiveString.split("-");
+                String[] keyValuePair = receiveString.split(SETTING_DELIMITER);
                 settingsMap.put(keyValuePair[0].trim(), keyValuePair[1].trim());
             }
 
@@ -72,13 +72,12 @@ public class Helper {
         try {
             bufferedWriter = new BufferedWriter(new FileWriter(settingsFile));
 
-            bufferedWriter.append(key + "-" +value);
+            bufferedWriter.append(key + SETTING_DELIMITER + value);
 
             bufferedWriter.flush();
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             try {
                 bufferedWriter.close();
             } catch (IOException e) {
@@ -91,13 +90,12 @@ public class Helper {
         try {
             bufferedWriter = new BufferedWriter(new FileWriter(settingsFile));
 
-            bufferedWriter.append(key + "-" +value);
+            bufferedWriter.append(key + SETTING_DELIMITER + value);
 
             bufferedWriter.flush();
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             try {
                 bufferedWriter.close();
             } catch (IOException e) {
@@ -111,7 +109,7 @@ public class Helper {
             bufferedWriter = new BufferedWriter(new FileWriter(settingsFile));
 
             for (Map.Entry<Object, Object> entry : map.entrySet()) {
-                bufferedWriter.append(entry.getKey().toString() + "-" +entry.getValue().toString());
+                bufferedWriter.append(entry.getKey().toString() + SETTING_DELIMITER + entry.getValue().toString());
                 bufferedWriter.newLine();
             }
 
