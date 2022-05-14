@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!Helper.checkPermissions(MainActivity.this)) {
                     Helper.launchPermission(MainActivity.this);
                 } else {
-                    timerToLoad(1000);
+                    timerToLoad(1250);
                 }
             });
             alertDialog.setNeutralButton(getString(R.string.disagree), (a, b) -> finish());
