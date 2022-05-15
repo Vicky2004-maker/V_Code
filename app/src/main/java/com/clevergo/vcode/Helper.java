@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
+import android.util.DisplayMetrics;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -232,6 +233,16 @@ public class Helper {
         } catch (Exception exception) {
             Toast.makeText(context, context.getString(R.string.copyFalied), Toast.LENGTH_LONG).show();
         }
+    }
+
+    public static float getScreenWidth_DP(Context context) {
+        DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+        return displayMetrics.widthPixels / displayMetrics.density;
+    }
+
+    public static float getScreenHeight_DP(Context context) {
+        DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+        return displayMetrics.heightPixels / displayMetrics.density;
     }
 
     //TODO : Generate PDF

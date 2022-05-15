@@ -16,4 +16,8 @@
     <string name="pick_File_Text">Pick a file !</string>
     <string name="addFile_TextMenu"><![CDATA[Open & Add File]]></string>
     <string name="setting">Settings</string>
+    <string name="coloring">Coloring ...</string>
+    <string name="pleaseWait">Please wait</string>
+    <string name="fileAlreadyPicked">You have already opened this file.</string>
+    <string name="openBottomSheet">Open info panel.</string>
 </resources>
