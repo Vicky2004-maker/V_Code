@@ -1,8 +1,9 @@
 package com.clevergo.vcode;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,21 +21,22 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.clevergo.vcode.codeviewer.CodeView;
 import com.clevergo.vcode.codeviewer.Language;
 import com.clevergo.vcode.codeviewer.Theme;
-import com.clevergo.vcode.editorfiles.CodeViewFile;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHighlightListener, WebView.FindListener, View.OnClickListener {
 
     private static ProgressDialog progressDialog;
-    private static List<CodeViewFile> fileList = new ArrayList<>();
+    private static LinkedList<CodeViewFile> fileList = new LinkedList<>();
     private static List<String> codeList = new ArrayList<>();
     private static int filesOpened = 0;
     private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout;
     private ImageView bottomSheet_ImageView;
-    private TextView pickFile_TextView;
+    private TextView pickFile_TextView, lineInfo_TextView, fileSize_TextView;
     private CodeView codeView_Main;
     private boolean loadIntoRAM = false;
 
@@ -43,25 +45,47 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == Helper.PICK_FILE_CODE && data != null) {
-            pickFile_TextView.setVisibility(View.GONE);
-            codeView_Main.setVisibility(View.VISIBLE);
-            info_LinearLayout.setVisibility(View.VISIBLE);
-
-            bottomSheet_ImageView.setTranslationX((info_LinearLayout.getWidth() >> 1) - 30);
-
-            if (codeList.size() == 0) {
+            if (filesOpened == 0) {
+                pickFile_TextView.setVisibility(View.GONE);
+                codeView_Main.setVisibility(View.VISIBLE);
+                info_LinearLayout.setVisibility(View.VISIBLE);
                 addUI_File(data);
             } else {
-                for (CodeViewFile codeFile : fileList) {
+                CodeViewFile codeViewFile = createACodeViewFile(data);
+                for (CodeViewFile file : fileList) {
+                    if (file.compareTo(codeViewFile) == 0) {
+                        Toast.makeText(CodeViewActivity.this, getString(R.string.fileAlreadyPicked), Toast.LENGTH_LONG).show();
+                        break;
+                    } else {
+                        addUI_File(data);
+                    }
+                }
+                /*
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    if (fileList.stream().anyMatch(fileObj -> fileObj.getUri().equals(data.getData().toString()))) {
+                        Toast.makeText(CodeViewActivity.this, getString(R.string.fileAlreadyPicked), Toast.LENGTH_LONG).show();
+                    } else {
+                        addUI_File(data);
+                    }
+                } else {
+                    if(fileList.contains(createACodeViewFile(data))) {
+                        Toast.makeText(CodeViewActivity.this, getString(R.string.fileAlreadyPicked), Toast.LENGTH_LONG).show();
+                    } else {
+                        addUI_File(data);
+                    }
+                }
+
+                 */
+
+/*              for (CodeViewFile codeFile : fileList) {
                     if (codeFile.getUri().equals(data.getData().toString())) {
                         Toast.makeText(CodeViewActivity.this, getString(R.string.fileAlreadyPicked), Toast.LENGTH_LONG).show();
                     } else {
                         addUI_File(data);
-                        break;
                     }
                 }
+ */
             }
-
         }
     }
 
@@ -70,16 +94,20 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_code_view);
 
-
         allFileSwitcher_LinearLayout = findViewById(R.id.allFileSwitcher);
         pickFile_TextView = findViewById(R.id.pickFileTextView);
         codeView_Main = findViewById(R.id.codeview_Main);
         info_LinearLayout = findViewById(R.id.info_LinearLayout);
         bottomSheet_ImageView = findViewById(R.id.bottomSheet_ImageView);
+        lineInfo_TextView = findViewById(R.id.lineInfo_TextView);
+        fileSize_TextView = findViewById(R.id.fileSize_TextView);
+
+        bottomSheet_ImageView.setOnClickListener(a -> Helper.openInfoBottomSheet(CodeViewActivity.this));
     }
 
     //region Private Methods
 
+    @SuppressLint("SetTextI18n")
     private void setCodeView(String code) {
         codeView_Main.setOnHighlightListener(this)
                 .setTheme(Theme.MONOKAI)
@@ -88,15 +116,22 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
                 .setWrapLine(false)
                 .setShowLineNumber(true)
                 .apply();
+
         codeView_Main.setFindListener(this);
+
+        lineInfo_TextView.setText(codeView_Main.getLineCount() + ":Nil");
     }
 
-    private void addUI_File(Intent data) {
-        fileList.add(new CodeViewFile(filesOpened,
+    private CodeViewFile createACodeViewFile(Intent data) {
+        return new CodeViewFile(filesOpened,
                 Double.parseDouble(Helper.getFileSize(CodeViewActivity.this, data)),
                 Helper.getFileName(CodeViewActivity.this, data),
                 data.getData().toString(),
-                Helper.getFileExtension(CodeViewActivity.this, data)));
+                Helper.getFileExtension(CodeViewActivity.this, data));
+    }
+
+    private void addUI_File(Intent data) {
+        fileList.add(createACodeViewFile(data));
 
         if (loadIntoRAM) {
             codeList.add(Helper.readFile(CodeViewActivity.this, data.getData()));
@@ -105,19 +140,34 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
             setCodeView(Helper.readFile(CodeViewActivity.this, data.getData()));
         }
 
-        MaterialButton materialButton = new MaterialButton(CodeViewActivity.this);
-        materialButton.setText(fileList.get(filesOpened).getName());
-        materialButton.setId(filesOpened);
-        materialButton.setOnClickListener(CodeViewActivity.this);
-        materialButton.setAllCaps(false);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        runOnUiThread(() -> {
+            MaterialButton materialButton = new MaterialButton(CodeViewActivity.this);
+            materialButton.setText(fileList.get(filesOpened).getName());
+            materialButton.setId(filesOpened);
+            materialButton.setOnClickListener(CodeViewActivity.this);
+            materialButton.setAllCaps(false);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
-        layoutParams.setMargins(5, 0, 5, 0);
+            layoutParams.setMargins(5, 0, 5, 0);
 
-        allFileSwitcher_LinearLayout.addView(materialButton, filesOpened, layoutParams);
+            allFileSwitcher_LinearLayout.addView(materialButton, filesOpened, layoutParams);
+        });
 
+        updateInfo(data);
         filesOpened++;
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void updateInfo(int currID) {
+        Objects.requireNonNull(getSupportActionBar()).setSubtitle(fileList.get(currID).getName());
+        fileSize_TextView.setText(fileList.get(currID).getFile_Size() + " KB");
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void updateInfo(Intent data) {
+        Objects.requireNonNull(getSupportActionBar()).setSubtitle(Helper.getFileName(CodeViewActivity.this, data));
+        fileSize_TextView.setText(Helper.getFileSize(CodeViewActivity.this, data) + " KB");
     }
 
     //endregion
@@ -175,9 +225,10 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
 
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onLineClicked(int lineNumber, String content) {
-
+        lineInfo_TextView.setText(codeView_Main.getLineCount() + ":" + lineNumber);
     }
 
     @Override
@@ -188,7 +239,15 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
     // Button OnclickListener
     @Override
     public void onClick(View view) {
-        //TODO : Implement Button OnClickListener
+        int clicked_ID = view.getId();
+
+        if (loadIntoRAM) {
+            setCodeView(codeList.get(clicked_ID));
+        } else {
+            setCodeView(Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(clicked_ID).getUri())));
+        }
+
+        updateInfo(clicked_ID);
     }
     //endregion
 }

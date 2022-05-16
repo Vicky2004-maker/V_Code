@@ -1,8 +1,9 @@
-package com.clevergo.vcode.editorfiles;
+package com.clevergo.vcode;
 
 import java.io.Serializable;
+import java.util.Objects;
 
-public class CodeViewFile implements Serializable {
+public class CodeViewFile implements Serializable, Comparable<CodeViewFile> {
     public int File_ID;
     public double File_Size;
     public String Name;
@@ -35,5 +36,14 @@ public class CodeViewFile implements Serializable {
 
     public String getLanguage() {
         return Language;
+    }
+
+    @Override
+    public int compareTo(CodeViewFile codeViewFile) {
+        if(Objects.equals(this.getUri(), codeViewFile.getUri())) {
+            return 0;
+        } else {
+            return 1;
+        }
     }
 }
