@@ -84,7 +84,10 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
         lineInfo_TextView = findViewById(R.id.lineInfo_TextView);
         fileSize_TextView = findViewById(R.id.fileSize_TextView);
 
-        bottomSheet_ImageView.setOnClickListener(a -> Helper.openInfoBottomSheet(CodeViewActivity.this));
+        bottomSheet_ImageView.setOnClickListener(a -> {
+            InfoBottomSheet infoBottomSheet = new InfoBottomSheet();
+            infoBottomSheet.show(getSupportFragmentManager(), "ModalBottomSheet");
+        });
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             uri_List = new ArrayList<>();

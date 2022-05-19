@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/dark_background">
 
+    <ImageView
+        android:id="@+id/edit_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="@string/edit"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_edit_24" />
+
+    <ImageView
+        android:id="@+id/search_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="@string/search"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/edit_imageView"
+        app:srcCompat="@drawable/ic_search_24" />
+
+    <ImageView
+        android:id="@+id/copy_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/edit_imageView"
+        app:layout_constraintEnd_toEndOf="@+id/edit_imageView"
+        app:layout_constraintStart_toStartOf="@+id/edit_imageView"
+        app:srcCompat="@drawable/ic_copy"
+        android:contentDescription="@string/copy" />
+
+    <ImageView
+        android:id="@+id/fullScreen_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/search_imageView"
+        app:layout_constraintEnd_toEndOf="@+id/search_imageView"
+        app:layout_constraintStart_toStartOf="@+id/search_imageView"
+        app:srcCompat="@drawable/ic_fullscreen_24"
+        android:contentDescription="@string/fullScreen" />
+
+    <ImageView
+        android:id="@+id/compile_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/fullScreen_imageView"
+        app:layout_constraintEnd_toStartOf="@+id/fullScreen_imageView"
+        app:layout_constraintTop_toTopOf="@+id/fullScreen_imageView"
+        app:srcCompat="@drawable/ic_compile_24"
+        android:contentDescription="@string/compile" />
 </androidx.constraintlayout.widget.ConstraintLayout>

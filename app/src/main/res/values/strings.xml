@@ -20,4 +20,9 @@
     <string name="pleaseWait">Please wait</string>
     <string name="fileAlreadyPicked">You have already opened this file.</string>
     <string name="openBottomSheet">Open info panel.</string>
+    <string name="edit">Edit</string>
+    <string name="search">Search</string>
+    <string name="copy">Copy</string>
+    <string name="fullScreen">Full screen</string>
+    <string name="compile">Compile</string>
 </resources>

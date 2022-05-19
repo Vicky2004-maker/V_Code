@@ -14,7 +14,8 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.info_bottom_sheet, container, false);
+        View v = inflater.inflate(R.layout.info_bottom_sheet, container, true);
+
 
         return super.onCreateView(inflater, container, savedInstanceState);
     }

@@ -245,11 +245,6 @@ public class Helper {
         return displayMetrics.heightPixels / displayMetrics.density;
     }
 
-    public static void openInfoBottomSheet(AppCompatActivity activity) {
-        InfoBottomSheet infoBottomSheet = new InfoBottomSheet();
-        infoBottomSheet.show(activity.getSupportFragmentManager(), "ModalBottomSheet");
-    }
-
     //TODO : Generate PDF
     //TODO : View PDF
     //TODO : Extract text from PDF and load it into CodeView
