@@ -23,13 +23,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.clevergo.vcode.codeviewer.CodeView;
 import com.clevergo.vcode.codeviewer.Language;
 import com.clevergo.vcode.codeviewer.Theme;
+import com.clevergo.vcode.editorfiles.BottomSheetCode;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHighlightListener, WebView.FindListener, View.OnClickListener {
+public class CodeViewActivity extends AppCompatActivity
+        implements CodeView.OnHighlightListener,
+        WebView.FindListener,
+        View.OnClickListener,
+        InfoBottomSheet.OnInputListener{
 
     private static ProgressDialog progressDialog;
     private static List<CodeViewFile> fileList = new ArrayList<>();
@@ -196,7 +201,7 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
     }
     //endregion
 
-    //region CodeView OnHighlightListener & OnFindListener & Button OnCLickListener
+    //region CodeView OnHighlightListener & OnFindListener & Button OnCLickListener && Data from InfoBottomSheet
 
     @Override
     public void onStartCodeHighlight() {
@@ -241,6 +246,28 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
         }
 
         updateInfo(clicked_ID);
+    }
+
+    // Get Data from InfoBottomSheet
+    @Override
+    public void sendInput(BottomSheetCode code) {
+        switch (code) {
+            case Compile:
+                //TODO : Compile Case
+                break;
+            case Edit:
+                //TODO : Edit Case
+                break;
+            case Search:
+                //TODO : Search Case
+                break;
+            case CopyAll:
+                //TODO : CopyAll Case
+                break;
+            case FullScreen:
+                //TODO : FullScreen Case
+                break;
+        }
     }
     //endregion
 }
