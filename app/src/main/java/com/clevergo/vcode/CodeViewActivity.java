@@ -1,6 +1,7 @@
 package com.clevergo.vcode;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
@@ -24,14 +25,14 @@ import com.clevergo.vcode.codeviewer.Theme;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
 public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHighlightListener, WebView.FindListener, View.OnClickListener {
 
     private static ProgressDialog progressDialog;
-    private static LinkedList<CodeViewFile> fileList = new LinkedList<>();
+    private static List<CodeViewFile> fileList = new ArrayList<>();
+    private static List<Uri> uri_List = new ArrayList<>();
     private static List<String> codeList = new ArrayList<>();
     private static int filesOpened = 0;
     private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout;
@@ -40,26 +41,24 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
     private CodeView codeView_Main;
     private boolean loadIntoRAM = false;
 
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == Helper.PICK_FILE_CODE && data != null) {
+        if (requestCode == Helper.PICK_FILE_CODE && data != null && resultCode == Activity.RESULT_OK) {
             if (filesOpened == 0) {
                 pickFile_TextView.setVisibility(View.GONE);
                 codeView_Main.setVisibility(View.VISIBLE);
                 info_LinearLayout.setVisibility(View.VISIBLE);
                 addUI_File(data);
-            } else {
-                CodeViewFile codeViewFile = createACodeViewFile(data);
-                for (CodeViewFile file : fileList) {
-                    if (file.compareTo(codeViewFile) == 0) {
-                        Toast.makeText(CodeViewActivity.this, getString(R.string.fileAlreadyPicked), Toast.LENGTH_LONG).show();
-                        break;
-                    } else {
-                        addUI_File(data);
-                    }
+            } else if (filesOpened > 0) {
+                if (uri_List.contains(data.getData())) {
+                    Toast.makeText(CodeViewActivity.this, getString(R.string.fileAlreadyPicked), Toast.LENGTH_LONG).show();
+                } else {
+                    addUI_File(data);
                 }
+
                 /*
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     if (fileList.stream().anyMatch(fileObj -> fileObj.getUri().equals(data.getData().toString()))) {
@@ -131,6 +130,7 @@ public class CodeViewActivity extends AppCompatActivity implements CodeView.OnHi
     }
 
     private void addUI_File(Intent data) {
+        uri_List.add(data.getData());
         fileList.add(createACodeViewFile(data));
 
         if (loadIntoRAM) {
