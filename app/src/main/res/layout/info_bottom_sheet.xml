@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="150dp"
+    android:layout_height="wrap_content"
     android:background="@color/dark_background">
 
     <ImageView
@@ -33,31 +33,78 @@
         android:layout_width="30dp"
         android:layout_height="35dp"
         android:layout_marginBottom="8dp"
+        android:contentDescription="@string/copy"
         app:layout_constraintBottom_toTopOf="@+id/edit_imageView"
         app:layout_constraintEnd_toEndOf="@+id/edit_imageView"
         app:layout_constraintStart_toStartOf="@+id/edit_imageView"
-        app:srcCompat="@drawable/ic_copy"
-        android:contentDescription="@string/copy" />
+        app:srcCompat="@drawable/ic_copy" />
 
     <ImageView
         android:id="@+id/fullScreen_imageView"
         android:layout_width="30dp"
         android:layout_height="35dp"
         android:layout_marginBottom="8dp"
+        android:contentDescription="@string/fullScreen"
         app:layout_constraintBottom_toTopOf="@+id/search_imageView"
         app:layout_constraintEnd_toEndOf="@+id/search_imageView"
         app:layout_constraintStart_toStartOf="@+id/search_imageView"
-        app:srcCompat="@drawable/ic_fullscreen_24"
-        android:contentDescription="@string/fullScreen" />
+        app:srcCompat="@drawable/ic_fullscreen_24" />
 
     <ImageView
         android:id="@+id/compile_imageView"
         android:layout_width="30dp"
         android:layout_height="35dp"
         android:layout_marginEnd="16dp"
+        android:contentDescription="@string/compile"
+        app:layout_constraintBottom_toBottomOf="@+id/deleteFile_imageView"
+        app:layout_constraintEnd_toStartOf="@+id/deleteFile_imageView"
+        app:layout_constraintTop_toTopOf="@+id/deleteFile_imageView"
+        app:srcCompat="@drawable/ic_compile_24" />
+
+    <ImageView
+        android:id="@+id/splitScreen_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="@string/splitScreen"
+        app:layout_constraintBottom_toBottomOf="@+id/search_imageView"
+        app:layout_constraintEnd_toStartOf="@+id/search_imageView"
+        app:layout_constraintTop_toTopOf="@+id/search_imageView"
+        app:srcCompat="@drawable/ic_split_screen" />
+
+    <ImageView
+        android:id="@+id/deleteFile_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="@string/deleteFile"
         app:layout_constraintBottom_toBottomOf="@+id/fullScreen_imageView"
         app:layout_constraintEnd_toStartOf="@+id/fullScreen_imageView"
         app:layout_constraintTop_toTopOf="@+id/fullScreen_imageView"
-        app:srcCompat="@drawable/ic_compile_24"
-        android:contentDescription="@string/compile" />
+        app:srcCompat="@drawable/ic_delete_file" />
+
+    <ImageView
+        android:id="@+id/addFile_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/splitScreen_imageView"
+        app:layout_constraintEnd_toStartOf="@+id/splitScreen_imageView"
+        app:layout_constraintTop_toTopOf="@+id/splitScreen_imageView"
+        app:srcCompat="@drawable/ic_add"
+        android:contentDescription="@string/addFile" />
+
+    <ImageView
+        android:id="@+id/closeBtmSht_imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintBottom_toTopOf="@+id/copy_imageView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_baseline_close_24"
+        android:contentDescription="@string/closeBtmSht" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

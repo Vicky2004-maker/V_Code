@@ -12,11 +12,13 @@ import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import android.util.DisplayMetrics;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentActivity;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -30,6 +32,7 @@ import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Helper {
 
@@ -245,6 +248,25 @@ public class Helper {
         return displayMetrics.heightPixels / displayMetrics.density;
     }
 
+    public static void makeFullScreen(AppCompatActivity activity) {
+        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        Objects.requireNonNull(activity.getSupportActionBar()).hide();
+    }
+
+    public static void revertFullScreen(AppCompatActivity activity) {
+        activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        Objects.requireNonNull(activity.getSupportActionBar()).show();
+    }
+
+    public static boolean isFullScreen(AppCompatActivity activity) {
+        int flags = activity.getWindow().getAttributes().flags;
+        return (flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
+    }
+
+    public static boolean isFullScreen(FragmentActivity activity) {
+        int flags = activity.getWindow().getAttributes().flags;
+        return (flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
+    }
     //TODO : Generate PDF
     //TODO : View PDF
     //TODO : Extract text from PDF and load it into CodeView

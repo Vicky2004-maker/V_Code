@@ -5,5 +5,8 @@ public enum BottomSheetCode {
     FullScreen,
     CopyAll,
     Search,
-    Edit
+    Edit,
+    SplitScreen,
+    AddFile,
+    DeleteFile
 }

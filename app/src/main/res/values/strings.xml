@@ -16,7 +16,7 @@
     <string name="pick_File_Text">Pick a file !</string>
     <string name="addFile_TextMenu"><![CDATA[Open & Add File]]></string>
     <string name="setting">Settings</string>
-    <string name="coloring">Coloring ...</string>
+    <string name="coloring">Coloring...</string>
     <string name="pleaseWait">Please wait</string>
     <string name="fileAlreadyPicked">You have already opened this file.</string>
     <string name="openBottomSheet">Open info panel.</string>
@@ -25,4 +25,12 @@
     <string name="copy">Copy</string>
     <string name="fullScreen">Full screen</string>
     <string name="compile">Compile</string>
+    <string name="splitScreen">Split screen</string>
+    <string name="deleteFile">Delete file</string>
+    <string name="addFile">Add file</string>
+    <string name="closeBtmSht">Close info panel</string>
+    <string name="cancel">Cancel</string>
+    <string name="find">Find</string>
+    <string name="regex">Regex</string>
+    <string name="exactMatch">Case sensitive</string>
 </resources>

@@ -2,6 +2,7 @@ package com.clevergo.vcode;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
@@ -25,6 +26,7 @@ import com.clevergo.vcode.codeviewer.Language;
 import com.clevergo.vcode.codeviewer.Theme;
 import com.clevergo.vcode.editorfiles.BottomSheetCode;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +36,7 @@ public class CodeViewActivity extends AppCompatActivity
         implements CodeView.OnHighlightListener,
         WebView.FindListener,
         View.OnClickListener,
-        InfoBottomSheet.OnInputListener{
+        InfoBottomSheet.OnInputListener {
 
     private static ProgressDialog progressDialog;
     private static List<CodeViewFile> fileList = new ArrayList<>();
@@ -159,13 +161,31 @@ public class CodeViewActivity extends AppCompatActivity
     @SuppressLint("SetTextI18n")
     private void updateInfo(int currID) {
         Objects.requireNonNull(getSupportActionBar()).setSubtitle(fileList.get(currID).getName());
-        fileSize_TextView.setText(fileList.get(currID).getFile_Size() + " KB");
+        fileSize_TextView.setText(fileList.get(currID).getName() + " - " + fileList.get(currID).getFile_Size() + "KB");
     }
 
     @SuppressLint("SetTextI18n")
     private void updateInfo(Intent data) {
         Objects.requireNonNull(getSupportActionBar()).setSubtitle(Helper.getFileName(CodeViewActivity.this, data));
-        fileSize_TextView.setText(Helper.getFileSize(CodeViewActivity.this, data) + " KB");
+        fileSize_TextView.setText(Helper.getFileName(CodeViewActivity.this, data) + " - " + Helper.getFileSize(CodeViewActivity.this, data) + " KB");
+    }
+
+    private void showSearchDialog() {
+        AlertDialog.Builder searchDialog = new AlertDialog.Builder(CodeViewActivity.this);
+        final View searchDialogView = getLayoutInflater().inflate(R.layout.search_dialog, null);
+        final TextInputEditText findTextInput = searchDialogView.findViewById(R.id.searchInputTextField);
+        searchDialog.setTitle(getString(R.string.search));
+        searchDialog.setView(searchDialogView);
+        searchDialog.setPositiveButton(getString(R.string.search), (a, b) -> {
+            codeView_Main.findAllAsync(Objects.requireNonNull(findTextInput.getText()).toString());
+        });
+
+        searchDialog.setNegativeButton(getString(R.string.cancel), (a, b) -> {
+        });
+
+        searchDialog.setCancelable(true);
+        searchDialog.create();
+        searchDialog.show();
     }
 
     //endregion
@@ -180,12 +200,6 @@ public class CodeViewActivity extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        /*
-        if(drawerToggle.onOptionsItemSelected(item)) {
-            return true;
-        }
-        */
-
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.addFile_menu:
@@ -259,13 +273,27 @@ public class CodeViewActivity extends AppCompatActivity
                 //TODO : Edit Case
                 break;
             case Search:
-                //TODO : Search Case
+                //TODO : Search Case, Regex, Exact Match Case
+                showSearchDialog();
                 break;
             case CopyAll:
-                //TODO : CopyAll Case
+                Helper.copyCode(CodeViewActivity.this, codeView_Main.getCode());
                 break;
             case FullScreen:
-                //TODO : FullScreen Case
+                if (Helper.isFullScreen(CodeViewActivity.this)) {
+                    Helper.revertFullScreen(CodeViewActivity.this);
+                } else {
+                    Helper.makeFullScreen(CodeViewActivity.this);
+                }
+                break;
+            case SplitScreen:
+                //TODO : SplitScreen Case
+                break;
+            case AddFile:
+                Helper.pickFile(CodeViewActivity.this);
+                break;
+            case DeleteFile:
+                //TODO : DeleteFile Case
                 break;
         }
     }
