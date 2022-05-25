@@ -13,7 +13,7 @@
     <string name="agree">Agree</string>
     <string name="disagree">Disagree</string>
     <string name="view">View Policy</string>
-    <string name="pick_File_Text">Pick a file !</string>
+    <string name="pick_File_Text">Open a file !</string>
     <string name="addFile_TextMenu"><![CDATA[Open & Add File]]></string>
     <string name="setting">Settings</string>
     <string name="coloring">Coloring...</string>
@@ -33,4 +33,13 @@
     <string name="find">Find</string>
     <string name="regex">Regex</string>
     <string name="exactMatch">Case sensitive</string>
+    <string name="closeSearch">Close search results</string>
+    <string name="search_findPrev">Highlight previous find</string>
+    <string name="search_findNext">Highlight next find</string>
+    <string name="invalidPattern">Invalid RegEx pattern</string>
+    <string name="noMatchFound">No match found</string>
+    <string name="noResultFound">No search result found</string>
+    <string name="suggestion">Suggestion</string>
+    <string name="changeToLandscape">Please change your device to landscape orientation to get a better experience</string>
+    <string name="change">"Change "</string>
 </resources>

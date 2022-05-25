@@ -67,6 +67,11 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
             dismiss();
         });
 
+        v.findViewById(R.id.splitScreen_imageView).setOnClickListener(a -> {
+            inputListener.sendInput(BottomSheetCode.SplitScreen);
+            dismiss();
+        });
+
         return v;
     }
 

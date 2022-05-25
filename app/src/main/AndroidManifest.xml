@@ -16,11 +16,13 @@
         android:largeHeap="true">
         <activity
             android:name=".CodeViewActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:configChanges="orientation|screenSize"/>
         <activity
             android:name=".MainActivity"
             android:theme="@style/Theme.VCode.Fullscreen"
-            android:exported="true">
+            android:exported="true"
+            android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

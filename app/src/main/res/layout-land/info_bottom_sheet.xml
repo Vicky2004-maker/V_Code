@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/dark_background">
+
+    <ImageView
+        android:id="@+id/edit_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@string/edit"
+        app:layout_constraintEnd_toStartOf="@+id/copy_imageView"
+        app:layout_constraintTop_toTopOf="@+id/copy_imageView"
+        app:srcCompat="@drawable/ic_edit_24" />
+
+    <ImageView
+        android:id="@+id/search_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:contentDescription="@string/search"
+        app:layout_constraintEnd_toStartOf="@+id/fullScreen_imageView"
+        app:layout_constraintTop_toTopOf="@+id/fullScreen_imageView"
+        app:srcCompat="@drawable/ic_search_24" />
+
+    <ImageView
+        android:id="@+id/copy_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@string/copy"
+        app:layout_constraintEnd_toStartOf="@+id/addFile_imageView"
+        app:layout_constraintTop_toTopOf="@+id/addFile_imageView"
+        app:srcCompat="@drawable/ic_copy" />
+
+    <ImageView
+        android:id="@+id/fullScreen_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@string/fullScreen"
+        app:layout_constraintEnd_toStartOf="@+id/edit_imageView"
+        app:layout_constraintTop_toTopOf="@+id/edit_imageView"
+        app:srcCompat="@drawable/ic_fullscreen_24" />
+
+    <ImageView
+        android:id="@+id/compile_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@string/compile"
+        app:layout_constraintEnd_toStartOf="@+id/deleteFile_imageView"
+        app:layout_constraintTop_toTopOf="@+id/deleteFile_imageView"
+        app:srcCompat="@drawable/ic_compile_24" />
+
+    <ImageView
+        android:id="@+id/splitScreen_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@string/splitScreen"
+        app:layout_constraintEnd_toStartOf="@+id/search_imageView"
+        app:layout_constraintTop_toTopOf="@+id/search_imageView"
+        app:srcCompat="@drawable/ic_split_screen" />
+
+    <ImageView
+        android:id="@+id/deleteFile_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@string/deleteFile"
+        app:layout_constraintEnd_toStartOf="@+id/splitScreen_imageView"
+        app:layout_constraintTop_toTopOf="@+id/splitScreen_imageView"
+        app:srcCompat="@drawable/ic_delete_file" />
+
+    <ImageView
+        android:id="@+id/addFile_imageView"
+        android:layout_width="30dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="@string/addFile"
+        app:layout_constraintEnd_toStartOf="@+id/closeBtmSht_imageView"
+        app:layout_constraintTop_toTopOf="@+id/closeBtmSht_imageView"
+        app:srcCompat="@drawable/ic_add" />
+
+    <ImageView
+        android:id="@+id/closeBtmSht_imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@string/closeBtmSht"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_baseline_close_24" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

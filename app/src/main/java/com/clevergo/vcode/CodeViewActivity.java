@@ -5,14 +5,19 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -20,6 +25,8 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.clevergo.vcode.codeviewer.CodeView;
 import com.clevergo.vcode.codeviewer.Language;
@@ -31,6 +38,9 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class CodeViewActivity extends AppCompatActivity
         implements CodeView.OnHighlightListener,
@@ -43,11 +53,13 @@ public class CodeViewActivity extends AppCompatActivity
     private static List<Uri> uri_List;
     private static List<String> codeList = new ArrayList<>();
     private static int filesOpened = 0;
+    private ConstraintLayout searchResult_Layout;
     private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout;
-    private ImageView bottomSheet_ImageView;
-    private TextView pickFile_TextView, lineInfo_TextView, fileSize_TextView;
+    private ImageView bottomSheet_ImageView, findNext_ImageView, closeSearch_ImageView, findPrev_ImageView;
+    private TextView pickFile_TextView, lineInfo_TextView, fileSize_TextView, searchWord_TextView, findResultNum_TextView;
     private CodeView codeView_Main;
-    private boolean loadIntoRAM = true;
+    private boolean loadIntoRAM = true, searchResult = false;
+    private String searchWord = "";
 
 
     @Override
@@ -90,6 +102,28 @@ public class CodeViewActivity extends AppCompatActivity
         bottomSheet_ImageView = findViewById(R.id.bottomSheet_ImageView);
         lineInfo_TextView = findViewById(R.id.lineInfo_TextView);
         fileSize_TextView = findViewById(R.id.fileSize_TextView);
+        findNext_ImageView = findViewById(R.id.findNext_ImageView);
+        searchResult_Layout = findViewById(R.id.searchResult_Layout);
+        searchWord_TextView = findViewById(R.id.searchWord_TextView);
+        findResultNum_TextView = findViewById(R.id.findResultNum_TextView);
+        closeSearch_ImageView = findViewById(R.id.closeSearch_ImageView);
+        findPrev_ImageView = findViewById(R.id.findPrev_ImageView);
+
+        findNext_ImageView.setOnClickListener(a -> {
+            if (searchResult) codeView_Main.findNext(true);
+        });
+
+        findPrev_ImageView.setOnClickListener(a -> {
+            if (searchResult) codeView_Main.findNext(false);
+        });
+
+        closeSearch_ImageView.setOnClickListener(a -> {
+            if (searchResult) {
+                codeView_Main.findAllAsync("");
+                searchResult_Layout.setVisibility(View.GONE);
+            }
+            searchResult = false;
+        });
 
         bottomSheet_ImageView.setOnClickListener(a -> {
             InfoBottomSheet infoBottomSheet = new InfoBottomSheet();
@@ -115,7 +149,7 @@ public class CodeViewActivity extends AppCompatActivity
 
         codeView_Main.setFindListener(this);
 
-        lineInfo_TextView.setText(codeView_Main.getLineCount() + ":Nil");
+        lineInfo_TextView.setText(codeView_Main.getLineCount() + ":Nil (" + codeView_Main.getCode().length() + ")");
     }
 
     private CodeViewFile createACodeViewFile(Intent data) {
@@ -174,10 +208,57 @@ public class CodeViewActivity extends AppCompatActivity
         AlertDialog.Builder searchDialog = new AlertDialog.Builder(CodeViewActivity.this);
         final View searchDialogView = getLayoutInflater().inflate(R.layout.search_dialog, null);
         final TextInputEditText findTextInput = searchDialogView.findViewById(R.id.searchInputTextField);
+        final SwitchCompat isRegexSwitch = searchDialogView.findViewById(R.id.isRegex_switch);
+        final SwitchCompat isExactMatchSwitch = searchDialogView.findViewById(R.id.exactMatch_switch);
+
+        isRegexSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            TextWatcher textWatcher = Helper.validateRegex(CodeViewActivity.this, findTextInput);
+
+            if(isChecked) {
+                findTextInput.addTextChangedListener(textWatcher);
+            } else {
+                findTextInput.removeTextChangedListener(textWatcher);
+            }
+        });
+
         searchDialog.setTitle(getString(R.string.search));
         searchDialog.setView(searchDialogView);
         searchDialog.setPositiveButton(getString(R.string.search), (a, b) -> {
-            codeView_Main.findAllAsync(Objects.requireNonNull(findTextInput.getText()).toString());
+            searchWord = Objects.requireNonNull(findTextInput.getText()).toString();
+            if(isRegexSwitch.isChecked()) {
+                Pattern pattern = Pattern.compile(searchWord);
+                Matcher matcher = pattern.matcher(codeView_Main.getCode());
+                int groups = matcher.groupCount();
+                StringBuilder matcherString = new StringBuilder();
+
+                for (int i = 0; i < groups; i++) {
+                    matcherString.append(matcher.group(i));
+                }
+
+                if(matcher.find()) {
+                    codeView_Main.findAllAsync(matcherString.toString());
+                } else {
+                    Toast.makeText(CodeViewActivity.this, getString(R.string.noMatchFound), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            if(isExactMatchSwitch.isChecked()) {
+                Pattern pattern = Pattern.compile(searchWord);
+                Matcher matcher = pattern.matcher(codeView_Main.getCode());
+
+                if(matcher.find()) {
+                    codeView_Main.findAllAsync(matcher.group());
+                } else {
+                    Toast.makeText(CodeViewActivity.this, getString(R.string.noResultFound), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            if(!isExactMatchSwitch.isChecked() && !isRegexSwitch.isChecked()) {
+                codeView_Main.findAllAsync(searchWord);
+            }
+
+            searchWord_TextView.setText(searchWord);
+            searchWord = null;
         });
 
         searchDialog.setNegativeButton(getString(R.string.cancel), (a, b) -> {
@@ -243,9 +324,15 @@ public class CodeViewActivity extends AppCompatActivity
         lineInfo_TextView.setText(codeView_Main.getLineCount() + ":" + lineNumber);
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onFindResultReceived(int i, int i1, boolean b) {
+        searchResult_Layout.setVisibility(View.VISIBLE);
 
+        if (b) {
+            searchResult = true;
+            findResultNum_TextView.setText(i1 + " results");
+        }
     }
 
     // Button OnclickListener
@@ -287,7 +374,12 @@ public class CodeViewActivity extends AppCompatActivity
                 }
                 break;
             case SplitScreen:
-                //TODO : SplitScreen Case
+                if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                    Helper.showAlertDialog(getString(R.string.suggestion), getString(R.string.changeToLandscape), CodeViewActivity.this);
+                } else {
+
+                }
+
                 break;
             case AddFile:
                 Helper.pickFile(CodeViewActivity.this);

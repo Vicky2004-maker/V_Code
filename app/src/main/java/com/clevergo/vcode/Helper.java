@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -11,14 +12,19 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
+
+import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -33,6 +39,8 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class Helper {
 
@@ -267,6 +275,48 @@ public class Helper {
         int flags = activity.getWindow().getAttributes().flags;
         return (flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
     }
+
+    public static TextWatcher validateRegex(AppCompatActivity activity, TextInputEditText editText) {
+        return new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                try {
+                    Pattern.compile(s.toString());
+                } catch (PatternSyntaxException e) {
+                    editText.setError(activity.getString(R.string.invalidPattern));
+                }
+            }
+        };
+    }
+
+    public static short showAlertDialog(@NonNull String title, @NonNull String message, @NonNull AppCompatActivity activity) {
+        final short[] toReturn = {-1};
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(activity);
+        alertBuilder.setTitle(title);
+        alertBuilder.setMessage(message);
+        alertBuilder.setCancelable(false);
+        alertBuilder.setPositiveButton(activity.getString(R.string.change), (dialog, which) -> toReturn[0] = 1);
+        alertBuilder.setNegativeButton(activity.getString(R.string.cancel), (dialog, which) -> toReturn[0] = 0);
+        alertBuilder.create();
+        alertBuilder.show();
+
+        return toReturn[0];
+    }
+
+    public static void splitScreen_2(AppCompatActivity activity) {
+
+    }
+
     //TODO : Generate PDF
     //TODO : View PDF
     //TODO : Extract text from PDF and load it into CodeView

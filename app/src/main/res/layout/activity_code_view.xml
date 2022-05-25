@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/dark_background"
@@ -29,7 +30,8 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:weightSum="2">
 
         <TextView
             android:id="@+id/pickFileTextView"
@@ -43,24 +45,98 @@
         <com.clevergo.vcode.codeviewer.CodeView
             android:id="@+id/codeview_Main"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone">
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:layout_weight="2"/>
+
+        <com.clevergo.vcode.codeviewer.CodeView
+            android:id="@+id/codeview_SplitScreen1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:layout_weight="1">
+
 
         </com.clevergo.vcode.codeviewer.CodeView>
     </LinearLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/searchResult_Layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="8dp"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/searchWord_TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_marginStart="8dp"
+            android:gravity="start|center_vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/findResultNum_TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:gravity="start|center_vertical"
+            android:textColor="@color/grey"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/closeSearch_ImageView"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toEndOf="@+id/searchWord_TextView"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <ImageView
+            android:id="@+id/closeSearch_ImageView"
+            android:layout_width="30dp"
+            android:layout_height="35dp"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@string/closeSearch"
+            android:src="@drawable/ic_baseline_close_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/findPrev_ImageView"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/findPrev_ImageView"
+            android:layout_width="30dp"
+            android:layout_height="35dp"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@string/search_findPrev"
+            android:src="@drawable/ic_find_prev"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/findNext_ImageView"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/findNext_ImageView"
+            android:layout_width="30dp"
+            android:layout_height="35dp"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@string/search_findNext"
+            android:src="@drawable/ic_find_next"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:id="@+id/info_LinearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:elevation="16dp"
         android:orientation="horizontal"
         android:visibility="gone"
-        android:elevation="8dp"
         android:weightSum="3">
 
         <TextView
             android:id="@+id/fileSize_TextView"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="12dp"
             android:layout_weight="1"
@@ -78,7 +154,7 @@
 
         <TextView
             android:id="@+id/lineInfo_TextView"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginEnd="12dp"
             android:layout_weight="1"
