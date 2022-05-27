@@ -42,4 +42,5 @@
     <string name="suggestion">Suggestion</string>
     <string name="changeToLandscape">Please change your device to landscape orientation to get a better experience</string>
     <string name="change">"Change "</string>
+    <string name="ok">Okay</string>
 </resources>

@@ -5,19 +5,16 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -31,7 +28,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import com.clevergo.vcode.codeviewer.CodeView;
 import com.clevergo.vcode.codeviewer.Language;
 import com.clevergo.vcode.codeviewer.Theme;
-import com.clevergo.vcode.editorfiles.BottomSheetCode;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -40,7 +36,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class CodeViewActivity extends AppCompatActivity
         implements CodeView.OnHighlightListener,
@@ -57,7 +52,7 @@ public class CodeViewActivity extends AppCompatActivity
     private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout;
     private ImageView bottomSheet_ImageView, findNext_ImageView, closeSearch_ImageView, findPrev_ImageView;
     private TextView pickFile_TextView, lineInfo_TextView, fileSize_TextView, searchWord_TextView, findResultNum_TextView;
-    private CodeView codeView_Main;
+    private CodeView codeView_Main, codeview_SplitScreen1;
     private boolean loadIntoRAM = true, searchResult = false;
     private String searchWord = "";
 
@@ -108,6 +103,7 @@ public class CodeViewActivity extends AppCompatActivity
         findResultNum_TextView = findViewById(R.id.findResultNum_TextView);
         closeSearch_ImageView = findViewById(R.id.closeSearch_ImageView);
         findPrev_ImageView = findViewById(R.id.findPrev_ImageView);
+        codeview_SplitScreen1 = findViewById(R.id.codeview_SplitScreen1);
 
         findNext_ImageView.setOnClickListener(a -> {
             if (searchResult) codeView_Main.findNext(true);
@@ -214,7 +210,7 @@ public class CodeViewActivity extends AppCompatActivity
         isRegexSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             TextWatcher textWatcher = Helper.validateRegex(CodeViewActivity.this, findTextInput);
 
-            if(isChecked) {
+            if (isChecked) {
                 findTextInput.addTextChangedListener(textWatcher);
             } else {
                 findTextInput.removeTextChangedListener(textWatcher);
@@ -225,7 +221,7 @@ public class CodeViewActivity extends AppCompatActivity
         searchDialog.setView(searchDialogView);
         searchDialog.setPositiveButton(getString(R.string.search), (a, b) -> {
             searchWord = Objects.requireNonNull(findTextInput.getText()).toString();
-            if(isRegexSwitch.isChecked()) {
+            if (isRegexSwitch.isChecked()) {
                 Pattern pattern = Pattern.compile(searchWord);
                 Matcher matcher = pattern.matcher(codeView_Main.getCode());
                 int groups = matcher.groupCount();
@@ -235,25 +231,25 @@ public class CodeViewActivity extends AppCompatActivity
                     matcherString.append(matcher.group(i));
                 }
 
-                if(matcher.find()) {
+                if (matcher.find()) {
                     codeView_Main.findAllAsync(matcherString.toString());
                 } else {
                     Toast.makeText(CodeViewActivity.this, getString(R.string.noMatchFound), Toast.LENGTH_SHORT).show();
                 }
             }
 
-            if(isExactMatchSwitch.isChecked()) {
+            if (isExactMatchSwitch.isChecked()) {
                 Pattern pattern = Pattern.compile(searchWord);
                 Matcher matcher = pattern.matcher(codeView_Main.getCode());
 
-                if(matcher.find()) {
+                if (matcher.find()) {
                     codeView_Main.findAllAsync(matcher.group());
                 } else {
                     Toast.makeText(CodeViewActivity.this, getString(R.string.noResultFound), Toast.LENGTH_SHORT).show();
                 }
             }
 
-            if(!isExactMatchSwitch.isChecked() && !isRegexSwitch.isChecked()) {
+            if (!isExactMatchSwitch.isChecked() && !isRegexSwitch.isChecked()) {
                 codeView_Main.findAllAsync(searchWord);
             }
 
@@ -360,7 +356,7 @@ public class CodeViewActivity extends AppCompatActivity
                 //TODO : Edit Case
                 break;
             case Search:
-                //TODO : Search Case, Regex, Exact Match Case
+                //FIXME : Regex Search
                 showSearchDialog();
                 break;
             case CopyAll:
@@ -374,12 +370,11 @@ public class CodeViewActivity extends AppCompatActivity
                 }
                 break;
             case SplitScreen:
-                if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
                     Helper.showAlertDialog(getString(R.string.suggestion), getString(R.string.changeToLandscape), CodeViewActivity.this);
                 } else {
-
+                    Helper.splitScreen_2(CodeViewActivity.this);
                 }
-
                 break;
             case AddFile:
                 Helper.pickFile(CodeViewActivity.this);

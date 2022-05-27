@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -15,6 +14,7 @@ import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
@@ -299,22 +299,27 @@ public class Helper {
         };
     }
 
-    public static short showAlertDialog(@NonNull String title, @NonNull String message, @NonNull AppCompatActivity activity) {
-        final short[] toReturn = {-1};
+    public static void showAlertDialog(@NonNull String title, @NonNull String message, @NonNull AppCompatActivity activity) {
         AlertDialog.Builder alertBuilder = new AlertDialog.Builder(activity);
         alertBuilder.setTitle(title);
         alertBuilder.setMessage(message);
         alertBuilder.setCancelable(false);
-        alertBuilder.setPositiveButton(activity.getString(R.string.change), (dialog, which) -> toReturn[0] = 1);
-        alertBuilder.setNegativeButton(activity.getString(R.string.cancel), (dialog, which) -> toReturn[0] = 0);
+        alertBuilder.setPositiveButton(activity.getString(R.string.ok), (dialog, which) -> {
+        });
         alertBuilder.create();
         alertBuilder.show();
-
-        return toReturn[0];
     }
 
     public static void splitScreen_2(AppCompatActivity activity) {
-
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(activity);
+        alertBuilder.setTitle(activity.getString(R.string.splitScreen));
+        final View searchDialog_View = activity.getLayoutInflater().inflate(R.layout.splitscreeen_dialog, null);
+        alertBuilder.setView(searchDialog_View);
+        alertBuilder.setCancelable(false);
+        alertBuilder.setPositiveButton(activity.getString(R.string.ok), (dialog, which) -> {
+        });
+        alertBuilder.create();
+        alertBuilder.show();
     }
 
     //TODO : Generate PDF
@@ -322,6 +327,6 @@ public class Helper {
     //TODO : Extract text from PDF and load it into CodeView
 
     public static class AsynchronousBehaviour {
-        //TODO : Make Async methods, Read and Write
+
     }
 }

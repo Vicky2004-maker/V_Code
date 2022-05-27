@@ -1,4 +1,4 @@
-package com.clevergo.vcode.editorfiles;
+package com.clevergo.vcode;
 
 public enum BottomSheetCode {
     Compile,

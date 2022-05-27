@@ -11,10 +11,7 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.clevergo.vcode.editorfiles.BottomSheetCode;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
-
-import java.util.Objects;
 
 public class InfoBottomSheet extends BottomSheetDialogFragment {
 

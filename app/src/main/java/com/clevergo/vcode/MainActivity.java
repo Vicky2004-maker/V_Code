@@ -12,8 +12,11 @@ import androidx.appcompat.app.AppCompatDelegate;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
 
 public class MainActivity extends AppCompatActivity {
+
+    CompletableFuture<Void> settingFileTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,11 +32,20 @@ public class MainActivity extends AppCompatActivity {
 
         Objects.requireNonNull(getSupportActionBar()).hide();
 
-        Helper.initializeFile(MainActivity.this);
-        Helper.updateSettingsMap();
-
-        if(Objects.equals(Helper.settingsMap.get("privacyPolicy"), "agree") && Helper.checkPermissions(MainActivity.this)) {
-            timerToLoad(3000);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            settingFileTask = CompletableFuture.runAsync(() -> Helper.initializeFile(MainActivity.this))
+                    .thenRun(Helper::updateSettingsMap)
+                    .thenRun(() -> {
+                        if (Objects.equals(Helper.settingsMap.get("privacyPolicy"), "agree") && Helper.checkPermissions(MainActivity.this)) {
+                            timerToLoad(3000);
+                        }
+                    });
+        } else {
+            Helper.initializeFile(MainActivity.this);
+            Helper.updateSettingsMap();
+            if (Objects.equals(Helper.settingsMap.get("privacyPolicy"), "agree") && Helper.checkPermissions(MainActivity.this)) {
+                timerToLoad(3000);
+            }
         }
     }
 
@@ -41,35 +53,70 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        if (!Helper.settingsMap.containsKey("privacyPolicy")) {
-            AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
-            alertDialog.setTitle(getString(R.string.privacyPolicy));
-            alertDialog.setMessage(getString(R.string.privacyPolicyMessage));
-            alertDialog.setCancelable(false);
-            alertDialog.setPositiveButton(getString(R.string.agree), (a, b) -> {
-                Helper.writeSetting("privacyPolicy", "agree");
-                if (!Helper.checkPermissions(MainActivity.this)) {
-                    Helper.launchPermission(MainActivity.this);
-                } else {
-                    timerToLoad(1000);
-                }
-            });
-            alertDialog.setNeutralButton(getString(R.string.disagree), (a, b) -> finish());
-            alertDialog.setNegativeButton(getString(R.string.view), (a, b) -> Helper.launchUrlInBrowser(Helper.PRIVACY_POLICY_URL, MainActivity.this));
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            if (settingFileTask.isDone() && !Helper.settingsMap.containsKey("privacyPolicy")) {
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+                alertDialog.setTitle(getString(R.string.privacyPolicy));
+                alertDialog.setMessage(getString(R.string.privacyPolicyMessage));
+                alertDialog.setCancelable(false);
+                alertDialog.setPositiveButton(getString(R.string.agree), (a, b) -> {
+                    CompletableFuture.runAsync(() -> Helper.writeSetting("privacyPolicy", "agree"))
+                            .thenRun(() -> {
+                                if (!Helper.checkPermissions(MainActivity.this)) {
+                                    Helper.launchPermission(MainActivity.this);
+                                } else {
+                                    timerToLoad(1000);
+                                }
+                            });
+                });
+                alertDialog.setNeutralButton(getString(R.string.disagree), (a, b) -> finish());
+                alertDialog.setNegativeButton(getString(R.string.view), (a, b) -> Helper.launchUrlInBrowser(Helper.PRIVACY_POLICY_URL, MainActivity.this));
 
-            alertDialog.create();
-            alertDialog.show();
-        } else if (!Helper.checkPermissions(MainActivity.this)) {
-            Helper.launchPermission(MainActivity.this);
+                alertDialog.create();
+                alertDialog.show();
+            } else if (!Helper.checkPermissions(MainActivity.this)) {
+                Helper.launchPermission(MainActivity.this);
+            }
+        } else {
+            if (!Helper.settingsMap.containsKey("privacyPolicy")) {
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+                alertDialog.setTitle(getString(R.string.privacyPolicy));
+                alertDialog.setMessage(getString(R.string.privacyPolicyMessage));
+                alertDialog.setCancelable(false);
+                alertDialog.setPositiveButton(getString(R.string.agree), (a, b) -> {
+                    Helper.writeSetting("privacyPolicy", "agree");
+                    if (!Helper.checkPermissions(MainActivity.this)) {
+                        Helper.launchPermission(MainActivity.this);
+                    } else {
+                        timerToLoad(1000);
+                    }
+                });
+                alertDialog.setNeutralButton(getString(R.string.disagree), (a, b) -> finish());
+                alertDialog.setNegativeButton(getString(R.string.view), (a, b) -> Helper.launchUrlInBrowser(Helper.PRIVACY_POLICY_URL, MainActivity.this));
+
+                alertDialog.create();
+                alertDialog.show();
+            } else if (!Helper.checkPermissions(MainActivity.this)) {
+                Helper.launchPermission(MainActivity.this);
+            }
         }
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
-        if (!Helper.checkPermissions(MainActivity.this)) {
-            Helper.launchPermission(MainActivity.this);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            CompletableFuture.supplyAsync(() -> Helper.checkPermissions(MainActivity.this))
+                    .thenAccept(isPermitted -> {
+                        if (!isPermitted) {
+                            Helper.launchPermission(MainActivity.this);
+                        }
+                    });
+        } else {
+            if (!Helper.checkPermissions(MainActivity.this)) {
+                Helper.launchPermission(MainActivity.this);
+            }
         }
     }
 
