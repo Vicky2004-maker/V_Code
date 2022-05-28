@@ -1,10 +1,12 @@
 package com.clevergo.vcode;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Window;
 import android.view.WindowManager;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -19,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
     CompletableFuture<Void> settingFileTask;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -36,88 +38,72 @@ public class MainActivity extends AppCompatActivity {
             settingFileTask = CompletableFuture.runAsync(() -> Helper.initializeFile(MainActivity.this))
                     .thenRun(Helper::updateSettingsMap)
                     .thenRun(() -> {
-                        if (Objects.equals(Helper.settingsMap.get("privacyPolicy"), "agree") && Helper.checkPermissions(MainActivity.this)) {
+                        if (Helper.isPrivacyPolicyAccepted() && Helper.checkPermissions(MainActivity.this)) {
                             timerToLoad(3000);
                         }
                     });
         } else {
             Helper.initializeFile(MainActivity.this);
             Helper.updateSettingsMap();
-            if (Objects.equals(Helper.settingsMap.get("privacyPolicy"), "agree") && Helper.checkPermissions(MainActivity.this)) {
+            if (Helper.isPrivacyPolicyAccepted() && Helper.checkPermissions(MainActivity.this)) {
                 timerToLoad(3000);
             }
         }
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            if (settingFileTask.isDone() && !Helper.settingsMap.containsKey("privacyPolicy")) {
-                AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
-                alertDialog.setTitle(getString(R.string.privacyPolicy));
-                alertDialog.setMessage(getString(R.string.privacyPolicyMessage));
-                alertDialog.setCancelable(false);
-                alertDialog.setPositiveButton(getString(R.string.agree), (a, b) -> {
-                    CompletableFuture.runAsync(() -> Helper.writeSetting("privacyPolicy", "agree"))
-                            .thenRun(() -> {
-                                if (!Helper.checkPermissions(MainActivity.this)) {
-                                    Helper.launchPermission(MainActivity.this);
-                                } else {
-                                    timerToLoad(1000);
-                                }
-                            });
-                });
-                alertDialog.setNeutralButton(getString(R.string.disagree), (a, b) -> finish());
-                alertDialog.setNegativeButton(getString(R.string.view), (a, b) -> Helper.launchUrlInBrowser(Helper.PRIVACY_POLICY_URL, MainActivity.this));
-
-                alertDialog.create();
-                alertDialog.show();
-            } else if (!Helper.checkPermissions(MainActivity.this)) {
-                Helper.launchPermission(MainActivity.this);
-            }
-        } else {
-            if (!Helper.settingsMap.containsKey("privacyPolicy")) {
-                AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
-                alertDialog.setTitle(getString(R.string.privacyPolicy));
-                alertDialog.setMessage(getString(R.string.privacyPolicyMessage));
-                alertDialog.setCancelable(false);
-                alertDialog.setPositiveButton(getString(R.string.agree), (a, b) -> {
-                    Helper.writeSetting("privacyPolicy", "agree");
-                    if (!Helper.checkPermissions(MainActivity.this)) {
-                        Helper.launchPermission(MainActivity.this);
-                    } else {
-                        timerToLoad(1000);
-                    }
-                });
-                alertDialog.setNeutralButton(getString(R.string.disagree), (a, b) -> finish());
-                alertDialog.setNegativeButton(getString(R.string.view), (a, b) -> Helper.launchUrlInBrowser(Helper.PRIVACY_POLICY_URL, MainActivity.this));
-
-                alertDialog.create();
-                alertDialog.show();
-            } else if (!Helper.checkPermissions(MainActivity.this)) {
-                Helper.launchPermission(MainActivity.this);
+        if (requestCode == Helper.PERMISSION_REQ_CODE) {
+            if (grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                runOnUiThread(this::privacyPolicyDialog);
             }
         }
-
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            CompletableFuture.supplyAsync(() -> Helper.checkPermissions(MainActivity.this))
-                    .thenAccept(isPermitted -> {
-                        if (!isPermitted) {
-                            Helper.launchPermission(MainActivity.this);
-                        }
-                    });
+            if (!Helper.checkPermissions(MainActivity.this)) {
+                Helper.launchPermission(MainActivity.this);
+            }
+
+            if (!Helper.isPrivacyPolicyAccepted() && settingFileTask.isDone()) {
+                privacyPolicyDialog();
+            }
         } else {
             if (!Helper.checkPermissions(MainActivity.this)) {
                 Helper.launchPermission(MainActivity.this);
             }
         }
+    }
+
+    private void privacyPolicyDialog() {
+        if (!Helper.settingsMap.containsKey("privacyPolicy")) {
+            AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+            alertDialog.setTitle(getString(R.string.privacyPolicy));
+            alertDialog.setMessage(getString(R.string.privacyPolicyMessage));
+            alertDialog.setCancelable(false);
+            alertDialog.setPositiveButton(getString(R.string.agree), (a, b) -> {
+                Helper.writeSetting("privacyPolicy", "agree");
+                if (!Helper.checkPermissions(MainActivity.this)) {
+                    Helper.launchPermission(MainActivity.this);
+                } else {
+                    timerToLoad(1000);
+                }
+            });
+            alertDialog.setNeutralButton(getString(R.string.disagree), (a, b) -> finish());
+            alertDialog.setNegativeButton(getString(R.string.view), (a, b) -> Helper.launchUrlInBrowser(Helper.PRIVACY_POLICY_URL, MainActivity.this));
+
+            alertDialog.create();
+            alertDialog.show();
+        } else if (!Helper.checkPermissions(MainActivity.this)) {
+            Helper.launchPermission(MainActivity.this);
+        }
+
     }
 
     private void timerToLoad(int time) {

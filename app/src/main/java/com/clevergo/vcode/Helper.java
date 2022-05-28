@@ -215,8 +215,11 @@ public class Helper {
     }
 
     public static boolean checkPermissions(Context context) {
-        return ActivityCompat.checkSelfPermission(context, PERMISSIONS[0]) == PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(context, PERMISSIONS[1]) == PackageManager.PERMISSION_GRANTED;
+        int res_0 = context.checkCallingOrSelfPermission(PERMISSIONS[0]);
+        int res_1 = context.checkCallingOrSelfPermission(PERMISSIONS[1]);
+
+        return (res_0 == PackageManager.PERMISSION_GRANTED)
+                && (res_1 == PackageManager.PERMISSION_GRANTED);
     }
 
     public static void launchPermission(AppCompatActivity activity) {
@@ -320,6 +323,10 @@ public class Helper {
         });
         alertBuilder.create();
         alertBuilder.show();
+    }
+
+    public static boolean isPrivacyPolicyAccepted() {
+        return Objects.equals(Helper.settingsMap.get("privacyPolicy"), "agree");
     }
 
     //TODO : Generate PDF
