@@ -149,6 +149,7 @@ public class Helper {
     public static void pickFile(AppCompatActivity activity) {
         Intent filePicker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         filePicker.addCategory(Intent.CATEGORY_OPENABLE);
+        filePicker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         filePicker.setType("*/*");
 
         activity.startActivityForResult(filePicker, PICK_FILE_CODE);
@@ -200,6 +201,14 @@ public class Helper {
         return returnCursor.getString(nameIndex);
     }
 
+    public static String getFileName(Context context, Uri uri) {
+        @SuppressLint("Recycle") Cursor returnCursor = context.getContentResolver().query(uri, null, null, null, null);
+        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+        returnCursor.moveToFirst();
+
+        return returnCursor.getString(nameIndex);
+    }
+
     public static String getFileExtension(Context context, Intent data) {
         @SuppressLint("Recycle") Cursor returnCursor = context.getContentResolver().query(data.getData(), null, null, null, null);
         int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -209,8 +218,26 @@ public class Helper {
         return fileName.substring(fileName.indexOf(".") + 1);
     }
 
+    public static String getFileExtension(Context context, Uri uri) {
+        @SuppressLint("Recycle") Cursor returnCursor = context.getContentResolver().query(uri, null, null, null, null);
+        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+        returnCursor.moveToFirst();
+        String fileName = returnCursor.getString(nameIndex);
+
+        return fileName.substring(fileName.indexOf(".") + 1);
+    }
+
     public static String getFileSize(Context context, Intent data) {
         @SuppressLint("Recycle") Cursor returnCursor = context.getContentResolver().query(data.getData(), null, null, null, null);
+        int sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE);
+        returnCursor.moveToFirst();
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+
+        return decimalFormat.format(returnCursor.getDouble(sizeIndex) / 1000);
+    }
+
+    public static String getFileSize(Context context, Uri uri) {
+        @SuppressLint("Recycle") Cursor returnCursor = context.getContentResolver().query(uri, null, null, null, null);
         int sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE);
         returnCursor.moveToFirst();
         DecimalFormat decimalFormat = new DecimalFormat("#.##");

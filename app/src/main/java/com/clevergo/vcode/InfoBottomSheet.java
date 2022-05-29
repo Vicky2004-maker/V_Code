@@ -6,6 +6,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -35,8 +38,24 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
         View v = inflater.inflate(R.layout.info_bottom_sheet, container, false);
 
         ImageView fullScreen_imageView = v.findViewById(R.id.fullScreen_imageView);
+        AutoCompleteTextView activeCodeView_Selector = v.findViewById(R.id.activeCodeView_Selector);
+        activeCodeView_Selector.setVisibility(View.GONE);
 
-        if(Helper.isFullScreen) {
+        if (CodeViewActivity.selectedFileNames[0] != null) {
+            ArrayAdapter<String> myAdapter = new ArrayAdapter<>(getActivity(),
+                    androidx.appcompat.R.layout.support_simple_spinner_dropdown_item,
+                    CodeViewActivity.selectedFileNames);
+
+            activeCodeView_Selector.setAdapter(myAdapter);
+            activeCodeView_Selector.setVisibility(View.VISIBLE);
+            activeCodeView_Selector.setOnItemClickListener((parent, view, position, id) -> {
+                CodeViewActivity.activeFilePosition = position;
+                inputListener.sendInput(BottomSheetCode.SetActiveCodeViewFile);
+                //dismiss();
+            });
+        }
+
+        if (Helper.isFullScreen) {
             fullScreen_imageView.setImageResource(R.drawable.ic_fullscreen_exit);
         } else {
             fullScreen_imageView.setImageResource(R.drawable.ic_fullscreen_24);

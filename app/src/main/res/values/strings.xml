@@ -45,4 +45,6 @@
     <string name="ok">Okay</string>
     <string name="selectFile">Select a file</string>
     <string name="split">Split</string>
+    <string name="selectActiveFile">Select active file</string>
+    <string name="codeView">Code View</string>
 </resources>

@@ -107,4 +107,21 @@
         app:srcCompat="@drawable/ic_baseline_close_24"
         android:contentDescription="@string/closeBtmSht" />
 
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/compile_imageView"
+        app:layout_constraintEnd_toStartOf="@+id/compile_imageView"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <AutoCompleteTextView
+            android:id="@+id/activeCodeView_Selector"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/selectActiveFile" />
+    </com.google.android.material.textfield.TextInputLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
