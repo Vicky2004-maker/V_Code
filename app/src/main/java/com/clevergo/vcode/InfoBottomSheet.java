@@ -36,7 +36,7 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
 
         ImageView fullScreen_imageView = v.findViewById(R.id.fullScreen_imageView);
 
-        if(Helper.isFullScreen(requireActivity())) {
+        if(Helper.isFullScreen) {
             fullScreen_imageView.setImageResource(R.drawable.ic_fullscreen_exit);
         } else {
             fullScreen_imageView.setImageResource(R.drawable.ic_fullscreen_24);

@@ -14,11 +14,16 @@ import androidx.appcompat.app.AppCompatDelegate;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.CompletableFuture;
 
 public class MainActivity extends AppCompatActivity {
 
-    CompletableFuture<Void> settingFileTask;
+    private CustomWorkerThread workerThread;
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        workerThread.stop();
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -34,21 +39,15 @@ public class MainActivity extends AppCompatActivity {
 
         Objects.requireNonNull(getSupportActionBar()).hide();
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            settingFileTask = CompletableFuture.runAsync(() -> Helper.initializeFile(MainActivity.this))
-                    .thenRun(Helper::updateSettingsMap)
-                    .thenRun(() -> {
-                        if (Helper.isPrivacyPolicyAccepted() && Helper.checkPermissions(MainActivity.this)) {
-                            timerToLoad(3000);
-                        }
-                    });
-        } else {
-            Helper.initializeFile(MainActivity.this);
-            Helper.updateSettingsMap();
+        workerThread = new CustomWorkerThread();
+        workerThread.addWork(() -> Helper.setThisIsMobile(MainActivity.this));
+        workerThread.addWork(() -> Helper.initializeFile(MainActivity.this));
+        workerThread.addWork(Helper::updateSettingsMap);
+        workerThread.addWork(() -> {
             if (Helper.isPrivacyPolicyAccepted() && Helper.checkPermissions(MainActivity.this)) {
                 timerToLoad(3000);
             }
-        }
+        });
     }
 
     @Override
@@ -56,8 +55,8 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == Helper.PERMISSION_REQ_CODE) {
-            if (grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                runOnUiThread(this::privacyPolicyDialog);
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                privacyPolicyDialog();
             }
         }
     }
@@ -66,41 +65,34 @@ public class MainActivity extends AppCompatActivity {
     public void onStart() {
         super.onStart();
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            if (!Helper.checkPermissions(MainActivity.this)) {
-                Helper.launchPermission(MainActivity.this);
-            }
+        if (!Helper.checkPermissions(MainActivity.this)) Helper.launchPermission(MainActivity.this);
 
-            if (!Helper.isPrivacyPolicyAccepted() && settingFileTask.isDone()) {
-                privacyPolicyDialog();
+        workerThread.addWork(() -> {
+            if (!Helper.isPrivacyPolicyAccepted()) {
+                runOnUiThread(this::privacyPolicyDialog);
             }
-        } else {
-            if (!Helper.checkPermissions(MainActivity.this)) {
-                Helper.launchPermission(MainActivity.this);
-            }
-        }
+        });
     }
 
     private void privacyPolicyDialog() {
-        if (!Helper.settingsMap.containsKey("privacyPolicy")) {
-            AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
-            alertDialog.setTitle(getString(R.string.privacyPolicy));
-            alertDialog.setMessage(getString(R.string.privacyPolicyMessage));
-            alertDialog.setCancelable(false);
-            alertDialog.setPositiveButton(getString(R.string.agree), (a, b) -> {
-                Helper.writeSetting("privacyPolicy", "agree");
-                if (!Helper.checkPermissions(MainActivity.this)) {
-                    Helper.launchPermission(MainActivity.this);
-                } else {
-                    timerToLoad(1000);
-                }
-            });
-            alertDialog.setNeutralButton(getString(R.string.disagree), (a, b) -> finish());
-            alertDialog.setNegativeButton(getString(R.string.view), (a, b) -> Helper.launchUrlInBrowser(Helper.PRIVACY_POLICY_URL, MainActivity.this));
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+        alertDialog.setTitle(getString(R.string.privacyPolicy));
+        alertDialog.setMessage(getString(R.string.privacyPolicyMessage));
+        alertDialog.setCancelable(false);
+        alertDialog.setPositiveButton(getString(R.string.agree), (a, b) -> {
+            Helper.writeSetting("privacyPolicy", "agree");
+            if (!Helper.checkPermissions(MainActivity.this)) {
+                Helper.launchPermission(MainActivity.this);
+            } else {
+                timerToLoad(1000);
+            }
+        });
+        alertDialog.setNeutralButton(getString(R.string.disagree), (a, b) -> finish());
+        alertDialog.setNegativeButton(getString(R.string.view), (a, b) -> Helper.launchUrlInBrowser(Helper.PRIVACY_POLICY_URL, MainActivity.this));
 
-            alertDialog.create();
-            alertDialog.show();
-        } else if (!Helper.checkPermissions(MainActivity.this)) {
+        alertDialog.create();
+        alertDialog.show();
+        if (!Helper.checkPermissions(MainActivity.this)) {
             Helper.launchPermission(MainActivity.this);
         }
 

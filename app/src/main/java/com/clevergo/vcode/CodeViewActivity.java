@@ -15,11 +15,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
@@ -49,12 +52,15 @@ public class CodeViewActivity extends AppCompatActivity
     private static List<String> codeList = new ArrayList<>();
     private static int filesOpened = 0;
     private ConstraintLayout searchResult_Layout;
-    private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout;
+    private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout, codeView_Container;
     private ImageView bottomSheet_ImageView, findNext_ImageView, closeSearch_ImageView, findPrev_ImageView;
     private TextView pickFile_TextView, lineInfo_TextView, fileSize_TextView, searchWord_TextView, findResultNum_TextView;
     private CodeView codeView_Main, codeview_SplitScreen1;
-    private boolean loadIntoRAM = true, searchResult = false;
+    private boolean loadIntoRAM = true, searchResult = false, configFullScreen = true, isScreenSplitted = false;
     private String searchWord = "";
+
+    //TODO : Thread Started, Change some workflow to async
+    private CustomWorkerThread customWorkerThread;
 
 
     @Override
@@ -86,6 +92,13 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        customWorkerThread.stop();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_code_view);
@@ -104,6 +117,7 @@ public class CodeViewActivity extends AppCompatActivity
         closeSearch_ImageView = findViewById(R.id.closeSearch_ImageView);
         findPrev_ImageView = findViewById(R.id.findPrev_ImageView);
         codeview_SplitScreen1 = findViewById(R.id.codeview_SplitScreen1);
+        codeView_Container = findViewById(R.id.codeView_Container);
 
         findNext_ImageView.setOnClickListener(a -> {
             if (searchResult) codeView_Main.findNext(true);
@@ -129,6 +143,8 @@ public class CodeViewActivity extends AppCompatActivity
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             uri_List = new ArrayList<>();
         }
+
+        customWorkerThread = new CustomWorkerThread();
     }
 
     //region Private Methods
@@ -146,6 +162,20 @@ public class CodeViewActivity extends AppCompatActivity
         codeView_Main.setFindListener(this);
 
         lineInfo_TextView.setText(codeView_Main.getLineCount() + ":Nil (" + codeView_Main.getCode().length() + ")");
+    }
+
+    private void setCodeViewSplitScreen(final CodeView[] codeView, @NonNull final String[] code) {
+        for (int i = 0; i < codeView.length; i++) {
+            codeView[i].setOnHighlightListener(this)
+                    .setTheme(Theme.MONOKAI)
+                    .setCode(code[i])
+                    .setLanguage(Language.AUTO)
+                    .setWrapLine(false)
+                    .setShowLineNumber(true)
+                    .apply();
+
+            codeView[i].setFindListener(this);
+        }
     }
 
     private CodeViewFile createACodeViewFile(Intent data) {
@@ -265,6 +295,116 @@ public class CodeViewActivity extends AppCompatActivity
         searchDialog.show();
     }
 
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        switch (newConfig.orientation) {
+            case Configuration.ORIENTATION_LANDSCAPE:
+                if (!Helper.isFullScreen && configFullScreen) {
+                    Helper.makeFullScreen(CodeViewActivity.this);
+                    configFullScreen = false;
+                    if (isScreenSplitted) {
+                        codeView_Container.setOrientation(LinearLayout.HORIZONTAL);
+                        LinearLayout.LayoutParams params = ((LinearLayout.LayoutParams) codeView_Main.getLayoutParams());
+                        params.width = 0;
+                        params.height = LinearLayout.LayoutParams.MATCH_PARENT;
+                        codeView_Main.setLayoutParams(params);
+
+                        params = ((LinearLayout.LayoutParams) codeview_SplitScreen1.getLayoutParams());
+                        params.width = 0;
+                        params.height = LinearLayout.LayoutParams.MATCH_PARENT;
+                        codeview_SplitScreen1.setLayoutParams(params);
+
+                        params = null;
+                    }
+                }
+                break;
+            case Configuration.ORIENTATION_PORTRAIT:
+                if (Helper.isFullScreen && !configFullScreen) {
+                    Helper.revertFullScreen(CodeViewActivity.this);
+                    configFullScreen = true;
+                    if (isScreenSplitted) {
+                        codeView_Container.setOrientation(LinearLayout.VERTICAL);
+                        LinearLayout.LayoutParams params = ((LinearLayout.LayoutParams) codeView_Main.getLayoutParams());
+                        params.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                        params.height = 0;
+                        codeView_Main.setLayoutParams(params);
+
+                        params = ((LinearLayout.LayoutParams) codeview_SplitScreen1.getLayoutParams());
+                        params.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                        params.height = 0;
+                        codeview_SplitScreen1.setLayoutParams(params);
+
+                        params = null;
+                    }
+                }
+                break;
+            case Configuration.ORIENTATION_SQUARE:
+                break;
+            case Configuration.ORIENTATION_UNDEFINED:
+                break;
+        }
+    }
+
+    private void splitScreen_2(@NonNull final CodeView[] codeViews) {
+        androidx.appcompat.app.AlertDialog.Builder alertBuilder = new androidx.appcompat.app.AlertDialog.Builder(CodeViewActivity.this);
+        alertBuilder.setTitle(getString(R.string.splitScreen));
+        final View searchDialog_View = getLayoutInflater().inflate(R.layout.splitscreeen_dialog, null);
+        final AutoCompleteTextView fileSelector_1 = searchDialog_View.findViewById(R.id.fileSelector_1);
+        final AutoCompleteTextView fileSelector_2 = searchDialog_View.findViewById(R.id.fileSelector_2);
+        String[] fileNameArray = new String[fileList.size()];
+        for (int i = 0; i < fileList.size(); i++) {
+            fileNameArray[i] = fileList.get(i).getName();
+        }
+        ArrayAdapter<String> fileNameAdapter = new ArrayAdapter<>(CodeViewActivity.this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, fileNameArray);
+        fileSelector_1.setAdapter(fileNameAdapter);
+        fileSelector_2.setAdapter(fileNameAdapter);
+
+        int[] file1 = new int[1];
+        int[] file2 = new int[1];
+        fileSelector_1.setOnItemClickListener((parent, view, position, id) -> {
+            file1[0] = position;
+        });
+
+        fileSelector_2.setOnItemClickListener((parent, view, position, id) -> {
+            file2[0] = position;
+        });
+        alertBuilder.setView(searchDialog_View);
+        alertBuilder.setCancelable(true);
+        alertBuilder.setPositiveButton(getString(R.string.split), (dialog, which) -> {
+            isScreenSplitted = true;
+            LinearLayout.LayoutParams params = ((LinearLayout.LayoutParams) codeView_Main.getLayoutParams());
+            params.weight = 1;
+            codeView_Main.setLayoutParams(params);
+
+            params = ((LinearLayout.LayoutParams) codeview_SplitScreen1.getLayoutParams());
+            params.weight = 1;
+            codeview_SplitScreen1.setLayoutParams(params);
+            codeview_SplitScreen1.setVisibility(View.VISIBLE);
+
+            params = null;
+
+            String[] codes = new String[2];
+            for (int i = 0; i < fileList.size(); i++) {
+                String fileName = fileList.get(i).getName();
+
+                if (Objects.equals(fileNameArray[file1[0]], fileName)) {
+                    codes[0] = Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(i).getUri()));
+                }
+                if (Objects.equals(fileNameArray[file2[0]], fileName)) {
+                    codes[1] = Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(i).getUri()));
+                }
+            }
+
+            setCodeViewSplitScreen(codeViews, codes);
+        });
+        alertBuilder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
+        });
+        alertBuilder.create();
+        alertBuilder.show();
+    }
+
     //endregion
 
     //region Menu
@@ -360,20 +500,21 @@ public class CodeViewActivity extends AppCompatActivity
                 showSearchDialog();
                 break;
             case CopyAll:
-                Helper.copyCode(CodeViewActivity.this, codeView_Main.getCode());
+                customWorkerThread.addWork(() -> Helper.copyCode(CodeViewActivity.this, codeView_Main.getCode()));
                 break;
             case FullScreen:
-                if (Helper.isFullScreen(CodeViewActivity.this)) {
+                if (Helper.isFullScreen) {
                     Helper.revertFullScreen(CodeViewActivity.this);
                 } else {
                     Helper.makeFullScreen(CodeViewActivity.this);
                 }
                 break;
             case SplitScreen:
-                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
                     Helper.showAlertDialog(getString(R.string.suggestion), getString(R.string.changeToLandscape), CodeViewActivity.this);
-                } else {
-                    Helper.splitScreen_2(CodeViewActivity.this);
+
+                if (Helper.thisIsMobile) {
+                    splitScreen_2(new CodeView[]{codeView_Main, codeview_SplitScreen1});
                 }
                 break;
             case AddFile:

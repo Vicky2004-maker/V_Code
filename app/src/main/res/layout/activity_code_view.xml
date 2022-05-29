@@ -26,21 +26,23 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/codeView_Container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:gravity="center"
         android:orientation="vertical"
         android:weightSum="2">
 
         <TextView
             android:id="@+id/pickFileTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:text="@string/pick_File_Text"
+            android:gravity="center"
             android:textColor="@color/grey"
             android:textSize="26sp"
-            android:textStyle="italic" />
+            android:textStyle="italic"
+            android:visibility="visible"/>
 
         <com.clevergo.vcode.codeviewer.CodeView
             android:id="@+id/codeview_Main"

@@ -9,20 +9,19 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
-import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -53,10 +52,19 @@ public class Helper {
             {"android.permission.READ_EXTERNAL_STORAGE",
                     "android.permission.WRITE_EXTERNAL_STORAGE"};
     private static final String SETTING_DELIMITER = "-";
-
+    private static final Handler uiHandler = new Handler(Looper.getMainLooper());
+    public static boolean isFullScreen = false;
+    public static boolean thisIsMobile = true;
     public static HashMap<String, String> settingsMap;
     private static File settingsFile;
     private static BufferedWriter bufferedWriter;
+
+    public static void setThisIsMobile(Context context) {
+        float yInches = getScreenWidth_DP(context);
+        float xInches = getScreenHeight_DP(context);
+        double diagonalInches = Math.sqrt(xInches * xInches + yInches * yInches);
+        thisIsMobile = diagonalInches >= 6.5;
+    }
 
     public static void initializeFile(AppCompatActivity activity) {
         settingsFile = new File(activity.getExternalFilesDir("Settings"), "settings.txt");
@@ -243,40 +251,33 @@ public class Helper {
             ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
             ClipData cd = ClipData.newPlainText("Source Code", toCopy);
             cm.setPrimaryClip(cd);
-            Toast.makeText(context, context.getString(R.string.copySuccess), Toast.LENGTH_LONG).show();
+
+            uiHandler.post(() -> Toast.makeText(context, context.getString(R.string.copySuccess), Toast.LENGTH_LONG).show());
         } catch (Exception exception) {
-            Toast.makeText(context, context.getString(R.string.copyFalied), Toast.LENGTH_LONG).show();
+            uiHandler.post(() -> Toast.makeText(context, context.getString(R.string.copyFalied), Toast.LENGTH_LONG).show());
         }
     }
 
     public static float getScreenWidth_DP(Context context) {
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-        return displayMetrics.widthPixels / displayMetrics.density;
+        return displayMetrics.widthPixels / displayMetrics.xdpi;
     }
 
     public static float getScreenHeight_DP(Context context) {
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-        return displayMetrics.heightPixels / displayMetrics.density;
+        return displayMetrics.heightPixels / displayMetrics.ydpi;
     }
 
     public static void makeFullScreen(AppCompatActivity activity) {
         activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         Objects.requireNonNull(activity.getSupportActionBar()).hide();
+        isFullScreen = true;
     }
 
     public static void revertFullScreen(AppCompatActivity activity) {
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         Objects.requireNonNull(activity.getSupportActionBar()).show();
-    }
-
-    public static boolean isFullScreen(AppCompatActivity activity) {
-        int flags = activity.getWindow().getAttributes().flags;
-        return (flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
-    }
-
-    public static boolean isFullScreen(FragmentActivity activity) {
-        int flags = activity.getWindow().getAttributes().flags;
-        return (flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
+        isFullScreen = false;
     }
 
     public static TextWatcher validateRegex(AppCompatActivity activity, TextInputEditText editText) {
@@ -313,20 +314,12 @@ public class Helper {
         alertBuilder.show();
     }
 
-    public static void splitScreen_2(AppCompatActivity activity) {
-        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(activity);
-        alertBuilder.setTitle(activity.getString(R.string.splitScreen));
-        final View searchDialog_View = activity.getLayoutInflater().inflate(R.layout.splitscreeen_dialog, null);
-        alertBuilder.setView(searchDialog_View);
-        alertBuilder.setCancelable(false);
-        alertBuilder.setPositiveButton(activity.getString(R.string.ok), (dialog, which) -> {
-        });
-        alertBuilder.create();
-        alertBuilder.show();
-    }
-
     public static boolean isPrivacyPolicyAccepted() {
-        return Objects.equals(Helper.settingsMap.get("privacyPolicy"), "agree");
+        try {
+            return Objects.equals(Helper.settingsMap.get("privacyPolicy"), "agree");
+        } catch (NullPointerException e) {
+            return false;
+        }
     }
 
     //TODO : Generate PDF
