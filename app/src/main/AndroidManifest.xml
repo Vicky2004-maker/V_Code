@@ -18,10 +18,19 @@
         <activity
             android:name=".CodeViewActivity"
             android:configChanges="orientation|screenSize"
-            android:exported="false"
-            android:label="@string/codeView">
+            android:exported="true"
+            android:label="@string/codeView"
+            android:hardwareAccelerated="true">
 
             <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+                <data android:scheme="content"/>
+                <data android:scheme="file"/>
+            </intent-filter>
+
+            <intent-filter >
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />
