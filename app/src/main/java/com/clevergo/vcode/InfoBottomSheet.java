@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
@@ -15,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.android.material.textfield.TextInputLayout;
 
 public class InfoBottomSheet extends BottomSheetDialogFragment {
 
@@ -39,15 +39,17 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
 
         ImageView fullScreen_imageView = v.findViewById(R.id.fullScreen_imageView);
         AutoCompleteTextView activeCodeView_Selector = v.findViewById(R.id.activeCodeView_Selector);
-        activeCodeView_Selector.setVisibility(View.GONE);
+        TextInputLayout activeFile_TextInputLayout = v.findViewById(R.id.activeFile_TextInputLayout);
+        activeFile_TextInputLayout.setVisibility(View.GONE);
 
-        if (CodeViewActivity.selectedFileNames[0] != null) {
+        if (CodeViewActivity.selectedFileNames[0] != null && CodeViewActivity.isScreenSplit) {
             ArrayAdapter<String> myAdapter = new ArrayAdapter<>(getActivity(),
                     androidx.appcompat.R.layout.support_simple_spinner_dropdown_item,
                     CodeViewActivity.selectedFileNames);
 
             activeCodeView_Selector.setAdapter(myAdapter);
-            activeCodeView_Selector.setVisibility(View.VISIBLE);
+            activeFile_TextInputLayout.setVisibility(View.VISIBLE);
+            //activeCodeView_Selector.setText(myAdapter.getItem(CodeViewActivity.activeFilePosition));
             activeCodeView_Selector.setOnItemClickListener((parent, view, position, id) -> {
                 CodeViewActivity.activeFilePosition = position;
                 inputListener.sendInput(BottomSheetCode.SetActiveCodeViewFile);
@@ -83,9 +85,16 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
             dismiss();
         });
 
-        v.findViewById(R.id.splitScreen_imageView).setOnClickListener(a -> {
+        ImageView splitScreen_imageView = v.findViewById(R.id.splitScreen_imageView);
+        splitScreen_imageView.setOnClickListener(a -> {
             inputListener.sendInput(BottomSheetCode.SplitScreen);
             dismiss();
+        });
+
+        splitScreen_imageView.setOnLongClickListener(a -> {
+            inputListener.sendInput(BottomSheetCode.RemoveSplitScreen);
+            dismiss();
+            return false;
         });
 
         return v;

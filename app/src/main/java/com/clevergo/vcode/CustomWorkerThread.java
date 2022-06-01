@@ -47,4 +47,8 @@ public class CustomWorkerThread {
     void addWork(Runnable runnable) {
         queue.add(runnable);
     }
+
+    public Thread getThread() {
+        return workerThread;
+    }
 }

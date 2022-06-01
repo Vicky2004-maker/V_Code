@@ -6,6 +6,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -34,8 +35,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -51,13 +54,25 @@ public class Helper {
     public static final String[] PERMISSIONS =
             {"android.permission.READ_EXTERNAL_STORAGE",
                     "android.permission.WRITE_EXTERNAL_STORAGE"};
+    public static final Handler uiHandler = new Handler(Looper.getMainLooper());
     private static final String SETTING_DELIMITER = "-";
-    private static final Handler uiHandler = new Handler(Looper.getMainLooper());
     public static boolean isFullScreen = false;
     public static boolean thisIsMobile = true;
     public static HashMap<String, String> settingsMap;
     private static File settingsFile;
     private static BufferedWriter bufferedWriter;
+
+    public static int findIndexFromListOfCodeView(List<CodeViewFile> codeViewFiles, String fileName) {
+        int toReturn = -1;
+        for (CodeViewFile codeFile : codeViewFiles) {
+            toReturn++;
+
+            if (codeFile.getName().equals(fileName)) {
+                return toReturn;
+            }
+        }
+        return toReturn;
+    }
 
     public static void setThisIsMobile(Context context) {
         float yInches = getScreenWidth_DP(context);
@@ -157,6 +172,25 @@ public class Helper {
 
     public static void launchUrlInBrowser(final Uri URL, final AppCompatActivity activity) {
         activity.startActivity(new Intent(Intent.ACTION_VIEW, URL));
+    }
+
+    public static String readFile(Context context, URL url) {
+        StringBuilder sb = new StringBuilder();
+
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+            String receiveString;
+
+            while ((receiveString = br.readLine()) != null) {
+                sb.append(receiveString).append("\n");
+            }
+
+            br.close();
+        } catch (IOException e) {
+            Toast.makeText(context, context.getString(R.string.fileReadingFailed), Toast.LENGTH_SHORT).show();
+        }
+
+        return sb.toString();
     }
 
     public static String readFile(Context context, Uri uri) {
@@ -305,6 +339,10 @@ public class Helper {
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         Objects.requireNonNull(activity.getSupportActionBar()).show();
         isFullScreen = false;
+    }
+
+    public static boolean isScreenLandscape(Context context) {
+        return context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
     }
 
     public static TextWatcher validateRegex(AppCompatActivity activity, TextInputEditText editText) {

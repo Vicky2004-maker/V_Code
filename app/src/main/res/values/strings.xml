@@ -47,4 +47,8 @@
     <string name="split">Split</string>
     <string name="selectActiveFile">Select active file</string>
     <string name="codeView">Code View</string>
+    <!--to toggle the open close button
+        of the navigation drawer-->
+    <string name="nav_open">Open</string>
+    <string name="nav_close">Close</string>
 </resources>

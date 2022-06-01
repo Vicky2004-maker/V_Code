@@ -6,6 +6,7 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -19,18 +20,19 @@
             android:name=".CodeViewActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:label="@string/codeView"
-            android:hardwareAccelerated="true">
+            android:hardwareAccelerated="true"
+            android:label="@string/codeView">
 
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
+                <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="*/*" />
-                <data android:scheme="content"/>
-                <data android:scheme="file"/>
+                <data android:scheme="content" />
+                <data android:scheme="file" />
             </intent-filter>
 
-            <intent-filter >
+            <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />

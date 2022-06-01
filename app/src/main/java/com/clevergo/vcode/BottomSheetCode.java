@@ -9,5 +9,6 @@ public enum BottomSheetCode {
     SplitScreen,
     AddFile,
     DeleteFile,
-    SetActiveCodeViewFile
+    SetActiveCodeViewFile,
+    RemoveSplitScreen
 }
