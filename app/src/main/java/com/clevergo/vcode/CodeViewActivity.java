@@ -14,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -41,6 +42,7 @@ import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -52,7 +54,7 @@ public class CodeViewActivity extends AppCompatActivity
         View.OnClickListener,
         InfoBottomSheet.OnInputListener {
 
-    public static int activeFilePosition = 0;
+    public static int activeFilePosition = 0, currentActiveID = -1;
 
     public static String[] selectedFileNames = new String[2];
     public static boolean isScreenSplit = false;
@@ -70,7 +72,7 @@ public class CodeViewActivity extends AppCompatActivity
     HashMap<String, List<String>> expandableListDetail = new HashMap<>();
     private NavigationView navView;
     private ConstraintLayout searchResult_Layout;
-    private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout, codeView_Container;
+    private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout, codeView_Container, allFileSwitcherParent;
     private TextView pickFile_TextView, lineInfo_TextView, fileSize_TextView, searchWord_TextView, findResultNum_TextView;
     private CodeView codeView_Main, codeview_SplitScreen1;
     private boolean loadIntoRAM = true, searchResult = false, configFullScreen = true;
@@ -79,6 +81,7 @@ public class CodeViewActivity extends AppCompatActivity
     //TODO : Thread Started, Change some workflow to async
     private CustomWorkerThread customWorkerThread;
     private List<String> fileNames = new ArrayList<>();
+    private HashSet<String> activeFileNames = new HashSet<>();
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -128,7 +131,9 @@ public class CodeViewActivity extends AppCompatActivity
         drawerLayout = findViewById(R.id.drawer_layout);
         navView = findViewById(R.id.navView);
         expandableListView = findViewById(R.id.fileSelector_ExpandableList);
+        allFileSwitcherParent = findViewById(R.id.allFileSwitcherParent);
 
+        expandableListTitle.add("Active Files");
         expandableListTitle.add("Opened Files");
         expandableListTitle.add("Settings");
 
@@ -137,7 +142,7 @@ public class CodeViewActivity extends AppCompatActivity
                 expandableListDetail);
         expandableListView.setAdapter(expandableListAdapter);
         expandableListView.setOnChildClickListener((parent, v, groupPosition, childPosition, id) -> {
-            if (groupPosition == 0) {
+            if (groupPosition == 1) {
                 updateInfo(childPosition);
                 setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(childPosition).getUri())));
             }
@@ -147,17 +152,6 @@ public class CodeViewActivity extends AppCompatActivity
         actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.nav_open, R.string.nav_close);
         drawerLayout.addDrawerListener(actionBarDrawerToggle);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(false);
-
-        /*
-        navView.setNavigationItemSelectedListener(item -> {
-
-            setCodeView(codeViewList.get(activeFilePosition),
-                    Helper.readFile(CodeViewActivity.this,
-                            Uri.parse(fileList.get(Helper.findIndexFromListOfCodeView(fileList, item.getTitle().toString())).getUri())));
-            return false;
-        });
-
-         */
 
         codeViewList.add(codeView_Main);
         codeViewList.add(codeview_SplitScreen1);
@@ -211,6 +205,7 @@ public class CodeViewActivity extends AppCompatActivity
                     } else {
                         addUI_File(data);
                         addNavMenu(Helper.getFileName(CodeViewActivity.this, data));
+                        allFileSwitcherParent.setVisibility(View.VISIBLE);
                     }
                 } else {
                     if (uri_List.contains(data.getData())) {
@@ -218,11 +213,12 @@ public class CodeViewActivity extends AppCompatActivity
                     } else {
                         addUI_File(data);
                         addNavMenu(Helper.getFileName(CodeViewActivity.this, data));
+                        allFileSwitcherParent.setVisibility(View.VISIBLE);
                     }
                 }
             }
 
-            if (filesOpened >= 1)
+            if (filesOpened == 2)
                 Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         }
     }
@@ -232,6 +228,7 @@ public class CodeViewActivity extends AppCompatActivity
             pickFile_TextView.setVisibility(View.GONE);
             codeView_Main.setVisibility(View.VISIBLE);
             info_LinearLayout.setVisibility(View.VISIBLE);
+            allFileSwitcherParent.setVisibility(View.VISIBLE);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 for (int i = 0; i < data.getClipData().getItemCount(); i++) {
@@ -304,6 +301,7 @@ public class CodeViewActivity extends AppCompatActivity
         }
 
         fileList.add(createACodeViewFile(uri));
+        currentActiveID++;
 
         if (loadIntoRAM) {
             codeList.add(Helper.readFile(CodeViewActivity.this, uri));
@@ -313,8 +311,8 @@ public class CodeViewActivity extends AppCompatActivity
             setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, uri));
         }
 
-        if (isScreenSplit && isLastFile)
-            selectedFileNames[activeFilePosition] = Helper.getFileName(CodeViewActivity.this, uri);
+        String fileNameTemp = Helper.getFileName(CodeViewActivity.this, uri);
+        if (isScreenSplit && isLastFile) selectedFileNames[activeFilePosition] = fileNameTemp;
 
         MaterialButton materialButton = new MaterialButton(CodeViewActivity.this);
         materialButton.setText(fileList.get(filesOpened).getName());
@@ -346,6 +344,7 @@ public class CodeViewActivity extends AppCompatActivity
         }
 
         fileList.add(createACodeViewFile(data));
+        currentActiveID++;
 
         if (loadIntoRAM) {
             codeList.add(Helper.readFile(CodeViewActivity.this, data.getData()));
@@ -358,8 +357,8 @@ public class CodeViewActivity extends AppCompatActivity
             selectedFileNames[activeFilePosition] = Helper.getFileName(CodeViewActivity.this, data);
 
         MaterialButton materialButton = new MaterialButton(CodeViewActivity.this);
-        materialButton.setText(fileList.get(filesOpened).getName());
-        materialButton.setId(filesOpened);
+        materialButton.setText(fileList.get(fileList.size() - 1).getName());
+        materialButton.setId(currentActiveID);
         materialButton.setOnClickListener(CodeViewActivity.this);
         materialButton.setAllCaps(false);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
@@ -367,7 +366,7 @@ public class CodeViewActivity extends AppCompatActivity
 
         layoutParams.setMargins(5, 0, 5, 0);
 
-        allFileSwitcher_LinearLayout.addView(materialButton, filesOpened, layoutParams);
+        allFileSwitcher_LinearLayout.addView(materialButton, fileList.size() - 1, layoutParams);
 
         updateInfo(data);
         filesOpened++;
@@ -377,9 +376,15 @@ public class CodeViewActivity extends AppCompatActivity
     private void updateInfo(Uri uri) {
         customWorkerThread.addWork(() -> {
             String actionBarSubtitle = Helper.getFileName(CodeViewActivity.this, uri);
-            String fileSize_Text = Helper.getFileName(CodeViewActivity.this, uri)
+            String fileSize_Text = actionBarSubtitle
                     + " - "
                     + Helper.getFileSize(CodeViewActivity.this, uri) + " KB";
+
+            activeFileNames.clear();
+            activeFileNames.add(actionBarSubtitle);
+            expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            navView.postInvalidate();
+
             Helper.uiHandler.post(() -> {
                 Objects.requireNonNull(getSupportActionBar()).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
@@ -391,7 +396,13 @@ public class CodeViewActivity extends AppCompatActivity
     private void updateInfo(int currID) {
         customWorkerThread.addWork(() -> {
             String actionBarSubtitle = fileList.get(currID).getName();
-            String fileSize_Text = fileList.get(currID).getName() + " - " + fileList.get(currID).getFile_Size() + "KB";
+            String fileSize_Text = actionBarSubtitle + " - " + fileList.get(currID).getFile_Size() + "KB";
+
+            activeFileNames.clear();
+            activeFileNames.add(actionBarSubtitle);
+            expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            navView.postInvalidate();
+
             Helper.uiHandler.post(() -> {
                 Objects.requireNonNull(getSupportActionBar()).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
@@ -403,9 +414,15 @@ public class CodeViewActivity extends AppCompatActivity
     private void updateInfo(Intent data) {
         customWorkerThread.addWork(() -> {
             String actionBarSubtitle = Helper.getFileName(CodeViewActivity.this, data);
-            String fileSize_Text = Helper.getFileName(CodeViewActivity.this, data)
+            String fileSize_Text = actionBarSubtitle
                     + " - "
                     + Helper.getFileSize(CodeViewActivity.this, data) + " KB";
+
+            activeFileNames.clear();
+            activeFileNames.add(actionBarSubtitle);
+            expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            navView.postInvalidate();
+
             Helper.uiHandler.post(() -> {
                 Objects.requireNonNull(getSupportActionBar()).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
@@ -532,6 +549,11 @@ public class CodeViewActivity extends AppCompatActivity
                 }
             }
 
+            activeFileNames.clear();
+            activeFileNames.add(fileNameArray[file1[0]]);
+            activeFileNames.add(fileNameArray[file2[0]]);
+            expandableListDetail.put("Active Files", List.of(fileNameArray[file1[0]], fileNameArray[file2[0]]));
+
             setCodeViewSplitScreen(codeViews, codes);
             codes = null;
         });
@@ -542,6 +564,8 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void removeSplitScreen_2() {
+        if (!isScreenSplit) return;
+
         CodeView activeCodeView = codeViewList.get(activeFilePosition);
 
         LinearLayout.LayoutParams params = null;
@@ -564,10 +588,51 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void addNavMenu(final String fileName) {
-        fileNames.add(fileName);
-        expandableListDetail.put("Opened Files", fileNames);
+        customWorkerThread.addWork(() -> {
+            fileNames.add(fileName);
+            expandableListDetail.put("Opened Files", fileNames);
+        });
     }
 
+    private void deleteCodeViewFile() {
+        //TODO : Delete File Method Implementation when in Split Screen
+        if (filesOpened <= 1) {
+            Toast.makeText(CodeViewActivity.this, getString(R.string.cantDelOnlyFile), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (isScreenSplit) {
+
+        } else {
+            //TODO : Ask permission to delete file using alert dialog
+            ((ViewGroup) allFileSwitcher_LinearLayout.getChildAt(currentActiveID).getParent()).removeViewAt(currentActiveID);
+            expandableListDetail.remove("Opened Files");
+            fileNames.remove(currentActiveID);
+            expandableListDetail.put("Opened Files", fileNames);
+            fileList.remove(currentActiveID);
+
+            if (currentActiveID < fileList.size()) {
+                for (int i = 0; i < allFileSwitcher_LinearLayout.getChildCount(); i++) {
+                    allFileSwitcher_LinearLayout.getChildAt(i).setId(i);
+                }
+            }
+
+            if (loadIntoRAM) codeList.remove(currentActiveID);
+
+            filesOpened--;
+            currentActiveID = fileList.size() - 1;
+
+            setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(fileList.size() - 1).getUri())));
+
+        }
+    }
+
+    private void updateInfo_SplitScreen(int clicked_id) {
+        customWorkerThread.addWork(() -> {
+            //TODO : Update Info Split Screen
+            //String actionBarSubtitle = fileList.get(clicked_id).getName()
+        });
+    }
     //endregion
 
     //region Menu
@@ -588,6 +653,7 @@ public class CodeViewActivity extends AppCompatActivity
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.addFile_menu:
+                if (drawerLayout.isOpen()) drawerLayout.close();
                 Helper.pickFile(CodeViewActivity.this);
                 break;
             case R.id.settings_Menu:
@@ -676,7 +742,6 @@ public class CodeViewActivity extends AppCompatActivity
     @SuppressLint("SetTextI18n")
     @Override
     public void onLineClicked(int lineNumber, String content) {
-
         customWorkerThread.addWork(() -> {
             String lineInfo = codeViewList.get(activeFilePosition).getLineCount()
                     + ":"
@@ -703,6 +768,8 @@ public class CodeViewActivity extends AppCompatActivity
     @Override
     public void onClick(View view) {
         int clicked_ID = view.getId();
+        if (fileList.get(clicked_ID).getName() == getSupportActionBar().getSubtitle().toString())
+            return;
 
         if (loadIntoRAM) {
             setCodeView(codeViewList.get(activeFilePosition), codeList.get(clicked_ID));
@@ -712,7 +779,9 @@ public class CodeViewActivity extends AppCompatActivity
             setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(clicked_ID).getUri())));
         }
 
+        currentActiveID = clicked_ID;
         updateInfo(clicked_ID);
+        //isScreenSplit == true ? updateInfo_SplitScreen(clicked_ID) : updateInfo(clicked_ID);
     }
 
     // Get Data from InfoBottomSheet
@@ -751,9 +820,10 @@ public class CodeViewActivity extends AppCompatActivity
                 }
                 break;
             case AddFile:
+                if (drawerLayout.isOpen()) drawerLayout.close();
                 Helper.pickFile(CodeViewActivity.this);
 
-                //TODO : Implement file reading from URL
+                //FIXME : Implement file reading from URL
 
                 /*
                 String[] codeURL = new String[1];
@@ -768,16 +838,15 @@ public class CodeViewActivity extends AppCompatActivity
                  */
                 break;
             case DeleteFile:
-                //TODO : DeleteFile Case
+                deleteCodeViewFile();
                 break;
             case SetActiveCodeViewFile:
                 break;
             case RemoveSplitScreen:
-                if (isScreenSplit) removeSplitScreen_2();
+                removeSplitScreen_2();
                 break;
         }
     }
-
 
     //endregion
 }

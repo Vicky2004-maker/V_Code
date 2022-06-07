@@ -85,6 +85,11 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
             dismiss();
         });
 
+        v.findViewById(R.id.deleteFile_imageView).setOnClickListener(a -> {
+            inputListener.sendInput(BottomSheetCode.DeleteFile);
+            dismiss();
+        });
+
         ImageView splitScreen_imageView = v.findViewById(R.id.splitScreen_imageView);
         splitScreen_imageView.setOnClickListener(a -> {
             inputListener.sendInput(BottomSheetCode.SplitScreen);

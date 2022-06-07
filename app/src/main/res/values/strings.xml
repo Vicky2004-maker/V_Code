@@ -51,4 +51,5 @@
         of the navigation drawer-->
     <string name="nav_open">Open</string>
     <string name="nav_close">Close</string>
+    <string name="cantDelOnlyFile">Can\'t delete the only file</string>
 </resources>
