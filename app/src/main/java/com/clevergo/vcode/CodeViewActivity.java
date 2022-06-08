@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
@@ -54,15 +55,19 @@ public class CodeViewActivity extends AppCompatActivity
         View.OnClickListener,
         InfoBottomSheet.OnInputListener {
 
+    private static final List<CodeViewFile> fileList = new ArrayList<>();
+    private static final List<String> codeList = new ArrayList<>();
     public static int activeFilePosition = 0, currentActiveID = -1;
-
     public static String[] selectedFileNames = new String[2];
     public static boolean isScreenSplit = false;
+    public static String activeSplitScreenFileName;
     private static ProgressDialog progressDialog;
-    private static List<CodeViewFile> fileList = new ArrayList<>();
     private static List<Uri> uri_List;
-    private static List<String> codeList = new ArrayList<>();
     private static int filesOpened = 0;
+    private final boolean loadIntoRAM = true;
+    private final List<CodeView> codeViewList = new ArrayList<>();
+    private final List<String> fileNames = new ArrayList<>();
+    private final HashSet<String> activeFileNames = new HashSet<>();
     public DrawerLayout drawerLayout;
     public ActionBarDrawerToggle actionBarDrawerToggle;
     //Expandable ListView
@@ -75,13 +80,12 @@ public class CodeViewActivity extends AppCompatActivity
     private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout, codeView_Container, allFileSwitcherParent;
     private TextView pickFile_TextView, lineInfo_TextView, fileSize_TextView, searchWord_TextView, findResultNum_TextView;
     private CodeView codeView_Main, codeview_SplitScreen1;
-    private boolean loadIntoRAM = true, searchResult = false, configFullScreen = true;
+    private boolean searchResult = false;
+    private boolean configFullScreen = true;
     private String searchWord = "";
-    private List<CodeView> codeViewList = new ArrayList<>();
     //TODO : Thread Started, Change some workflow to async
     private CustomWorkerThread customWorkerThread;
-    private List<String> fileNames = new ArrayList<>();
-    private HashSet<String> activeFileNames = new HashSet<>();
+    private ActionBar actionBar;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -132,6 +136,7 @@ public class CodeViewActivity extends AppCompatActivity
         navView = findViewById(R.id.navView);
         expandableListView = findViewById(R.id.fileSelector_ExpandableList);
         allFileSwitcherParent = findViewById(R.id.allFileSwitcherParent);
+        actionBar = getSupportActionBar();
 
         expandableListTitle.add("Active Files");
         expandableListTitle.add("Opened Files");
@@ -151,7 +156,7 @@ public class CodeViewActivity extends AppCompatActivity
 
         actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.nav_open, R.string.nav_close);
         drawerLayout.addDrawerListener(actionBarDrawerToggle);
-        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(false);
+        Objects.requireNonNull(actionBar).setDisplayHomeAsUpEnabled(false);
 
         codeViewList.add(codeView_Main);
         codeViewList.add(codeview_SplitScreen1);
@@ -177,11 +182,12 @@ public class CodeViewActivity extends AppCompatActivity
             infoBottomSheet.show(getSupportFragmentManager(), "ModalBottomSheet");
         });
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+        if (Helper.isLowerSDK()) {
             uri_List = new ArrayList<>();
         }
 
-        if ((Intent.ACTION_SEND.equals(getIntent().getAction()) || Intent.ACTION_VIEW.equals(getIntent().getAction())) && getIntent().getType() != null) {
+        if ((Intent.ACTION_SEND.equals(getIntent().getAction()) || Intent.ACTION_VIEW.equals(getIntent().getAction()))
+                && getIntent().getType() != null) {
             manageSingleFileIntent(getIntent());
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(getIntent().getAction()) && getIntent().getType() != null) {
             manageMultipleFileIntent(getIntent());
@@ -219,7 +225,7 @@ public class CodeViewActivity extends AppCompatActivity
             }
 
             if (filesOpened == 2)
-                Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+                Objects.requireNonNull(actionBar).setDisplayHomeAsUpEnabled(true);
         }
     }
 
@@ -252,7 +258,7 @@ public class CodeViewActivity extends AppCompatActivity
                 }
             }
             if (filesOpened >= 1)
-                Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+                Objects.requireNonNull(actionBar).setDisplayHomeAsUpEnabled(true);
         }
     }
 
@@ -296,7 +302,7 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void addUI_FileURI(final Uri uri, final boolean isLastFile) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+        if (Helper.isLowerSDK()) {
             uri_List.add(uri);
         }
 
@@ -339,7 +345,7 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void addUI_File(Intent data) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+        if (Helper.isLowerSDK()) {
             uri_List.add(data.getData());
         }
 
@@ -386,7 +392,7 @@ public class CodeViewActivity extends AppCompatActivity
             navView.postInvalidate();
 
             Helper.uiHandler.post(() -> {
-                Objects.requireNonNull(getSupportActionBar()).setSubtitle(actionBarSubtitle);
+                Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
             });
         });
@@ -404,7 +410,7 @@ public class CodeViewActivity extends AppCompatActivity
             navView.postInvalidate();
 
             Helper.uiHandler.post(() -> {
-                Objects.requireNonNull(getSupportActionBar()).setSubtitle(actionBarSubtitle);
+                Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
             });
         });
@@ -424,7 +430,7 @@ public class CodeViewActivity extends AppCompatActivity
             navView.postInvalidate();
 
             Helper.uiHandler.post(() -> {
-                Objects.requireNonNull(getSupportActionBar()).setSubtitle(actionBarSubtitle);
+                Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
             });
         });
@@ -495,72 +501,91 @@ public class CodeViewActivity extends AppCompatActivity
         searchDialog.show();
     }
 
+    private void splitScreenPositiveButton_2(final String[] fileNameArray, int[] file1, int[] file2, @NonNull final CodeView[] codeViews) {
+        isScreenSplit = true;
+        LinearLayout.LayoutParams params = ((LinearLayout.LayoutParams) codeView_Main.getLayoutParams());
+        params.setMargins(0, 0, 0, 5);
+        params.weight = 1;
+        codeView_Main.setLayoutParams(params);
+
+        params = ((LinearLayout.LayoutParams) codeview_SplitScreen1.getLayoutParams());
+        params.weight = 1;
+        params.setMargins(0, 5, 0, 0);
+        codeview_SplitScreen1.setLayoutParams(params);
+        codeview_SplitScreen1.setVisibility(View.VISIBLE);
+
+        params = null;
+
+        String[] codes = new String[2];
+        selectedFileNames[0] = fileNameArray[file1[0]];
+        selectedFileNames[1] = fileNameArray[file2[0]];
+
+        for (int i = 0; i < fileList.size(); i++) {
+            String fileName = fileList.get(i).getName();
+
+            if (Objects.equals(fileNameArray[file1[0]], fileName)) {
+                codes[0] = Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(i).getUri()));
+            }
+            if (Objects.equals(fileNameArray[file2[0]], fileName)) {
+                codes[1] = Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(i).getUri()));
+            }
+        }
+
+        activeFileNames.clear();
+        activeFileNames.add(fileNameArray[file1[0]]);
+        activeFileNames.add(fileNameArray[file2[0]]);
+        expandableListDetail.put("Active Files", List.of(fileNameArray[file1[0]], fileNameArray[file2[0]]));
+
+        setCodeViewSplitScreen(codeViews, codes);
+        codes = null;
+    }
+
 
     private void splitScreen_2(@NonNull final CodeView[] codeViews) {
-        androidx.appcompat.app.AlertDialog.Builder alertBuilder = new androidx.appcompat.app.AlertDialog.Builder(CodeViewActivity.this);
-        alertBuilder.setTitle(getString(R.string.splitScreen));
-        final View searchDialog_View = getLayoutInflater().inflate(R.layout.splitscreeen_dialog, null);
-        final AutoCompleteTextView fileSelector_1 = searchDialog_View.findViewById(R.id.fileSelector_1);
-        final AutoCompleteTextView fileSelector_2 = searchDialog_View.findViewById(R.id.fileSelector_2);
-        String[] fileNameArray = new String[fileList.size()];
-        for (int i = 0; i < fileList.size(); i++) {
-            fileNameArray[i] = fileList.get(i).getName();
-        }
-        ArrayAdapter<String> fileNameAdapter = new ArrayAdapter<>(CodeViewActivity.this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, fileNameArray);
-        fileSelector_1.setAdapter(fileNameAdapter);
-        fileSelector_2.setAdapter(fileNameAdapter);
+        if (fileList.size() == 1) {
+            splitScreenPositiveButton_2(new String[]{
+                    fileList.get(0).getName(),
+                    fileList.get(0).getName()
+            }, new int[]{0}, new int[]{0}, codeViews);
 
-        int[] file1 = new int[1];
-        int[] file2 = new int[1];
-        fileSelector_1.setOnItemClickListener((parent, view, position, id) -> {
-            file1[0] = position;
-        });
-
-        fileSelector_2.setOnItemClickListener((parent, view, position, id) -> {
-            file2[0] = position;
-        });
-        alertBuilder.setView(searchDialog_View);
-        alertBuilder.setCancelable(true);
-        alertBuilder.setPositiveButton(getString(R.string.split), (dialog, which) -> {
-            isScreenSplit = true;
-            LinearLayout.LayoutParams params = ((LinearLayout.LayoutParams) codeView_Main.getLayoutParams());
-            params.weight = 1;
-            codeView_Main.setLayoutParams(params);
-
-            params = ((LinearLayout.LayoutParams) codeview_SplitScreen1.getLayoutParams());
-            params.weight = 1;
-            codeview_SplitScreen1.setLayoutParams(params);
-            codeview_SplitScreen1.setVisibility(View.VISIBLE);
-
-            params = null;
-
-            String[] codes = new String[2];
-            selectedFileNames[0] = fileNameArray[file1[0]];
-            selectedFileNames[1] = fileNameArray[file2[0]];
-
+        } else if (fileList.size() == 2) {
+            splitScreenPositiveButton_2(new String[]{
+                    fileList.get(0).getName(),
+                    fileList.get(1).getName()
+            }, new int[]{0}, new int[]{1}, codeViews);
+        } else {
+            androidx.appcompat.app.AlertDialog.Builder alertBuilder = new androidx.appcompat.app.AlertDialog.Builder(CodeViewActivity.this);
+            alertBuilder.setTitle(getString(R.string.splitScreen));
+            final View searchDialog_View = getLayoutInflater().inflate(R.layout.splitscreeen_dialog, null);
+            final AutoCompleteTextView fileSelector_1 = searchDialog_View.findViewById(R.id.fileSelector_1);
+            final AutoCompleteTextView fileSelector_2 = searchDialog_View.findViewById(R.id.fileSelector_2);
+            String[] fileNameArray = new String[fileList.size()];
             for (int i = 0; i < fileList.size(); i++) {
-                String fileName = fileList.get(i).getName();
-
-                if (Objects.equals(fileNameArray[file1[0]], fileName)) {
-                    codes[0] = Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(i).getUri()));
-                }
-                if (Objects.equals(fileNameArray[file2[0]], fileName)) {
-                    codes[1] = Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(i).getUri()));
-                }
+                fileNameArray[i] = fileList.get(i).getName();
             }
+            ArrayAdapter<String> fileNameAdapter = new ArrayAdapter<>(CodeViewActivity.this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, fileNameArray);
+            fileSelector_1.setAdapter(fileNameAdapter);
+            fileSelector_2.setAdapter(fileNameAdapter);
 
-            activeFileNames.clear();
-            activeFileNames.add(fileNameArray[file1[0]]);
-            activeFileNames.add(fileNameArray[file2[0]]);
-            expandableListDetail.put("Active Files", List.of(fileNameArray[file1[0]], fileNameArray[file2[0]]));
+            int[] file1 = new int[1];
+            int[] file2 = new int[1];
+            fileSelector_1.setOnItemClickListener((parent, view, position, id) -> {
+                file1[0] = position;
+            });
 
-            setCodeViewSplitScreen(codeViews, codes);
-            codes = null;
-        });
-        alertBuilder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
-        });
-        alertBuilder.create();
-        alertBuilder.show();
+            fileSelector_2.setOnItemClickListener((parent, view, position, id) -> {
+                file2[0] = position;
+            });
+            alertBuilder.setView(searchDialog_View);
+            alertBuilder.setCancelable(true);
+            alertBuilder.setPositiveButton(getString(R.string.split), (dialog, which) -> {
+                splitScreenPositiveButton_2(fileNameArray, file1, file2, codeViews);
+            });
+            alertBuilder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
+            });
+            alertBuilder.create();
+            alertBuilder.show();
+        }
     }
 
     private void removeSplitScreen_2() {
@@ -584,6 +609,7 @@ public class CodeViewActivity extends AppCompatActivity
             }
         }
 
+
         isScreenSplit = false;
     }
 
@@ -595,36 +621,39 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void deleteCodeViewFile() {
-        //TODO : Delete File Method Implementation when in Split Screen
         if (filesOpened <= 1) {
             Toast.makeText(CodeViewActivity.this, getString(R.string.cantDelOnlyFile), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (isScreenSplit) {
-
-        } else {
-            //TODO : Ask permission to delete file using alert dialog
-            ((ViewGroup) allFileSwitcher_LinearLayout.getChildAt(currentActiveID).getParent()).removeViewAt(currentActiveID);
-            expandableListDetail.remove("Opened Files");
-            fileNames.remove(currentActiveID);
-            expandableListDetail.put("Opened Files", fileNames);
-            fileList.remove(currentActiveID);
-
-            if (currentActiveID < fileList.size()) {
-                for (int i = 0; i < allFileSwitcher_LinearLayout.getChildCount(); i++) {
-                    allFileSwitcher_LinearLayout.getChildAt(i).setId(i);
-                }
+            for (int i = 0; i < fileList.size(); i++) {
+                if (fileList.get(i).getName().equals(String.valueOf(selectedFileNames[activeFilePosition])))
+                    currentActiveID = i;
             }
-
-            if (loadIntoRAM) codeList.remove(currentActiveID);
-
-            filesOpened--;
-            currentActiveID = fileList.size() - 1;
-
-            setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(fileList.size() - 1).getUri())));
-
         }
+
+        ((ViewGroup) allFileSwitcher_LinearLayout.getChildAt(currentActiveID).getParent()).removeViewAt(currentActiveID);
+        expandableListDetail.remove("Opened Files");
+        fileNames.remove(currentActiveID);
+        expandableListDetail.put("Opened Files", fileNames);
+        fileList.remove(currentActiveID);
+
+        if (currentActiveID < fileList.size()) {
+            for (int i = 0; i < allFileSwitcher_LinearLayout.getChildCount(); i++) {
+                allFileSwitcher_LinearLayout.getChildAt(i).setId(i);
+            }
+        }
+
+        if (loadIntoRAM) codeList.remove(currentActiveID);
+
+        filesOpened--;
+        currentActiveID = fileList.size() - 1;
+
+        setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(fileList.size() - 1).getUri())));
+
+        removeSplitScreen_2();
+        updateInfo(currentActiveID);
     }
 
     private void updateInfo_SplitScreen(int clicked_id) {
@@ -768,8 +797,10 @@ public class CodeViewActivity extends AppCompatActivity
     @Override
     public void onClick(View view) {
         int clicked_ID = view.getId();
-        if (fileList.get(clicked_ID).getName() == getSupportActionBar().getSubtitle().toString())
+        if (currentActiveID == clicked_ID) {
+            Toast.makeText(CodeViewActivity.this, getString(R.string.fileAreadyDisplayed), Toast.LENGTH_SHORT).show();
             return;
+        }
 
         if (loadIntoRAM) {
             setCodeView(codeViewList.get(activeFilePosition), codeList.get(clicked_ID));
@@ -792,10 +823,14 @@ public class CodeViewActivity extends AppCompatActivity
                 //TODO : Compile Case
                 break;
             case Edit:
-                //TODO : Edit Case
+                Intent i = new Intent();
+                i.putExtra("currentFileObject", fileList.get(currentActiveID));
+                i.setAction(Intent.ACTION_VIEW);
+                i.setClass(CodeViewActivity.this, EditorActivity.class);
+                startActivity(i);
                 break;
             case Search:
-                //FIXME : Regex Search
+                //FIXME : Regex Search, Case Sensitive
                 showSearchDialog();
                 break;
             case CopyAll:
@@ -811,7 +846,6 @@ public class CodeViewActivity extends AppCompatActivity
             case SplitScreen:
                 if (!Helper.isScreenLandscape(CodeViewActivity.this))
                     Helper.showAlertDialog(getString(R.string.suggestion), getString(R.string.changeToLandscape), CodeViewActivity.this);
-
                 if (Helper.thisIsMobile) {
                     splitScreen_2(new CodeView[]{codeView_Main, codeview_SplitScreen1});
                 } else {

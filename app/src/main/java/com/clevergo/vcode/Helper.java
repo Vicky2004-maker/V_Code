@@ -10,6 +10,7 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.FileUtils;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
@@ -29,6 +30,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -54,6 +56,8 @@ public class Helper {
     public static final String[] PERMISSIONS =
             {"android.permission.READ_EXTERNAL_STORAGE",
                     "android.permission.WRITE_EXTERNAL_STORAGE"};
+    public static final String[] COMPILER_FILENAMES = {"InputJavaClass.java"};
+
     public static final Handler uiHandler = new Handler(Looper.getMainLooper());
     private static final String SETTING_DELIMITER = "-";
     public static boolean isFullScreen = false;
@@ -159,6 +163,10 @@ public class Helper {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static boolean isLowerSDK() {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.N;
     }
 
     public static void pickFile(AppCompatActivity activity) {

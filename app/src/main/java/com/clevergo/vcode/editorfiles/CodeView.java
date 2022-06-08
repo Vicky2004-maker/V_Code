@@ -1,11 +1,12 @@
 package com.clevergo.vcode.editorfiles;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -18,18 +19,17 @@ import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ReplacementSpan;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.widget.MultiAutoCompleteTextView;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -37,10 +37,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * CodeView is a CustomView to provide a lot of features that you need to highlights
- * and creating an editor for your custom programming language or data format
- */
 public class CodeView extends AppCompatMultiAutoCompleteTextView implements Findable, Replaceable {
 
     private static final Pattern PATTERN_LINE = Pattern.compile("(^.+$)+", Pattern.MULTILINE);
@@ -48,6 +44,7 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
     private final Set<Character> indentationStarts = new HashSet<>();
     private final Set<Character> indentationEnds = new HashSet<>();
     private final List<Token> matchedTokens = new ArrayList<>();
+    private final Map<Character, Character> mPairCompleteMap = new HashMap<>();
     private final Handler mUpdateHandler = new Handler();
     private final SortedMap<Integer, Integer> mErrorHashSet = new TreeMap<>();
     private final Map<Pattern, Integer> mSyntaxPatternMap = new HashMap<>();
@@ -56,12 +53,9 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
     private int tabWidthInCharacters;
     private int mUpdateDelayTime = 500;
     private boolean modified = true;
-    private final Runnable mUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-            Editable source = getText();
-            highlightWithoutChange(source);
-        }
+    private final Runnable mUpdateRunnable = () -> {
+        Editable source = getText();
+        highlightWithoutChange(source);
     };
     private boolean highlightWhileTextChanging = true;
     private boolean hasErrors = false;
@@ -71,7 +65,46 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
     private boolean enableLineNumber = false;
     private int currentIndentation = 0;
     private boolean enableAutoIndentation = false;
+    private final OnKeyListener mOnKeyListener = (v, keyCode, event) -> {
+        if (!enableAutoIndentation) return false;
+        if (event.getAction() != KeyEvent.ACTION_DOWN)
+            return true;
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_SPACE:
+                currentIndentation++;
+                break;
+            case KeyEvent.KEYCODE_DEL:
+                if (currentIndentation > 0)
+                    currentIndentation--;
+                break;
+        }
+        return false;
+    };
+    private final InputFilter mInputFilter = (source, start, end, dest, dStart, dEnd) -> {
+        if (modified && enableAutoIndentation && start < source.length()) {
+            if (source.charAt(start) == '\n') {
+                // Apply the current indentation if it inserted at the end
+                if (dest.length() == dEnd) return applyIndentation(source, currentIndentation);
 
+                // reCalculate the current indentation
+                int indentation = calculateSourceIndentation(dest.subSequence(0, dStart));
+
+                // Decrement the indentation if the next char is on indentationEnds set
+                if (indentationEnds.contains(dest.charAt(dEnd))) indentation -= tabLength;
+
+                // Apply the new indentation to the source code
+                return applyIndentation(source, indentation);
+            }
+        }
+        return source;
+    };
+    private int currentMatchedIndex = -1;
+    private int matchingColor = Color.YELLOW;
+    private CharacterStyle currentMatchedToken;
+    private int maxNumberOfSuggestions = Integer.MAX_VALUE;
+    private int autoCompleteItemHeightInDp = (int) (50 * Resources.getSystem().getDisplayMetrics().density);
+    private boolean enablePairComplete = false;
+    private boolean enablePairCompleteCenterCursor = false;
     private final TextWatcher mEditorTextWatcher = new TextWatcher() {
 
         private int start;
@@ -96,15 +129,35 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
 
             if (mRemoveErrorsWhenTextChanged) removeAllErrorLines();
 
-            if (enableAutoIndentation && count == 1) {
-                if (indentationStarts.contains(charSequence.charAt(start)))
-                    currentIndentation += tabLength;
-                else if (indentationEnds.contains(charSequence.charAt(start)))
-                    currentIndentation -= tabLength;
+            if (count == 1 && (enableAutoIndentation || enablePairComplete)) {
+                char currentChar = charSequence.charAt(start);
+
+                if (enableAutoIndentation) {
+                    if (indentationStarts.contains(currentChar))
+                        currentIndentation += tabLength;
+                    else if (indentationEnds.contains(currentChar))
+                        currentIndentation -= tabLength;
+                }
+
+                if (enablePairComplete) {
+                    Character pairValue = mPairCompleteMap.get(currentChar);
+                    if (pairValue != null) {
+                        modified = false;
+                        int selectionEnd = getSelectionEnd();
+                        getText().insert(selectionEnd, pairValue.toString());
+                        if (enablePairCompleteCenterCursor) setSelection(selectionEnd);
+                        if (enableAutoIndentation) {
+                            if (indentationStarts.contains(pairValue))
+                                currentIndentation += tabLength;
+                            else if (indentationEnds.contains(pairValue))
+                                currentIndentation -= tabLength;
+                        }
+                        modified = true;
+                    }
+                }
             }
         }
 
-        @SuppressLint("SetTextI18n")
         @Override
         public void afterTextChanged(Editable editable) {
             if (!highlightWhileTextChanging) {
@@ -119,21 +172,6 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
             }
         }
     };
-    private final InputFilter mInputFilter = (source, start, end, dest, dStart, dEnd) -> {
-        if (modified && enableAutoIndentation && start < source.length()) {
-            boolean isInsertedAtEnd = dest.length() == dEnd;
-            if (source.charAt(start) == '\n') {
-                int indentation = isInsertedAtEnd
-                        ? currentIndentation
-                        : calculateSourceIndentation(dest.subSequence(0, dStart));
-                return applyIndentation(source, indentation);
-            }
-        }
-        return source;
-    };
-    private int currentMatchedIndex = -1;
-    private int matchingColor = Color.YELLOW;
-    private CharacterStyle currentMatchedToken;
     private MultiAutoCompleteTextView.Tokenizer mAutoCompleteTokenizer;
 
     public CodeView(Context context) {
@@ -159,6 +197,7 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
         setHorizontallyScrolling(true);
         setFilters(new InputFilter[]{mInputFilter});
         addTextChangedListener(mEditorTextWatcher);
+        setOnKeyListener(mOnKeyListener);
 
         lineNumberRect = new Rect();
         lineNumberPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -168,15 +207,17 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
     @Override
     protected void onDraw(Canvas canvas) {
         if (enableLineNumber) {
+            final Editable fullText = getText();
+            final Layout layout = getLayout();
+            final int lineCount = getLineCount();
             int baseline;
-            int lineCount = getLineCount();
-            int lineNumber = 1;
+            int currentLineNumber = 1;
 
             for (int i = 0; i < lineCount; ++i) {
                 baseline = getLineBounds(i, null);
-                if (i == 0 || getText().charAt(getLayout().getLineStart(i) - 1) == '\n') {
-                    canvas.drawText(String.format(Locale.ENGLISH, " %d", lineNumber), lineNumberRect.left, baseline, lineNumberPaint);
-                    ++lineNumber;
+                if (i == 0 || fullText.charAt(layout.getLineStart(i) - 1) == '\n') {
+                    canvas.drawText(" " + currentLineNumber, lineNumberRect.left, baseline, lineNumberPaint);
+                    ++currentLineNumber;
                 }
             }
 
@@ -621,22 +662,128 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
         matchingColor = color;
     }
 
+    /**
+     * Modify the typeface of line number
+     *
+     * @param typeface The typeface to be set
+     * @since 1.3.4
+     */
+    public void setLineNumberTypeface(Typeface typeface) {
+        lineNumberPaint.setTypeface(typeface);
+    }
+
+    /**
+     * Modify the maximum number of suggestions to show, default is Integer.MAX_VALUE
+     *
+     * @param maxSuggestions the maximum number of suggestions
+     * @since 1.3.0
+     */
+    public void setMaxSuggestionsSize(int maxSuggestions) {
+        maxNumberOfSuggestions = maxSuggestions;
+    }
+
+    /**
+     * Modify the auto complete item height
+     *
+     * @param height auto complete item height in dp
+     * @since 1.3.0
+     */
+    public void setAutoCompleteItemHeightInDp(int height) {
+        autoCompleteItemHeightInDp = (int) (height * Resources.getSystem().getDisplayMetrics().density);
+    }
+
+    /**
+     * Enable or disable the auto pairs complete feature
+     *
+     * @param enable Flag to enable or disable auto pair complete
+     * @since 1.3.0
+     */
+    public void enablePairComplete(boolean enable) {
+        enablePairComplete = enable;
+    }
+
+    /**
+     * Enable or disable moving the cursor to the center after insert pair complete
+     *
+     * @param enable Flag to enable or disable pair complete center cursor
+     * @since 1.3.4
+     */
+    public void enablePairCompleteCenterCursor(boolean enable) {
+        enablePairCompleteCenterCursor = enable;
+    }
+
+    /**
+     * Set the pairs for auto pairs complete feature
+     *
+     * @param map Map of pairs of characters
+     * @since 1.3.0
+     */
+    public void setPairCompleteMap(Map<Character, Character> map) {
+        mPairCompleteMap.clear();
+        mPairCompleteMap.putAll(map);
+    }
+
+    /**
+     * Add new pair complete item using key and value
+     *
+     * @param key   the pair complete item key
+     * @param value the pair complete item value
+     * @since 1.3.0
+     */
+    public void addPairCompleteItem(char key, char value) {
+        mPairCompleteMap.put(key, value);
+    }
+
+    /**
+     * Remove single pair complete item by key
+     *
+     * @param key the pair complete item key
+     * @since 1.3.0
+     */
+    public void removePairCompleteItem(char key) {
+        mPairCompleteMap.remove(key);
+    }
+
+    /**
+     * Clear all of pairs
+     *
+     * @since 1.3.0
+     */
+    public void clearPairCompleteMap() {
+        mPairCompleteMap.clear();
+    }
+
     @Override
     public void showDropDown() {
-        int[] screenPoint = new int[2];
-        getLocationOnScreen(screenPoint);
+        final Layout layout = getLayout();
+        final int position = getSelectionStart();
+        final int line = layout.getLineForOffset(position);
+        final int lineButton = layout.getLineBottom(line);
+
+        int numberOfMatchedItems = getAdapter().getCount();
+        if (numberOfMatchedItems > maxNumberOfSuggestions) {
+            numberOfMatchedItems = maxNumberOfSuggestions;
+        }
+
+        int dropDownHeight = getDropDownHeight();
+        int modifiedDropDownHeight = numberOfMatchedItems * autoCompleteItemHeightInDp;
+        if (dropDownHeight != modifiedDropDownHeight) {
+            dropDownHeight = modifiedDropDownHeight;
+        }
 
         final Rect displayFrame = new Rect();
-        getWindowVisibleDisplayFrame(displayFrame);
+        getGlobalVisibleRect(displayFrame);
 
-        int position = getSelectionStart();
-        Layout layout = getLayout();
-        int line = layout.getLineForOffset(position);
-        int lineButton = layout.getLineBottom(line);
-        int dropDownVerticalOffset = lineButton + 140;
-        int dropDownHorizontalOffset = (int) layout.getPrimaryHorizontal(position);
-        setDropDownVerticalOffset(dropDownVerticalOffset);
-        setDropDownHorizontalOffset(dropDownHorizontalOffset);
+        int displayFrameHeight = displayFrame.height();
+
+        int verticalOffset = lineButton + dropDownHeight;
+        if (verticalOffset > displayFrameHeight) {
+            verticalOffset = displayFrameHeight - autoCompleteItemHeightInDp;
+        }
+
+        setDropDownHeight(dropDownHeight);
+        setDropDownVerticalOffset(verticalOffset - displayFrameHeight - dropDownHeight);
+        setDropDownHorizontalOffset((int) layout.getPrimaryHorizontal(position));
 
         super.showDropDown();
     }
@@ -678,9 +825,5 @@ public class CodeView extends AppCompatMultiAutoCompleteTextView implements Find
                          int start, int end, float x,
                          int top, int y, int bottom, @NonNull Paint paint) {
         }
-    }
-
-    static {
-        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
 }

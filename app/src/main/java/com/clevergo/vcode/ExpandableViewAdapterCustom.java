@@ -18,7 +18,9 @@ public class ExpandableViewAdapterCustom extends BaseExpandableListAdapter {
     private List<String> expandableListTitle;
     private HashMap<String, List<String>> expandableListDetail;
 
-    public ExpandableViewAdapterCustom(Context context, List<String> expandableListTitle, HashMap<String, List<String>> expandableListDetail) {
+    public ExpandableViewAdapterCustom(Context context,
+                                       List<String> expandableListTitle,
+                                       HashMap<String, List<String>> expandableListDetail) {
         this.context = context;
         this.expandableListTitle = expandableListTitle;
         this.expandableListDetail = expandableListDetail;

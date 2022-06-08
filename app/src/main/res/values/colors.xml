@@ -9,6 +9,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="gold">#e6b121</color>
 
     <!--- Monokai Theme Colors -->
     <color name="monokai_background">#272822</color>
@@ -52,6 +53,16 @@
     <color name="orange_box_grey">#90a9b3</color>
     <color name="orange_box_dark_grey">#414d63</color>
     <color name="orange_box_white">#ffffff</color>
+
+    <!--Monokai Pro Theme Colors-->
+    <color name="monokia_pro_green">#9ccc6b</color>
+    <color name="monokia_pro_black">#2d2a2e</color>
+    <color name="monokia_pro_white">#fcfcfa</color>
+    <color name="monokia_pro_pink">#ff6188</color>
+    <color name="monokia_pro_sky">#78dce8</color>
+    <color name="monokia_pro_orange">#ffd866</color>
+    <color name="monokia_pro_purple">#ab9df2</color>
+    <color name="monokia_pro_grey">#727072</color>
 
     <color name="cyan">#07DAC0</color>
     <color name="gray">#D6DFE0</color>

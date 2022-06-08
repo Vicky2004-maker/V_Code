@@ -50,8 +50,10 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
             activeCodeView_Selector.setAdapter(myAdapter);
             activeFile_TextInputLayout.setVisibility(View.VISIBLE);
             //activeCodeView_Selector.setText(myAdapter.getItem(CodeViewActivity.activeFilePosition));
+            activeCodeView_Selector.setListSelection(CodeViewActivity.activeFilePosition);
             activeCodeView_Selector.setOnItemClickListener((parent, view, position, id) -> {
                 CodeViewActivity.activeFilePosition = position;
+                CodeViewActivity.activeSplitScreenFileName = myAdapter.getItem(position);
                 inputListener.sendInput(BottomSheetCode.SetActiveCodeViewFile);
                 //dismiss();
             });
@@ -87,6 +89,16 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
 
         v.findViewById(R.id.deleteFile_imageView).setOnClickListener(a -> {
             inputListener.sendInput(BottomSheetCode.DeleteFile);
+            dismiss();
+        });
+
+        v.findViewById(R.id.edit_imageView).setOnClickListener(a -> {
+            inputListener.sendInput(BottomSheetCode.Edit);
+            dismiss();
+        });
+
+        v.findViewById(R.id.compile_imageView).setOnClickListener(a -> {
+            inputListener.sendInput(BottomSheetCode.Compile);
             dismiss();
         });
 

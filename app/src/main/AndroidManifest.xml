@@ -17,32 +17,39 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VCode">
         <activity
+            android:name=".EditorActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:hardwareAccelerated="true" />
+        <activity
             android:name=".CodeViewActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:hardwareAccelerated="true"
             android:label="@string/codeView">
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
 
                 <data android:mimeType="*/*" />
                 <data android:scheme="content" />
                 <data android:scheme="file" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="*/*" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="*/*" />
             </intent-filter>
-
         </activity>
         <activity
             android:name=".MainActivity"

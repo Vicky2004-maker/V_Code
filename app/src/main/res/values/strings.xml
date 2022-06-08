@@ -52,4 +52,7 @@
     <string name="nav_open">Open</string>
     <string name="nav_close">Close</string>
     <string name="cantDelOnlyFile">Can\'t delete the only file</string>
+    <string name="fileAreadyDisplayed">File is already being displayed.</string>
+    <string name="editor">Editor</string>
+    <string name="codeType">Code Type</string>
 </resources>

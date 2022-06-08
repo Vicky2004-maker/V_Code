@@ -17,7 +17,7 @@ public class KeywordTokenizer implements MultiAutoCompleteTextView.Tokenizer {
         int bracketIndex = sequenceStr.lastIndexOf("(");
 
         int index = Math.max(0, Math.max(spaceIndex, Math.max(lineIndex, bracketIndex)));
-        if(index == 0) return 0;
+        if (index == 0) return 0;
         return (index + 1 < charSequence.length()) ? index + 1 : index;
     }
 
