@@ -55,7 +55,7 @@ public class CodeViewActivity extends AppCompatActivity
         View.OnClickListener,
         InfoBottomSheet.OnInputListener {
 
-    private static final List<CodeViewFile> fileList = new ArrayList<>();
+    public static final List<CodeViewFile> fileList = new ArrayList<>();
     private static final List<String> codeList = new ArrayList<>();
     public static int activeFilePosition = 0, currentActiveID = -1;
     public static String[] selectedFileNames = new String[2];
@@ -75,6 +75,7 @@ public class CodeViewActivity extends AppCompatActivity
     ExpandableListAdapter expandableListAdapter;
     List<String> expandableListTitle = new ArrayList<>();
     HashMap<String, List<String>> expandableListDetail = new HashMap<>();
+    private HashMap<String, Integer> allMethods = new HashMap<>();
     private NavigationView navView;
     private ConstraintLayout searchResult_Layout;
     private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout, codeView_Container, allFileSwitcherParent;
@@ -94,6 +95,17 @@ public class CodeViewActivity extends AppCompatActivity
         if (requestCode == Helper.PICK_FILE_CODE && data != null && resultCode == Activity.RESULT_OK) {
             manageSingleFileIntent(data);
             manageMultipleFileIntent(data);
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if (EditorActivity.reload) {
+            setCodeView(codeViewList.get(activeFilePosition),
+                    Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(currentActiveID).getUri())));
+            EditorActivity.reload = false;
         }
     }
 
@@ -140,6 +152,7 @@ public class CodeViewActivity extends AppCompatActivity
 
         expandableListTitle.add("Active Files");
         expandableListTitle.add("Opened Files");
+        expandableListTitle.add("All Methods");
         expandableListTitle.add("Settings");
 
         expandableListAdapter = new ExpandableViewAdapterCustom(CodeViewActivity.this,
@@ -150,6 +163,11 @@ public class CodeViewActivity extends AppCompatActivity
             if (groupPosition == 1) {
                 updateInfo(childPosition);
                 setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(childPosition).getUri())));
+            }
+            if (groupPosition == 2) {
+                searchWord = List.copyOf(allMethods.keySet()).get(childPosition);
+                codeViewList.get(activeFilePosition).findAllAsync(searchWord);
+                searchWord_TextView.setText(searchWord);
             }
             return false;
         });
@@ -171,6 +189,7 @@ public class CodeViewActivity extends AppCompatActivity
 
         closeSearch_ImageView.setOnClickListener(a -> {
             if (searchResult) {
+                searchWord = "";
                 codeViewList.get(activeFilePosition).findAllAsync("");
                 searchResult_Layout.setVisibility(View.GONE);
             }
@@ -389,6 +408,9 @@ public class CodeViewActivity extends AppCompatActivity
             activeFileNames.clear();
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            allMethods.clear();
+            allMethods = Helper.getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
             Helper.uiHandler.post(() -> {
@@ -407,6 +429,9 @@ public class CodeViewActivity extends AppCompatActivity
             activeFileNames.clear();
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            allMethods.clear();
+            allMethods = Helper.getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
             Helper.uiHandler.post(() -> {
@@ -427,6 +452,9 @@ public class CodeViewActivity extends AppCompatActivity
             activeFileNames.clear();
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            allMethods.clear();
+            allMethods = Helper.getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
             Helper.uiHandler.post(() -> {
@@ -881,6 +909,5 @@ public class CodeViewActivity extends AppCompatActivity
                 break;
         }
     }
-
-    //endregion
+//endregion
 }

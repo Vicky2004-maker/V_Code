@@ -10,7 +10,6 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-import android.os.FileUtils;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
@@ -30,7 +29,6 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -43,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -221,12 +220,38 @@ public class Helper {
         return sb.toString();
     }
 
-    public static void writeFile(Context context, Uri uri, String content) {
+    public static void getAllMethods(HashMap<String, Integer> toAdd, String code) {
+        String[] lines = code.split("\n");
+        Pattern pattern = Pattern.compile("(?s)(String|byte|void|int|float|double|long|short|byte\\[\\]|String\\[\\]|int\\[\\]|float\\[\\]|double\\[\\]|long\\[\\]|short\\[\\]) (\\w|\\d|\\w\\d)+(\\((\\w|,|\\d|\\w\\d|\\w,|\\d,|\\w\\d,|\\s|\\[\\])+\\))(?s)");
+        Matcher matcher;
+        for (int i = 0; i < lines.length; i++) {
+            matcher = pattern.matcher(lines[i]);
+            if (matcher.find()) toAdd.put(lines[i].replace("{", ""), i + 1);
+        }
+    }
+
+    public static HashMap<String, Integer> getAllMethods(String code) {
+        HashMap<String, Integer> methods = new HashMap<>();
+        String[] lines = code.split("\n");
+        Pattern pattern = Pattern.compile("(?s)(String|byte|void|int|float|double|long|short|byte\\[\\]|String\\[\\]|int\\[\\]|float\\[\\]|double\\[\\]|long\\[\\]|short\\[\\]) (\\w|\\d|\\w\\d)+(\\((\\w|,|\\d|\\w\\d|\\w,|\\d,|\\w\\d,|\\s|\\[\\])+\\))(?s)");
+        Matcher matcher;
+        for (int i = 0; i < lines.length; i++) {
+            matcher = pattern.matcher(lines[i]);
+            if (matcher.find()) methods.put(lines[i].replace("{", ""), i + 1);
+        }
+
+        return methods;
+    }
+
+    public static void writeFile(Context context, Uri uri, final String content) {
         ParcelFileDescriptor pfd;
         try {
             pfd = context.getContentResolver().openFileDescriptor(uri, "w");
             FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
-            fileOutputStream.write(content.getBytes());
+            byte[] bytes = new byte[8 * 1024];
+            bytes = content.getBytes();
+            fileOutputStream.write(bytes);
+            fileOutputStream.flush();
             fileOutputStream.close();
             pfd.close();
             Toast.makeText(context, context.getString(R.string.saved), Toast.LENGTH_LONG).show();

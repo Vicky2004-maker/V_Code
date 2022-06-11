@@ -1,24 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerLayout_Editor"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".EditorActivity">
 
-    <com.clevergo.vcode.editorfiles.CodeView
-        android:id="@+id/editor_Main"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/monokai_background"
-        android:dropDownWidth="@dimen/dimen150dp"
-        android:dropDownHorizontalOffset="0dp"
-        android:dropDownSelector="@color/monokai_background"
-        android:gravity="top|start"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:orientation="vertical">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <com.clevergo.vcode.editorfiles.CodeView
+            android:id="@+id/editor_Main"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/monokai_background"
+            android:dropDownWidth="@dimen/dimen150dp"
+            android:dropDownHorizontalOffset="0dp"
+            android:dropDownSelector="@color/monokai_background"
+            android:gravity="top|start"
+            android:inputType="textNoSuggestions|textMultiLine" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="55dp">
+
+            <LinearLayout
+                android:id="@+id/buttonControls_LinearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@color/dark_background"
+                android:elevation="@dimen/dimen5dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navView_Editor"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="5dp">
+
+            <ListView
+                android:id="@+id/methodListView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@color/grey"
+                android:dividerHeight="0.25dp"
+                android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft" />
+
+        </LinearLayout>
+
+    </com.google.android.material.navigation.NavigationView>
+
+</androidx.drawerlayout.widget.DrawerLayout>

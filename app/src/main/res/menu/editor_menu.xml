@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <item
+        android:id="@+id/addFileEditor_menu"
+        android:icon="@drawable/ic_add"
+        android:title="@string/addFile_TextMenu"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/saveFileEditor_menu"
+        android:icon="@drawable/ic_save"
+        android:title="@string/saveFile_TextMenu"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/settingsEditor_Menu"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/setting"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/readOnlyEditor_menu"
+        android:title="@string/readOnly"
+        app:showAsAction="collapseActionView" />
+
+</menu>

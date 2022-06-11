@@ -16,7 +16,7 @@
     <string name="pick_File_Text">Open a file !</string>
     <string name="addFile_TextMenu"><![CDATA[Open & Add File]]></string>
     <string name="setting">Settings</string>
-    <string name="coloring">Coloring...</string>
+    <string name="coloring">Coloring…</string>
     <string name="pleaseWait">Please wait</string>
     <string name="fileAlreadyPicked">You have already opened this file.</string>
     <string name="openBottomSheet">Open info panel.</string>
@@ -55,4 +55,17 @@
     <string name="fileAreadyDisplayed">File is already being displayed.</string>
     <string name="editor">Editor</string>
     <string name="codeType">Code Type</string>
+    <string name="readOnly">Read only</string>
+    <string name="saveFile_TextMenu">Save</string>
+    <string name="curlyBracket">{ }</string>
+    <string name="boxBracket">[ ]</string>
+    <string name="curvedBracket">( )</string>
+    <string name="equalTo">=</string>
+    <string name="exclamation">!</string>
+    <string name="semicolon">;</string>
+    <string name="colon">:</string>
+    <string name="quote">\" \"</string>
+    <string name="singleQuote">\' \'</string>
+    <string name="and"><![CDATA[&]]></string>
+    <string name="similar">~</string>
 </resources>
