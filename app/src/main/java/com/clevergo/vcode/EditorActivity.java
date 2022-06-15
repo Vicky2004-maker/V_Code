@@ -1,5 +1,12 @@
 package com.clevergo.vcode;
 
+import static com.clevergo.vcode.Helper.PICK_FILE_CODE;
+import static com.clevergo.vcode.Helper.createACodeViewFile;
+import static com.clevergo.vcode.Helper.getAllMethods;
+import static com.clevergo.vcode.Helper.isLowerSDK;
+import static com.clevergo.vcode.Helper.pickFile;
+import static com.clevergo.vcode.Helper.readFile;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -11,11 +18,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -40,9 +48,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class EditorActivity extends AppCompatActivity implements View.OnClickListener {
+public class EditorActivity extends AppCompatActivity {
 
-    public static boolean reload;
+    public static boolean reload, newFileAdded = false;
     public static HashMap<String, Integer> methods = new HashMap<>();
     private int activeEditor = 0;
     private DrawerLayout drawerLayout;
@@ -54,11 +62,15 @@ public class EditorActivity extends AppCompatActivity implements View.OnClickLis
     private Set<Character> indentationStarts = new HashSet<>(), indentationEnds = new HashSet<>();
     private CodeViewFile file;
     private UndoRedoManager undoRedoManager;
-    private CodeView editorMain;
-    private CustomWorkerThread workerThread;
-    private List<String> buttonStringList = List.of("{\n    }", "()", "[]", "<>", ";", ",", "&", "|", "!",
+    private CustomWorkerThread customWorkerThread;
+    private List<String> buttonStringList = List.of("\t", "{\n    }", "()", "[]", "<", ">", ";", "=", ",", "&", "<>", "|", "!",
             "~", "+", "-", "*", "/", "%", ":");
-    private ListView methodListView;
+    private ExpandableListView expandableListView_Editor;
+    private ExpandableListView expandableListView;
+    private ExpandableListAdapter expandableListAdapter;
+    private List<String> expandableListTitle = new ArrayList<>();
+    private HashMap<String, List<String>> expandableListDetail = new HashMap<>();
+    private LinearLayout buttonSwitcher_LinearLayout;
 
     private void writeFile(Context context, Uri uri, final String content) {
         try {
@@ -76,10 +88,111 @@ public class EditorActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        customWorkerThread.stop();
+    }
+
     private void addTextButton(CodeView editor, final String text) {
         editor.getText().insert(editor.getSelectionStart(), text);
-        editor.setSelection(editor.getSelectionStart() - 1);
+        if (text.equals(buttonStringList.get(1))
+                || text.equals(buttonStringList.get(2))
+                || text.equals(buttonStringList.get(3)))
+            editor.setSelection(editor.getSelectionStart() - 1);
         //editor.getText().insert(editor.getSelectionStart(), "\t");
+    }
+
+    private void setEditor(@NonNull final CodeView editor, @NonNull final String code) {
+        LanguageManager languageManager = new LanguageManager(EditorActivity.this, editor);
+        languageManager.applyTheme(LanguageName.JAVA, ThemeName.MONOKAI);
+        editor.setText(code);
+        editor.setHighlightWhileTextChanging(true);
+        editor.setEnableAutoIndentation(true);
+        editor.setEnableLineNumber(true);
+        editor.setLineNumberTextColor(Color.GRAY);
+        editor.setLineNumberTextSize(35);
+        editor.setTabLength(4);
+        editor.setIndentationStarts(indentationStarts);
+        editor.setIndentationEnds(indentationEnds);
+
+        String[] languageKeywords = getResources().getStringArray(R.array.java_keywords);
+        ArrayAdapter<String> codeAdapter = new ArrayAdapter<>(EditorActivity.this,
+                R.layout.list_item_suggestion,
+                R.id.suggestItemTextView,
+                languageKeywords);
+
+        editor.setAdapter(codeAdapter);
+        editor.enablePairComplete(true);
+        editor.enablePairCompleteCenterCursor(true);
+        Map<Character, Character> pairCompleteMap = new HashMap<>();
+        pairCompleteMap.put('{', '}');
+        pairCompleteMap.put('[', ']');
+        pairCompleteMap.put('(', ')');
+        pairCompleteMap.put('<', '>');
+        pairCompleteMap.put('"', '"');
+        pairCompleteMap.put('\'', '\'');
+        editor.setPairCompleteMap(pairCompleteMap);
+    }
+
+    private void singleFile(@Nullable Intent data, boolean isUrl) {
+        if (data != null) {
+            if (isLowerSDK()) {
+
+            } else {
+                if (CodeViewActivity.fileList.stream().anyMatch(fileObj -> fileObj.getUri().equals(data.getData().toString()))) {
+                    editorList.get(activeEditor).setText(readFile(EditorActivity.this, data.getData()));
+                } else {
+                    CodeViewActivity.filesOpened++;
+                    file = createACodeViewFile(EditorActivity.this, data, isUrl);
+                    CodeViewActivity.fileList.add(file);
+                    setEditor(editorList.get(activeEditor), readFile(EditorActivity.this, Uri.parse(file.getUri())));
+                    newFileAdded = true;
+                }
+            }
+        }
+    }
+
+    private void multipleFile(@NonNull Intent data, boolean isUrl) {
+        buttonSwitcher_LinearLayout.setVisibility(View.VISIBLE);
+
+        int itemCount = data.getClipData().getItemCount();
+        if (isLowerSDK()) {
+            //TODO : Add in Nav Menu and Add Material Button
+            for (int i = 0; i < itemCount; i++) {
+                Uri uri = data.getClipData().getItemAt(i).getUri();
+                if (CodeViewActivity.uri_List.contains(uri)) {
+                    if (i == itemCount - 1)
+                        setEditor(editorList.get(activeEditor), readFile(EditorActivity.this, uri));
+                } else {
+                    CodeViewFile tempFile = createACodeViewFile(EditorActivity.this, uri, isUrl);
+                    CodeViewActivity.fileList.add(tempFile);
+                    CodeViewActivity.uri_List.add(uri);
+                    if (i == itemCount - 1) {
+                        setEditor(editorList.get(activeEditor), readFile(EditorActivity.this, uri));
+                        newFileAdded = true;
+                        file = tempFile;
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < itemCount; i++) {
+                Uri uri = data.getClipData().getItemAt(i).getUri();
+                if (CodeViewActivity.fileList.stream().anyMatch(fileObj -> fileObj.getUri().equals(uri.toString()))) {
+                    if (i == itemCount - 1)
+                        setEditor(editorList.get(activeEditor), readFile(EditorActivity.this, uri));
+                } else {
+                    CodeViewFile tempFile = createACodeViewFile(EditorActivity.this, uri, isUrl);
+                    CodeViewActivity.fileList.add(tempFile);
+                    if (i == itemCount - 1) {
+                        setEditor(editorList.get(activeEditor), readFile(EditorActivity.this, uri));
+                        newFileAdded = true;
+                        file = tempFile;
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -100,20 +213,28 @@ public class EditorActivity extends AppCompatActivity implements View.OnClickLis
         navView = findViewById(R.id.navView_Editor);
         actionBar.setTitle(getString(R.string.editor));
         //fileEditor_ExpandableList = findViewById(R.id.fileEditor_ExpandableList);
-        methodListView = findViewById(R.id.methodListView);
         LinearLayout buttonControls_LinearLayout = findViewById(R.id.buttonControls_LinearLayout);
-        workerThread = new CustomWorkerThread();
+        buttonSwitcher_LinearLayout = findViewById(R.id.buttonSwitcher_LinearLayout);
+        expandableListView = findViewById(R.id.expandableListView_Editor);
+        customWorkerThread = new CustomWorkerThread();
+
+        expandableListTitle.add("Active Files");
+        expandableListTitle.add("Opened Files");
+        expandableListTitle.add("All Methods");
+        expandableListTitle.add("Settings");
 
         for (int i = 0; i < buttonStringList.size(); i++) {
             AppCompatButton simpleButton = new AppCompatButton(EditorActivity.this);
             simpleButton.setId(i);
-            simpleButton.setText(i == 0 ? "{}" : buttonStringList.get(i));
-            simpleButton.setOnClickListener(EditorActivity.this);
+            String txt = buttonStringList.get(i);
+            if (i == 0) txt = "->";
+            if (i == 1) txt = "{}";
+            simpleButton.setText(txt);
+            simpleButton.setOnClickListener(new BottomControlsClickListener());
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     ((int) getResources().getDimension(R.dimen.dimen40dp)),
                     ((int) getResources().getDimension(R.dimen.dimen45dp)));
             buttonControls_LinearLayout.addView(simpleButton, i, layoutParams);
-            simpleButton = null;
         }
 
         actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.nav_open, R.string.nav_close);
@@ -123,59 +244,30 @@ public class EditorActivity extends AppCompatActivity implements View.OnClickLis
         indentationStarts.add('{');
         indentationEnds.add('}');
 
-        file = ((CodeViewFile) getIntent().getExtras().get("currentFileObject"));
-        actionBar.setSubtitle(file.getName());
         editorList.add(findViewById(R.id.editor_Main));
-        editorMain = findViewById(R.id.editor_Main);
-        CodeView editor_Main = editorList.get(0);
-        LanguageManager languageManager = new LanguageManager(EditorActivity.this, editor_Main);
-        languageManager.applyTheme(LanguageName.JAVA, ThemeName.MONOKAI);
-        editor_Main.setText(Helper.readFile(EditorActivity.this, Uri.parse(file.getUri())));
-        editor_Main.setHighlightWhileTextChanging(true);
-        editor_Main.setEnableAutoIndentation(true);
-        editor_Main.setEnableLineNumber(true);
-        editor_Main.setLineNumberTextColor(Color.GRAY);
-        editor_Main.setLineNumberTextSize(35);
-        editor_Main.setTabLength(4);
-        editor_Main.setIndentationStarts(indentationStarts);
-        editor_Main.setIndentationEnds(indentationEnds);
-
-        String[] languageKeywords = getResources().getStringArray(R.array.java_keywords);
-        ArrayAdapter<String> codeAdapter = new ArrayAdapter<>(EditorActivity.this,
-                R.layout.list_item_suggestion,
-                R.id.suggestItemTextView,
-                languageKeywords);
-
-        editor_Main.setAdapter(codeAdapter);
-        editor_Main.enablePairComplete(true);
-        editor_Main.enablePairCompleteCenterCursor(true);
-        Map<Character, Character> pairCompleteMap = new HashMap<>();
-        pairCompleteMap.put('{', '}');
-        pairCompleteMap.put('[', ']');
-        pairCompleteMap.put('(', ')');
-        pairCompleteMap.put('<', '>');
-        pairCompleteMap.put('"', '"');
-        pairCompleteMap.put('\'', '\'');
-        editor_Main.setPairCompleteMap(pairCompleteMap);
-
-        undoRedoManager = new UndoRedoManager(editor_Main);
+        if (getIntent().getExtras().get("currentFileObject") != null) {
+            file = ((CodeViewFile) getIntent().getExtras().get("currentFileObject"));
+            actionBar.setSubtitle(file.getName());
+            setEditor(editorList.get(activeEditor),
+                    readFile(EditorActivity.this, Uri.parse(file.getUri())));
+        }
 
         if ((Intent.ACTION_SEND.equals(getIntent().getAction()) || Intent.ACTION_VIEW.equals(getIntent().getAction()))
                 && getIntent().getType() != null) {
-            //file = new CodeViewFile();
-            //manageSingleFileIntent(getIntent());
+            singleFile(getIntent(), false);
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(getIntent().getAction()) && getIntent().getType() != null) {
             //manageMultipleFileIntent(getIntent());
         }
 
-        workerThread.addWork(() -> {
-            Helper.getAllMethods(methods, editor_Main.getText().toString());
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(EditorActivity.this,
-                    androidx.appcompat.R.layout.support_simple_spinner_dropdown_item);
-            adapter.addAll(methods.keySet());
+        customWorkerThread.addWork(() -> {
+            expandableListAdapter = new ExpandableViewAdapterCustom(EditorActivity.this,
+                    expandableListTitle,
+                    expandableListDetail);
+            expandableListView.setAdapter(expandableListAdapter);
 
-            adapter.notifyDataSetChanged();
-            Helper.uiHandler.post(() -> methodListView.setAdapter(adapter));
+            getAllMethods(methods, editorList.get(activeEditor).getText().toString());
+
+            expandableListDetail.put("All Methods", List.copyOf(methods.keySet()));
             navView.postInvalidate();
         });
     }
@@ -196,6 +288,15 @@ public class EditorActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_FILE_CODE && data.getData() != null) singleFile(data, false);
+        if (requestCode == PICK_FILE_CODE && data.getClipData() != null) multipleFile(data, false);
+
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (actionBarDrawerToggle.onOptionsItemSelected(item)) {
             return true;
@@ -204,7 +305,7 @@ public class EditorActivity extends AppCompatActivity implements View.OnClickLis
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.addFileEditor_menu:
-                Helper.pickFile(EditorActivity.this);
+                pickFile(EditorActivity.this);
                 break;
             case R.id.settingsEditor_Menu:
                 //TODO : Navigate to Setting Page
@@ -213,7 +314,7 @@ public class EditorActivity extends AppCompatActivity implements View.OnClickLis
                 //TODO : Read Only setting
                 break;
             case R.id.saveFileEditor_menu: {
-                String content = editorMain.getText().toString();
+                String content = editorList.get(activeEditor).getText().toString();
                 writeFile(EditorActivity.this,
                         Uri.parse(file.getUri()),
                         content);
@@ -225,8 +326,17 @@ public class EditorActivity extends AppCompatActivity implements View.OnClickLis
         return false;
     }
 
-    @Override
-    public void onClick(View v) {
-        addTextButton(editorList.get(activeEditor), buttonStringList.get(v.getId()));
+    private class BottomControlsClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            addTextButton(editorList.get(activeEditor), buttonStringList.get(v.getId()));
+        }
+    }
+
+    private class EditorFileSwitcherClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+
+        }
     }
 }

@@ -35,6 +35,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -81,7 +82,7 @@ public class Helper {
         float yInches = getScreenWidth_DP(context);
         float xInches = getScreenHeight_DP(context);
         double diagonalInches = Math.sqrt(xInches * xInches + yInches * yInches);
-        thisIsMobile = diagonalInches >= 6.5;
+        thisIsMobile = diagonalInches <= 6.5;
     }
 
     public static void initializeFile(AppCompatActivity activity) {
@@ -110,7 +111,7 @@ public class Helper {
         try {
             bufferedWriter = new BufferedWriter(new FileWriter(settingsFile));
 
-            bufferedWriter.append(key + SETTING_DELIMITER + value);
+            bufferedWriter.append(key).append(SETTING_DELIMITER).append(value);
 
             bufferedWriter.flush();
         } catch (IOException e) {
@@ -165,7 +166,42 @@ public class Helper {
     }
 
     public static boolean isLowerSDK() {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.N;
+        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.N;
+    }
+
+    public static CodeViewFile createACodeViewFile(Context context, Intent data, boolean isUrl) {
+        return new CodeViewFile(CodeViewActivity.filesOpened,
+                Double.parseDouble(getFileSize(context, data)),
+                getFileName(context, data),
+                data.getData().toString(),
+                getFileExtension(context, data),
+                isUrl);
+    }
+
+    public static CodeViewFile createACodeViewFile(Context context, Uri uri, boolean isUrl) {
+        CodeViewFile file = null;
+
+        if (isUrl) {
+            try {
+                file = new CodeViewFile(CodeViewActivity.filesOpened,
+                        0d,
+                        "N/A",
+                        uri.toString(),
+                        "N/A",
+                        true,
+                        new URL(uri.toString()));
+            } catch (MalformedURLException ignored) {
+            }
+        } else {
+            file = new CodeViewFile(CodeViewActivity.filesOpened,
+                    Double.parseDouble(getFileSize(context, uri)),
+                    getFileName(context, uri),
+                    uri.toString(),
+                    getFileExtension(context, uri),
+                    false);
+        }
+
+        return file;
     }
 
     public static void pickFile(AppCompatActivity activity) {
@@ -200,10 +236,31 @@ public class Helper {
         return sb.toString();
     }
 
+    public static boolean isURL(String urlContent) {
+        try {
+            URL url = new URL(urlContent);
+            return true;
+        } catch (MalformedURLException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Returns the file name for a given URL string
+     *
+     * @param string The URL as a string
+     * @return the file name
+     */
+    public static String getFileName(String string) {
+        String[] syllabus = string.split("/");
+        return syllabus[syllabus.length - 1];
+    }
+
     public static String readFile(Context context, Uri uri) {
         StringBuilder sb = new StringBuilder();
 
         try {
+            context.getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             InputStream is = context.getContentResolver().openInputStream(uri);
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             String receiveString;

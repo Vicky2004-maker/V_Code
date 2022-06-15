@@ -21,7 +21,8 @@
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+            android:label="@string/editor">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -51,6 +52,7 @@
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:hardwareAccelerated="true"
+            android:noHistory="false"
             android:label="@string/codeView">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

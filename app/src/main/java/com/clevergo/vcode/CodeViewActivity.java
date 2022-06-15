@@ -1,5 +1,24 @@
 package com.clevergo.vcode;
 
+import static com.clevergo.vcode.Helper.PICK_FILE_CODE;
+import static com.clevergo.vcode.Helper.copyCode;
+import static com.clevergo.vcode.Helper.createACodeViewFile;
+import static com.clevergo.vcode.Helper.getAllMethods;
+import static com.clevergo.vcode.Helper.getFileName;
+import static com.clevergo.vcode.Helper.getFileSize;
+import static com.clevergo.vcode.Helper.isFullScreen;
+import static com.clevergo.vcode.Helper.isLowerSDK;
+import static com.clevergo.vcode.Helper.isScreenLandscape;
+import static com.clevergo.vcode.Helper.isURL;
+import static com.clevergo.vcode.Helper.makeFullScreen;
+import static com.clevergo.vcode.Helper.pickFile;
+import static com.clevergo.vcode.Helper.readFile;
+import static com.clevergo.vcode.Helper.revertFullScreen;
+import static com.clevergo.vcode.Helper.showAlertDialog;
+import static com.clevergo.vcode.Helper.thisIsMobile;
+import static com.clevergo.vcode.Helper.uiHandler;
+import static com.clevergo.vcode.Helper.validateRegex;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -9,7 +28,9 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -30,6 +51,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -38,10 +60,15 @@ import com.clevergo.vcode.codeviewer.CodeView;
 import com.clevergo.vcode.codeviewer.Language;
 import com.clevergo.vcode.codeviewer.Theme;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -61,9 +88,9 @@ public class CodeViewActivity extends AppCompatActivity
     public static String[] selectedFileNames = new String[2];
     public static boolean isScreenSplit = false;
     public static String activeSplitScreenFileName;
+    public static int filesOpened = 0;
+    public static List<Uri> uri_List;
     private static ProgressDialog progressDialog;
-    private static List<Uri> uri_List;
-    private static int filesOpened = 0;
     private final boolean loadIntoRAM = true;
     private final List<CodeView> codeViewList = new ArrayList<>();
     private final List<String> fileNames = new ArrayList<>();
@@ -92,7 +119,7 @@ public class CodeViewActivity extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == Helper.PICK_FILE_CODE && data != null && resultCode == Activity.RESULT_OK) {
+        if (requestCode == PICK_FILE_CODE && data != null && resultCode == Activity.RESULT_OK) {
             manageSingleFileIntent(data);
             manageMultipleFileIntent(data);
         }
@@ -103,9 +130,30 @@ public class CodeViewActivity extends AppCompatActivity
         super.onStart();
 
         if (EditorActivity.reload) {
-            setCodeView(codeViewList.get(activeFilePosition),
-                    Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(currentActiveID).getUri())));
+            if (fileList.get(currentActiveID).isURL) {
+                setCodeView(codeViewList.get(activeFilePosition),
+                        readFile(CodeViewActivity.this, fileList.get(currentActiveID).getUrl()));
+            } else {
+                setCodeView(codeViewList.get(activeFilePosition),
+                        readFile(CodeViewActivity.this, Uri.parse(fileList.get(currentActiveID).getUri())));
+            }
             EditorActivity.reload = false;
+        }
+
+        if (EditorActivity.newFileAdded) {
+            for (int i = 0; i < fileList.size(); i++) {
+                Uri uri = Uri.parse(fileList.get(i).getUri());
+                String fileName = getFileName(CodeViewActivity.this, uri);
+                if (!fileNames.contains(fileName)) {
+                    addUI_FileURI(uri, i == (fileList.size() - 1), false);
+                    addNavMenu(getFileName(CodeViewActivity.this, uri));
+                    updateInfo(uri);
+                    allFileSwitcherParent.setVisibility(View.VISIBLE);
+                    setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, uri));
+                }
+            }
+            currentActiveID = fileList.size() - 1;
+            EditorActivity.newFileAdded = false;
         }
     }
 
@@ -162,7 +210,8 @@ public class CodeViewActivity extends AppCompatActivity
         expandableListView.setOnChildClickListener((parent, v, groupPosition, childPosition, id) -> {
             if (groupPosition == 1) {
                 updateInfo(childPosition);
-                setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(childPosition).getUri())));
+                boolean isUrl = fileList.get(childPosition).isURL;
+                //setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, isUrl ? (URL) fileList.get(childPosition).getUrl() : Uri.parse(fileList.get(childPosition).getUri())));
             }
             if (groupPosition == 2) {
                 searchWord = List.copyOf(allMethods.keySet()).get(childPosition);
@@ -201,7 +250,7 @@ public class CodeViewActivity extends AppCompatActivity
             infoBottomSheet.show(getSupportFragmentManager(), "ModalBottomSheet");
         });
 
-        if (Helper.isLowerSDK()) {
+        if (isLowerSDK()) {
             uri_List = new ArrayList<>();
         }
 
@@ -221,30 +270,28 @@ public class CodeViewActivity extends AppCompatActivity
                 pickFile_TextView.setVisibility(View.GONE);
                 codeView_Main.setVisibility(View.VISIBLE);
                 info_LinearLayout.setVisibility(View.VISIBLE);
-                addUI_File(data);
-                addNavMenu(Helper.getFileName(CodeViewActivity.this, data));
+                addUI_File(data, false);
+                addNavMenu(getFileName(CodeViewActivity.this, data));
+                Objects.requireNonNull(actionBar).setDisplayHomeAsUpEnabled(true);
             } else if (filesOpened > 0) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     if (fileList.stream().anyMatch(fileObj -> fileObj.getUri().equals(data.getData().toString()))) {
                         Toast.makeText(CodeViewActivity.this, getString(R.string.fileAlreadyPicked), Toast.LENGTH_LONG).show();
                     } else {
-                        addUI_File(data);
-                        addNavMenu(Helper.getFileName(CodeViewActivity.this, data));
+                        addUI_File(data, false);
+                        addNavMenu(getFileName(CodeViewActivity.this, data));
                         allFileSwitcherParent.setVisibility(View.VISIBLE);
                     }
                 } else {
                     if (uri_List.contains(data.getData())) {
                         Toast.makeText(CodeViewActivity.this, getString(R.string.fileAlreadyPicked), Toast.LENGTH_LONG).show();
                     } else {
-                        addUI_File(data);
-                        addNavMenu(Helper.getFileName(CodeViewActivity.this, data));
+                        addUI_File(data, false);
+                        addNavMenu(getFileName(CodeViewActivity.this, data));
                         allFileSwitcherParent.setVisibility(View.VISIBLE);
                     }
                 }
             }
-
-            if (filesOpened == 2)
-                Objects.requireNonNull(actionBar).setDisplayHomeAsUpEnabled(true);
         }
     }
 
@@ -261,9 +308,11 @@ public class CodeViewActivity extends AppCompatActivity
                     if (fileList.stream().anyMatch(fileObj -> fileObj.getUri().equals(uri.toString()))) {
                         Toast.makeText(CodeViewActivity.this, getString(R.string.fileAlreadyPicked), Toast.LENGTH_LONG).show();
                     } else {
-                        addUI_FileURI(uri, i == (data.getClipData().getItemCount() - 1));
-                        addNavMenu(Helper.getFileName(CodeViewActivity.this, uri));
+                        addUI_FileURI(uri, i == (data.getClipData().getItemCount() - 1), false);
+                        addNavMenu(getFileName(CodeViewActivity.this, uri));
                     }
+
+                    Log.e("File List", Arrays.toString(fileList.toArray()));
                 }
             } else {
                 for (int i = 0; i < data.getClipData().getItemCount(); i++) {
@@ -271,8 +320,8 @@ public class CodeViewActivity extends AppCompatActivity
                     if (uri_List.contains(uri)) {
                         Toast.makeText(CodeViewActivity.this, getString(R.string.fileAlreadyPicked), Toast.LENGTH_LONG).show();
                     } else {
-                        addUI_FileURI(uri, i == (data.getClipData().getItemCount() - 1));
-                        addNavMenu(Helper.getFileName(CodeViewActivity.this, uri));
+                        addUI_FileURI(uri, i == (data.getClipData().getItemCount() - 1), false);
+                        addNavMenu(getFileName(CodeViewActivity.this, uri));
                     }
                 }
             }
@@ -312,38 +361,31 @@ public class CodeViewActivity extends AppCompatActivity
         }
     }
 
-    private CodeViewFile createACodeViewFile(Intent data) {
-        return new CodeViewFile(filesOpened,
-                Double.parseDouble(Helper.getFileSize(CodeViewActivity.this, data)),
-                Helper.getFileName(CodeViewActivity.this, data),
-                data.getData().toString(),
-                Helper.getFileExtension(CodeViewActivity.this, data));
-    }
-
-    private void addUI_FileURI(final Uri uri, final boolean isLastFile) {
-        if (Helper.isLowerSDK()) {
+    private void addUI_FileURI(final Uri uri, final boolean isLastFile, boolean isUrl) {
+        if (isLowerSDK()) {
             uri_List.add(uri);
         }
 
-        fileList.add(createACodeViewFile(uri));
+        fileList.add(createACodeViewFile(CodeViewActivity.this, uri, isUrl));
         currentActiveID++;
 
         if (loadIntoRAM) {
-            codeList.add(Helper.readFile(CodeViewActivity.this, uri));
+            codeList.add(readFile(CodeViewActivity.this, uri));
             if (isLastFile)
                 setCodeView(codeViewList.get(activeFilePosition), codeList.get(filesOpened));
         } else if (isLastFile) {
-            setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, uri));
+            setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, uri));
         }
 
-        String fileNameTemp = Helper.getFileName(CodeViewActivity.this, uri);
+        String fileNameTemp = getFileName(CodeViewActivity.this, uri);
         if (isScreenSplit && isLastFile) selectedFileNames[activeFilePosition] = fileNameTemp;
 
         MaterialButton materialButton = new MaterialButton(CodeViewActivity.this);
-        materialButton.setText(fileList.get(filesOpened).getName());
+        materialButton.setText(isUrl ? getFileName(uri.toString()) : fileList.get(filesOpened).getName());
         materialButton.setId(filesOpened);
         materialButton.setOnClickListener(CodeViewActivity.this);
         materialButton.setAllCaps(false);
+        materialButton.setIcon(AppCompatResources.getDrawable(CodeViewActivity.this, R.drawable.java_logo));
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
@@ -355,37 +397,30 @@ public class CodeViewActivity extends AppCompatActivity
         filesOpened++;
     }
 
-    private CodeViewFile createACodeViewFile(Uri uri) {
-        return new CodeViewFile(filesOpened,
-                Double.parseDouble(Helper.getFileSize(CodeViewActivity.this, uri)),
-                Helper.getFileName(CodeViewActivity.this, uri),
-                uri.toString(),
-                Helper.getFileExtension(CodeViewActivity.this, uri));
-    }
-
-    private void addUI_File(Intent data) {
-        if (Helper.isLowerSDK()) {
+    private void addUI_File(Intent data, boolean isUrl) {
+        if (isLowerSDK()) {
             uri_List.add(data.getData());
         }
 
-        fileList.add(createACodeViewFile(data));
+        fileList.add(createACodeViewFile(CodeViewActivity.this, data, isUrl));
         currentActiveID++;
 
         if (loadIntoRAM) {
-            codeList.add(Helper.readFile(CodeViewActivity.this, data.getData()));
+            codeList.add(readFile(CodeViewActivity.this, data.getData()));
             setCodeView(codeViewList.get(activeFilePosition), codeList.get(filesOpened));
         } else {
-            setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, data.getData()));
+            setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, data.getData()));
         }
 
         if (isScreenSplit)
-            selectedFileNames[activeFilePosition] = Helper.getFileName(CodeViewActivity.this, data);
+            selectedFileNames[activeFilePosition] = getFileName(CodeViewActivity.this, data);
 
         MaterialButton materialButton = new MaterialButton(CodeViewActivity.this);
         materialButton.setText(fileList.get(fileList.size() - 1).getName());
         materialButton.setId(currentActiveID);
         materialButton.setOnClickListener(CodeViewActivity.this);
         materialButton.setAllCaps(false);
+        materialButton.setIcon(AppCompatResources.getDrawable(CodeViewActivity.this, R.drawable.java_logo));
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
@@ -400,20 +435,20 @@ public class CodeViewActivity extends AppCompatActivity
     @SuppressLint("SetTextI18n")
     private void updateInfo(Uri uri) {
         customWorkerThread.addWork(() -> {
-            String actionBarSubtitle = Helper.getFileName(CodeViewActivity.this, uri);
+            String actionBarSubtitle = getFileName(CodeViewActivity.this, uri);
             String fileSize_Text = actionBarSubtitle
                     + " - "
-                    + Helper.getFileSize(CodeViewActivity.this, uri) + " KB";
+                    + getFileSize(CodeViewActivity.this, uri) + " KB";
 
             activeFileNames.clear();
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
             allMethods.clear();
-            allMethods = Helper.getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
-            Helper.uiHandler.post(() -> {
+            uiHandler.post(() -> {
                 Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
             });
@@ -430,11 +465,11 @@ public class CodeViewActivity extends AppCompatActivity
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
             allMethods.clear();
-            allMethods = Helper.getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
-            Helper.uiHandler.post(() -> {
+            uiHandler.post(() -> {
                 Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
             });
@@ -444,20 +479,40 @@ public class CodeViewActivity extends AppCompatActivity
     @SuppressLint("SetTextI18n")
     private void updateInfo(Intent data) {
         customWorkerThread.addWork(() -> {
-            String actionBarSubtitle = Helper.getFileName(CodeViewActivity.this, data);
+            String actionBarSubtitle = getFileName(CodeViewActivity.this, data);
             String fileSize_Text = actionBarSubtitle
                     + " - "
-                    + Helper.getFileSize(CodeViewActivity.this, data) + " KB";
+                    + getFileSize(CodeViewActivity.this, data) + " KB";
 
             activeFileNames.clear();
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
             allMethods.clear();
-            allMethods = Helper.getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
-            Helper.uiHandler.post(() -> {
+            uiHandler.post(() -> {
+                Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
+                fileSize_TextView.setText(fileSize_Text);
+            });
+        });
+    }
+
+    private void updateInfo(URL url) {
+        customWorkerThread.addWork(() -> {
+            String actionBarSubtitle = getFileName(url.toString());
+            String fileSize_Text = "N/A";
+
+            activeFileNames.clear();
+            activeFileNames.add(actionBarSubtitle);
+            expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            allMethods.clear();
+            allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
+            navView.postInvalidate();
+
+            uiHandler.post(() -> {
                 Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
             });
@@ -472,7 +527,7 @@ public class CodeViewActivity extends AppCompatActivity
         final SwitchCompat isExactMatchSwitch = searchDialogView.findViewById(R.id.exactMatch_switch);
 
         isRegexSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            TextWatcher textWatcher = Helper.validateRegex(CodeViewActivity.this, findTextInput);
+            TextWatcher textWatcher = validateRegex(CodeViewActivity.this, findTextInput);
 
             if (isChecked) {
                 findTextInput.addTextChangedListener(textWatcher);
@@ -552,10 +607,10 @@ public class CodeViewActivity extends AppCompatActivity
             String fileName = fileList.get(i).getName();
 
             if (Objects.equals(fileNameArray[file1[0]], fileName)) {
-                codes[0] = Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(i).getUri()));
+                codes[0] = readFile(CodeViewActivity.this, Uri.parse(fileList.get(i).getUri()));
             }
             if (Objects.equals(fileNameArray[file2[0]], fileName)) {
-                codes[1] = Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(i).getUri()));
+                codes[1] = readFile(CodeViewActivity.this, Uri.parse(fileList.get(i).getUri()));
             }
         }
 
@@ -567,7 +622,6 @@ public class CodeViewActivity extends AppCompatActivity
         setCodeViewSplitScreen(codeViews, codes);
         codes = null;
     }
-
 
     private void splitScreen_2(@NonNull final CodeView[] codeViews) {
         if (fileList.size() == 1) {
@@ -678,7 +732,7 @@ public class CodeViewActivity extends AppCompatActivity
         filesOpened--;
         currentActiveID = fileList.size() - 1;
 
-        setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(fileList.size() - 1).getUri())));
+        setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, Uri.parse(fileList.get(fileList.size() - 1).getUri())));
 
         removeSplitScreen_2();
         updateInfo(currentActiveID);
@@ -688,6 +742,96 @@ public class CodeViewActivity extends AppCompatActivity
         customWorkerThread.addWork(() -> {
             //TODO : Update Info Split Screen
             //String actionBarSubtitle = fileList.get(clicked_id).getName()
+        });
+    }
+
+    private void addFileMenu() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(CodeViewActivity.this);
+        final View addFileMenu = getLayoutInflater().inflate(R.layout.add_file_menu, null);
+        alertDialog.setView(addFileMenu);
+        MaterialCheckBox createFile_checkBox = addFileMenu.findViewById(R.id.createFile_checkBox);
+        MaterialCheckBox openFile_checkBox = addFileMenu.findViewById(R.id.openFile_checkBox);
+        MaterialCheckBox loadFile_checkBox = addFileMenu.findViewById(R.id.loadFromURL_checkBox);
+        TextInputEditText urlInput = addFileMenu.findViewById(R.id.urlInput);
+        TextInputLayout textInputLayout = addFileMenu.findViewById(R.id.textInputLayout3);
+        MaterialButton continueBtn = addFileMenu.findViewById(R.id.continue_Button);
+        openFile_checkBox.setChecked(true);
+
+        createFile_checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (openFile_checkBox.isChecked()) openFile_checkBox.setChecked(false);
+                if (loadFile_checkBox.isChecked()) loadFile_checkBox.setChecked(false);
+                if (textInputLayout.getVisibility() == View.VISIBLE) {
+                    textInputLayout.setVisibility(View.GONE);
+                }
+            }
+        });
+
+        openFile_checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (createFile_checkBox.isChecked()) createFile_checkBox.setChecked(false);
+                if (loadFile_checkBox.isChecked()) loadFile_checkBox.setChecked(false);
+                if (textInputLayout.getVisibility() == View.VISIBLE) {
+                    textInputLayout.setVisibility(View.GONE);
+                }
+            }
+        });
+
+        loadFile_checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (createFile_checkBox.isChecked()) createFile_checkBox.setChecked(false);
+                if (openFile_checkBox.isChecked()) openFile_checkBox.setChecked(false);
+                if (textInputLayout.getVisibility() == View.GONE) {
+                    textInputLayout.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        urlInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (!isURL(s.toString())) urlInput.setError(getString(R.string.malformedURL));
+            }
+        });
+
+        continueBtn.setOnClickListener(a -> {
+            if (createFile_checkBox.isChecked()) {
+
+            } else if (openFile_checkBox.isChecked()) {
+                pickFile(CodeViewActivity.this);
+            } else if (loadFile_checkBox.isChecked()) {
+                urlOpen(Objects.requireNonNull(urlInput.getText()).toString());
+            }
+        });
+
+        alertDialog.create().show();
+    }
+
+    private void urlOpen(String urlContent) {
+        customWorkerThread.addWork(() -> {
+            try {
+                URL url = new URL(urlContent);
+                String content = readFile(CodeViewActivity.this, url);
+                uiHandler.post(() -> {
+                    setCodeView(codeView_Main, content);
+                });
+                addUI_FileURI(Uri.parse(url.toString()), true, true);
+                addNavMenu(getFileName(url.toString()));
+                updateInfo(url);
+                currentActiveID = fileList.size() - 1;
+            } catch (MalformedURLException ignored) {
+                uiHandler.post(() -> Toast.makeText(CodeViewActivity.this, getString(R.string.malformedURL), Toast.LENGTH_SHORT).show());
+            }
         });
     }
     //endregion
@@ -711,7 +855,8 @@ public class CodeViewActivity extends AppCompatActivity
         switch (item.getItemId()) {
             case R.id.addFile_menu:
                 if (drawerLayout.isOpen()) drawerLayout.close();
-                Helper.pickFile(CodeViewActivity.this);
+                //pickFile(CodeViewActivity.this);
+                addFileMenu();
                 break;
             case R.id.settings_Menu:
                 //TODO : Navigate to Setting Page
@@ -732,8 +877,8 @@ public class CodeViewActivity extends AppCompatActivity
 
         switch (newConfig.orientation) {
             case Configuration.ORIENTATION_LANDSCAPE:
-                if (!Helper.isFullScreen && configFullScreen) {
-                    Helper.makeFullScreen(CodeViewActivity.this);
+                if (!isFullScreen && configFullScreen) {
+                    makeFullScreen(CodeViewActivity.this);
                     configFullScreen = false;
                 }
                 if (isScreenSplit) {
@@ -752,8 +897,8 @@ public class CodeViewActivity extends AppCompatActivity
                 }
                 break;
             case Configuration.ORIENTATION_PORTRAIT:
-                if (Helper.isFullScreen && !configFullScreen) {
-                    Helper.revertFullScreen(CodeViewActivity.this);
+                if (isFullScreen && !configFullScreen) {
+                    revertFullScreen(CodeViewActivity.this);
                     configFullScreen = true;
                 }
                 if (isScreenSplit) {
@@ -806,7 +951,7 @@ public class CodeViewActivity extends AppCompatActivity
                     + "("
                     + codeViewList.get(activeFilePosition).getCode().length()
                     + ")";
-            Helper.uiHandler.post(() -> lineInfo_TextView.setText(lineInfo));
+            uiHandler.post(() -> lineInfo_TextView.setText(lineInfo));
         });
     }
 
@@ -835,7 +980,7 @@ public class CodeViewActivity extends AppCompatActivity
             if (isScreenSplit)
                 selectedFileNames[activeFilePosition] = ((MaterialButton) view).getText().toString();
         } else {
-            setCodeView(codeViewList.get(activeFilePosition), Helper.readFile(CodeViewActivity.this, Uri.parse(fileList.get(clicked_ID).getUri())));
+            setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, Uri.parse(fileList.get(clicked_ID).getUri())));
         }
 
         currentActiveID = clicked_ID;
@@ -862,19 +1007,19 @@ public class CodeViewActivity extends AppCompatActivity
                 showSearchDialog();
                 break;
             case CopyAll:
-                customWorkerThread.addWork(() -> Helper.copyCode(CodeViewActivity.this, codeViewList.get(activeFilePosition).getCode()));
+                customWorkerThread.addWork(() -> copyCode(CodeViewActivity.this, codeViewList.get(activeFilePosition).getCode()));
                 break;
             case FullScreen:
-                if (Helper.isFullScreen) {
-                    Helper.revertFullScreen(CodeViewActivity.this);
+                if (isFullScreen) {
+                    revertFullScreen(CodeViewActivity.this);
                 } else {
-                    Helper.makeFullScreen(CodeViewActivity.this);
+                    makeFullScreen(CodeViewActivity.this);
                 }
                 break;
             case SplitScreen:
-                if (!Helper.isScreenLandscape(CodeViewActivity.this))
-                    Helper.showAlertDialog(getString(R.string.suggestion), getString(R.string.changeToLandscape), CodeViewActivity.this);
-                if (Helper.thisIsMobile) {
+                if (!isScreenLandscape(CodeViewActivity.this))
+                    showAlertDialog(getString(R.string.suggestion), getString(R.string.changeToLandscape), CodeViewActivity.this);
+                if (thisIsMobile) {
                     splitScreen_2(new CodeView[]{codeView_Main, codeview_SplitScreen1});
                 } else {
                     //TODO : Tablet Model Screen
@@ -883,21 +1028,7 @@ public class CodeViewActivity extends AppCompatActivity
                 break;
             case AddFile:
                 if (drawerLayout.isOpen()) drawerLayout.close();
-                Helper.pickFile(CodeViewActivity.this);
-
-                //FIXME : Implement file reading from URL
-
-                /*
-                String[] codeURL = new String[1];
-                customWorkerThread.addWork(() -> {
-                    try {
-                        codeURL[0] = Helper.readFile(CodeViewActivity.this, new URL("https://clever-go.web.app/app-ads.txt"));
-                        Helper.uiHandler.post(() -> setCodeView(codeView_Main, codeURL[0]));
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    }
-                });
-                 */
+                pickFile(CodeViewActivity.this);
                 break;
             case DeleteFile:
                 deleteCodeViewFile();
