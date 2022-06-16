@@ -74,4 +74,5 @@
     <string name="enterURL">Web URL</string>
     <string name="continueStr">Continue</string>
     <string name="malformedURL">Malformed URL</string>
+    <string name="fileName_demo">file_name.language_extension</string>
 </resources>

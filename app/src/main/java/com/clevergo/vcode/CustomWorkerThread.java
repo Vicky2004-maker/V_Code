@@ -39,7 +39,7 @@ public class CustomWorkerThread {
         return workerThread.getState();
     }
 
-    void stop() {
+    public void stop() {
         queue.clear();
         queue.add(KILLER_THREAD);
     }

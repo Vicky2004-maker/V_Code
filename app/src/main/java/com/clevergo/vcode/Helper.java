@@ -1,6 +1,7 @@
 package com.clevergo.vcode;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -23,7 +24,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.BufferedReader;
@@ -50,6 +53,10 @@ public class Helper {
 
     public static final int PICK_FILE_CODE = 100;
     public static final int PERMISSION_REQ_CODE = 7;
+    public static final int CREATE_FILE_CODE = 1;
+    public static final int CHOOSE_DIRECTORY_CODE = 2;
+
+    public static final int CODE_HIGHLIGHTER_MAX_LINES = 1000;
 
     public static final Uri PRIVACY_POLICY_URL = Uri.parse("https://clever-go.web.app/privacy-policy-codeviewer.html");
 
@@ -219,18 +226,26 @@ public class Helper {
 
     public static String readFile(Context context, URL url) {
         StringBuilder sb = new StringBuilder();
+        Thread t = new Thread(() -> {
+            try {
+                BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+                String receiveString;
+
+                while ((receiveString = br.readLine()) != null) {
+                    sb.append(receiveString).append("\n");
+                }
+
+                br.close();
+            } catch (IOException e) {
+                uiHandler.post(() -> Toast.makeText(context, context.getString(R.string.fileReadingFailed), Toast.LENGTH_SHORT).show());
+            }
+        });
+
+        t.start();
 
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
-            String receiveString;
-
-            while ((receiveString = br.readLine()) != null) {
-                sb.append(receiveString).append("\n");
-            }
-
-            br.close();
-        } catch (IOException e) {
-            Toast.makeText(context, context.getString(R.string.fileReadingFailed), Toast.LENGTH_SHORT).show();
+            t.join();
+        } catch (InterruptedException ignored) {
         }
 
         return sb.toString();
@@ -275,6 +290,21 @@ public class Helper {
         }
 
         return sb.toString();
+    }
+
+    public static void createFile(Activity activity, Uri uri) {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_TITLE, activity.getString(R.string.fileName_demo));
+
+        activity.startActivityForResult(intent, CREATE_FILE_CODE);
+    }
+
+    public static void chooseDirectory(Activity activity) {
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        i.addCategory(Intent.CATEGORY_DEFAULT);
+        activity.startActivityForResult(Intent.createChooser(i, "Choose directory"), CHOOSE_DIRECTORY_CODE);
     }
 
     public static void getAllMethods(HashMap<String, Integer> toAdd, String code) {
@@ -474,6 +504,21 @@ public class Helper {
             return Objects.equals(Helper.settingsMap.get("privacyPolicy"), "agree");
         } catch (NullPointerException e) {
             return false;
+        }
+    }
+
+    public static void setBtnIcon(Context context, MaterialButton button, String fileExtension) {
+        switch (fileExtension) {
+            case "java":
+                button.setIcon(AppCompatResources.getDrawable(context, R.drawable.java_logo));
+                break;
+            case "cs":
+                break;
+            case "cpp":
+            case "h": {
+
+                break;
+            }
         }
     }
 

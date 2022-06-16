@@ -61,16 +61,6 @@
             android:hint="@string/enterURL" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/continue_Button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="75dp"
-        android:text="@string/continueStr"
-        android:textAllCaps="false"
-        app:layout_constraintEnd_toEndOf="@+id/loadFromURL_checkBox"
-        app:layout_constraintTop_toBottomOf="@+id/loadFromURL_checkBox" />
-
     <TextView
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
