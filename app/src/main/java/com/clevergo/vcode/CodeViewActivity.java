@@ -290,7 +290,6 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     //region Private Methods
-
     private void manageSingleFileIntent(Intent data) {
         if (data.getData() != null) {
             if (filesOpened == 0) {
@@ -329,7 +328,6 @@ public class CodeViewActivity extends AppCompatActivity
             codeView_Main.setVisibility(View.VISIBLE);
             info_LinearLayout.setVisibility(View.VISIBLE);
             allFileSwitcherParent.setVisibility(View.VISIBLE);
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 for (int i = 0; i < data.getClipData().getItemCount(); i++) {
                     Uri uri = data.getClipData().getItemAt(i).getUri();
@@ -364,10 +362,8 @@ public class CodeViewActivity extends AppCompatActivity
                 .setWrapLine(false)
                 .setShowLineNumber(true)
                 .apply();
-
         codeView.setFindListener(this);
         disableHighlighting(codeView, getLines(code));
-
         lineInfo_TextView.setText(codeView.getLineCount() + ":Nil (" + codeView.getCode().length() + ")");
     }
 
@@ -380,7 +376,6 @@ public class CodeViewActivity extends AppCompatActivity
                     .setZoomEnabled(true)
                     .setShowLineNumber(true)
                     .apply();
-
             codeView[i].setFindListener(this);
             disableHighlighting(codeView[i], getLines(code[i]));
             codeView[i].setVisibility(View.VISIBLE);
@@ -1057,7 +1052,15 @@ public class CodeViewActivity extends AppCompatActivity
     public void sendInput(BottomSheetCode code) {
         switch (code) {
             case Compile:
-                //TODO : Compile Case
+                if(fileList.get(currentActiveID).isURL) {
+                    Intent i = new Intent();
+                    i.putExtra("code", codeViewList.get(activeFilePosition).getCode());
+                    i.setAction(Intent.ACTION_VIEW);
+                    i.setClass(CodeViewActivity.this, CompileLinkActivity.class);
+                    startActivity(i);
+                } else {
+                    //TODO : Compile Case
+                }
                 break;
             case Edit:
                 editFile();

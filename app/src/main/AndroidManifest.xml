@@ -17,12 +17,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VCode">
         <activity
+            android:name=".CompileLinkActivity"
+            android:exported="false" />
+        <activity
             android:name=".EditorActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize"
-            android:label="@string/editor">
+            android:label="@string/editor"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -52,8 +55,8 @@
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:noHistory="false"
-            android:label="@string/codeView">
+            android:label="@string/codeView"
+            android:noHistory="false">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
