@@ -102,6 +102,11 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
             dismiss();
         });
 
+        v.findViewById(R.id.convertPDF_ImageView).setOnClickListener(a -> {
+            inputListener.sendInput(BottomSheetCode.ConvertToPDF);
+            dismiss();
+        });
+
         ImageView splitScreen_imageView = v.findViewById(R.id.splitScreen_imageView);
         splitScreen_imageView.setOnClickListener(a -> {
             inputListener.sendInput(BottomSheetCode.SplitScreen);

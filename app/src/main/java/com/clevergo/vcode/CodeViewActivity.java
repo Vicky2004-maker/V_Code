@@ -1,13 +1,19 @@
 package com.clevergo.vcode;
 
-import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_CODE;
+import static com.clevergo.vcode.Helper.ALL_FILES_MIME;
+import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_NORMAL;
+import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_PDF;
 import static com.clevergo.vcode.Helper.CODE_HIGHLIGHTER_MAX_LINES;
 import static com.clevergo.vcode.Helper.CREATE_FILE_CODE;
+import static com.clevergo.vcode.Helper.CREATE_FILE_NORMAL_CODE;
+import static com.clevergo.vcode.Helper.CREATE_FILE_PDF_CODE;
+import static com.clevergo.vcode.Helper.PDF_MIME;
 import static com.clevergo.vcode.Helper.PICK_FILE_CODE;
 import static com.clevergo.vcode.Helper.chooseDirectory;
 import static com.clevergo.vcode.Helper.copyCode;
 import static com.clevergo.vcode.Helper.createACodeViewFile;
 import static com.clevergo.vcode.Helper.createFile;
+import static com.clevergo.vcode.Helper.generatePDF;
 import static com.clevergo.vcode.Helper.getAllMethods;
 import static com.clevergo.vcode.Helper.getFileExtension;
 import static com.clevergo.vcode.Helper.getFileName;
@@ -128,13 +134,21 @@ public class CodeViewActivity extends AppCompatActivity
             manageMultipleFileIntent(data);
         }
 
-        if (requestCode == CHOOSE_DIRECTORY_CODE && data != null && resultCode == RESULT_OK) {
-            createFile(CodeViewActivity.this, data.getData());
+        if (requestCode == CHOOSE_DIRECTORY_NORMAL && data != null && resultCode == RESULT_OK) {
+            createFile(CodeViewActivity.this, ALL_FILES_MIME, CREATE_FILE_NORMAL_CODE);
         }
 
-        if (requestCode == CREATE_FILE_CODE && data != null && resultCode == RESULT_OK) {
+        if (requestCode == CHOOSE_DIRECTORY_PDF && data != null && resultCode == RESULT_OK) {
+            createFile(CodeViewActivity.this, PDF_MIME, CREATE_FILE_PDF_CODE);
+        }
+
+        if (requestCode == CREATE_FILE_NORMAL_CODE && data != null && resultCode == RESULT_OK) {
             manageSingleFileIntent(data);
             editFile();
+        }
+
+        if (requestCode == CREATE_FILE_PDF_CODE && data != null && resultCode == RESULT_OK) {
+            generatePDF(CodeViewActivity.this, data.getData(), fileList.get(currentActiveID));
         }
     }
 
@@ -843,7 +857,7 @@ public class CodeViewActivity extends AppCompatActivity
 
         alertDialog.setPositiveButton(getString(R.string.continueStr), (dialog, which) -> {
             if (createFile_checkBox.isChecked()) {
-                chooseDirectory(CodeViewActivity.this);
+                chooseDirectory(CodeViewActivity.this, CHOOSE_DIRECTORY_NORMAL);
             } else if (openFile_checkBox.isChecked()) {
                 pickFile(CodeViewActivity.this);
             } else if (loadFile_checkBox.isChecked()) {
@@ -1052,7 +1066,7 @@ public class CodeViewActivity extends AppCompatActivity
     public void sendInput(BottomSheetCode code) {
         switch (code) {
             case Compile:
-                if(fileList.get(currentActiveID).isURL) {
+                if (fileList.get(currentActiveID).isURL) {
                     Intent i = new Intent();
                     i.putExtra("code", codeViewList.get(activeFilePosition).getCode());
                     i.setAction(Intent.ACTION_VIEW);
@@ -1100,6 +1114,9 @@ public class CodeViewActivity extends AppCompatActivity
                 break;
             case RemoveSplitScreen:
                 removeSplitScreen_2();
+                break;
+            case ConvertToPDF:
+                chooseDirectory(CodeViewActivity.this, CHOOSE_DIRECTORY_PDF);
                 break;
         }
     }

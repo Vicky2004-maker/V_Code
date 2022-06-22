@@ -10,5 +10,6 @@ public enum BottomSheetCode {
     AddFile,
     DeleteFile,
     SetActiveCodeViewFile,
-    RemoveSplitScreen
+    RemoveSplitScreen,
+    ConvertToPDF
 }

@@ -51,6 +51,8 @@ import java.util.Set;
 public class EditorActivity extends AppCompatActivity {
 
     public static boolean reload, newFileAdded = false;
+    private static int filesOpened = 0;
+
     public static HashMap<String, Integer> methods = new HashMap<>();
     private int activeEditor = 0;
     private DrawerLayout drawerLayout;
@@ -102,6 +104,10 @@ public class EditorActivity extends AppCompatActivity {
                 || text.equals(buttonStringList.get(3)))
             editor.setSelection(editor.getSelectionStart() - 1);
         //editor.getText().insert(editor.getSelectionStart(), "\t");
+    }
+
+    private void createMaterialButton() {
+        
     }
 
     private void setEditor(@NonNull final CodeView editor, @NonNull final String code) {

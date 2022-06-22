@@ -9,6 +9,15 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.Typeface;
+import android.graphics.pdf.PdfDocument;
+import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -54,7 +63,12 @@ public class Helper {
     public static final int PICK_FILE_CODE = 100;
     public static final int PERMISSION_REQ_CODE = 7;
     public static final int CREATE_FILE_CODE = 1;
-    public static final int CHOOSE_DIRECTORY_CODE = 2;
+    public static final int CHOOSE_DIRECTORY_NORMAL = 2;
+    public static final int CHOOSE_DIRECTORY_PDF = 3;
+    public static final int CREATE_FILE_PDF_CODE = 4;
+    public static final int CREATE_FILE_NORMAL_CODE = 5;
+    public static final String ALL_FILES_MIME = "*/*";
+    public static final String PDF_MIME = "application/pdf";
 
     public static final int CODE_HIGHLIGHTER_MAX_LINES = 1000;
 
@@ -67,6 +81,7 @@ public class Helper {
 
     public static final Handler uiHandler = new Handler(Looper.getMainLooper());
     private static final String SETTING_DELIMITER = "-";
+    private static final int WRAP_LINE_LIMIT = 65;
     public static boolean isFullScreen = false;
     public static boolean thisIsMobile = true;
     public static HashMap<String, String> settingsMap;
@@ -292,19 +307,19 @@ public class Helper {
         return sb.toString();
     }
 
-    public static void createFile(Activity activity, Uri uri) {
+    public static void createFile(Activity activity, String mime, int requestCode) {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*");
+        intent.setType(mime);
         intent.putExtra(Intent.EXTRA_TITLE, activity.getString(R.string.fileName_demo));
 
-        activity.startActivityForResult(intent, CREATE_FILE_CODE);
+        activity.startActivityForResult(intent, requestCode);
     }
 
-    public static void chooseDirectory(Activity activity) {
+    public static void chooseDirectory(Activity activity, int reqCode) {
         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         i.addCategory(Intent.CATEGORY_DEFAULT);
-        activity.startActivityForResult(Intent.createChooser(i, "Choose directory"), CHOOSE_DIRECTORY_CODE);
+        activity.startActivityForResult(Intent.createChooser(i, "Choose directory"), reqCode);
     }
 
     public static void getAllMethods(HashMap<String, Integer> toAdd, String code) {
@@ -519,6 +534,86 @@ public class Helper {
 
                 break;
             }
+        }
+    }
+
+    public static void generatePDF(Context context, Uri uri, CodeViewFile file) {
+        final int pageHeight = 842;
+        final int pageWidth = 595;
+        PdfDocument pdf = new PdfDocument();
+
+        Paint paint = new Paint();
+        Paint title = new Paint();
+        Paint rectangle = new Paint();
+
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create();
+        PdfDocument.Page myPage = pdf.startPage(pageInfo);
+
+        Bitmap bmp = BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher);
+        Bitmap scaledBmp = Bitmap.createScaledBitmap(bmp, 40, 40, false);
+
+        Canvas canvas = myPage.getCanvas();
+        canvas.drawBitmap(scaledBmp, 50, 60, paint);
+
+        title.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.ITALIC));
+        title.setTextSize(17);
+        title.setColor(Color.BLACK);
+        canvas.drawText(file.getName(), 100, 80, title);
+
+        rectangle.setColor(Color.rgb(239, 239, 245));
+        RectF rectF = new RectF();
+        rectF.left = 50;
+        rectF.bottom = 792;
+        rectF.right = 545;
+        rectF.top = 100;
+        canvas.drawRoundRect(rectF, 5, 5, rectangle);
+        rectangle.setColor(Color.GRAY);
+        rectF.right = 70;
+        //canvas.drawLine(100, 70, 792, 70, rectangle);
+        //canvas.drawRoundRect(rectF, 5, 5, rectangle);
+
+        //canvas.drawRect(50, 140, 50, 50, rectangle);
+
+        title.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+        title.setTextSize(15);
+        String[] content = readFile(context, Uri.parse(file.getUri())).split("\n");
+        StringBuilder sb = new StringBuilder();
+
+        for (String s : content) {
+            String line = s;
+            if (line.length() >= WRAP_LINE_LIMIT) {
+                line = line.substring(0, WRAP_LINE_LIMIT) + "\n" + line.substring(WRAP_LINE_LIMIT);
+            }
+
+            sb.append(line).append("\n");
+        }
+
+        content = sb.toString().split("\n");
+        for (int i = 0; i < content.length; i++) {
+            int y = 150 + ((i - 1) * 20);
+            canvas.drawText(String.valueOf(i), 52, y, title);
+            canvas.drawText(content[i], 85, y, title);
+        }
+
+        pdf.finishPage(myPage);
+
+        try {
+            ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "w");
+            pdf.writeTo(new FileOutputStream(pfd.getFileDescriptor()));
+            pfd.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            pdf.close();
+        }
+    }
+
+    public static void viewPDF(Context context, Uri uri) {
+        try {
+            ParcelFileDescriptor pfd = context.getContentResolver().openFileDescriptor(uri, "w");
+            PdfRenderer pdfRenderer = new PdfRenderer(pfd);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
