@@ -3,9 +3,11 @@ package com.clevergo.vcode;
 import static com.clevergo.vcode.Helper.PICK_FILE_CODE;
 import static com.clevergo.vcode.Helper.createACodeViewFile;
 import static com.clevergo.vcode.Helper.getAllMethods;
+import static com.clevergo.vcode.Helper.getFileExtension;
 import static com.clevergo.vcode.Helper.isLowerSDK;
 import static com.clevergo.vcode.Helper.pickFile;
 import static com.clevergo.vcode.Helper.readFile;
+import static com.clevergo.vcode.Helper.setBtnIcon;
 
 import android.content.Context;
 import android.content.Intent;
@@ -28,6 +30,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -36,6 +39,7 @@ import com.clevergo.vcode.editorfiles.plugin.UndoRedoManager;
 import com.clevergo.vcode.editorfiles.syntax.LanguageManager;
 import com.clevergo.vcode.editorfiles.syntax.LanguageName;
 import com.clevergo.vcode.editorfiles.syntax.ThemeName;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
 
 import java.io.FileOutputStream;
@@ -51,9 +55,8 @@ import java.util.Set;
 public class EditorActivity extends AppCompatActivity {
 
     public static boolean reload, newFileAdded = false;
-    private static int filesOpened = 0;
-
     public static HashMap<String, Integer> methods = new HashMap<>();
+    private static int filesOpened = -1;
     private int activeEditor = 0;
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle actionBarDrawerToggle;
@@ -106,8 +109,20 @@ public class EditorActivity extends AppCompatActivity {
         //editor.getText().insert(editor.getSelectionStart(), "\t");
     }
 
-    private void createMaterialButton() {
-        
+    private MaterialButton createMaterialButton() {
+        MaterialButton materialButton = new MaterialButton(EditorActivity.this);
+        materialButton.setId(filesOpened);
+        materialButton.setText(file.getName());
+        materialButton.setAllCaps(false);
+        materialButton.setOnClickListener(new EditorFileSwitcherClickListener());
+
+        if (file.isURL) {
+            materialButton.setIcon(AppCompatResources.getDrawable(EditorActivity.this, R.drawable.ic_link));
+        } else {
+            setBtnIcon(EditorActivity.this, materialButton, getFileExtension(file.getName()));
+        }
+
+        return materialButton;
     }
 
     private void setEditor(@NonNull final CodeView editor, @NonNull final String code) {
@@ -155,6 +170,7 @@ public class EditorActivity extends AppCompatActivity {
                     CodeViewActivity.fileList.add(file);
                     setEditor(editorList.get(activeEditor), readFile(EditorActivity.this, Uri.parse(file.getUri())));
                     newFileAdded = true;
+                    filesOpened++;
                 }
             }
         }
@@ -220,7 +236,7 @@ public class EditorActivity extends AppCompatActivity {
         actionBar.setTitle(getString(R.string.editor));
         //fileEditor_ExpandableList = findViewById(R.id.fileEditor_ExpandableList);
         LinearLayout buttonControls_LinearLayout = findViewById(R.id.buttonControls_LinearLayout);
-        buttonSwitcher_LinearLayout = findViewById(R.id.buttonSwitcher_LinearLayout);
+        buttonSwitcher_LinearLayout = findViewById(R.id.buttonSwitcherEditor_LinearLayout);
         expandableListView = findViewById(R.id.expandableListView_Editor);
         customWorkerThread = new CustomWorkerThread();
 
@@ -252,6 +268,7 @@ public class EditorActivity extends AppCompatActivity {
 
         editorList.add(findViewById(R.id.editor_Main));
         if (getIntent().getExtras().get("currentFileObject") != null) {
+            filesOpened++;
             file = ((CodeViewFile) getIntent().getExtras().get("currentFileObject"));
             actionBar.setSubtitle(file.getName());
             setEditor(editorList.get(activeEditor),
@@ -342,7 +359,9 @@ public class EditorActivity extends AppCompatActivity {
     private class EditorFileSwitcherClickListener implements View.OnClickListener {
         @Override
         public void onClick(View v) {
+            int clicked_ID = v.getId();
 
+            //TODO : Editor File Switcher OnClickListener
         }
     }
 }
