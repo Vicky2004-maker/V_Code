@@ -1,10 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_background">
+    android:background="@color/dark_background"
+    tools:ignore="NestedWeights">
+
+    <TextView
+        android:id="@+id/pickFileTextView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/pick_File_Text"
+        android:textColor="@color/grey"
+        android:textSize="26sp"
+        android:textStyle="italic"
+        android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -33,41 +46,276 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/codeView_Container"
+            android:id="@+id/codeView_Container_Main"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible">
+
+            <com.clevergo.vcode.codeviewer.CodeView
+                android:id="@+id/codeview_1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/codeView_Container_SplitScreen2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:weightSum="2">
+
+            <com.clevergo.vcode.codeviewer.CodeView
+                android:id="@+id/codeview_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <com.clevergo.vcode.codeviewer.CodeView
+                android:id="@+id/codeview_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/codeView_Container_SplitScreen3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:weightSum="2">
+
+            <com.clevergo.vcode.codeviewer.CodeView
+                android:id="@+id/codeview_4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <com.clevergo.vcode.codeviewer.CodeView
+                    android:id="@+id/codeview_5"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+                <com.clevergo.vcode.codeviewer.CodeView
+                    android:id="@+id/codeview_6"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/codeView_Container_SplitScreen4"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:orientation="vertical"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            android:visibility="gone"
             android:weightSum="2">
 
-            <TextView
-                android:id="@+id/pickFileTextView"
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:weightSum="2">
+
+                <com.clevergo.vcode.codeviewer.CodeView
+                    android:id="@+id/codeview_7"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:visibility="visible" />
+
+                <com.clevergo.vcode.codeviewer.CodeView
+                    android:id="@+id/codeview_8"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="@dimen/dimen20dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:weightSum="2">
+
+                <com.clevergo.vcode.codeviewer.CodeView
+                    android:id="@+id/codeview_9"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:visibility="visible" />
+
+                <com.clevergo.vcode.codeviewer.CodeView
+                    android:id="@+id/codeview_10"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:visibility="visible" />
+
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/editor_Container_Main"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible">
+
+            <com.clevergo.vcode.editorfiles.CodeView
+                android:id="@+id/editor_1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/editor_Container_SplitScreen2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:weightSum="2">
+
+            <com.clevergo.vcode.editorfiles.CodeView
+                android:id="@+id/editor_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <com.clevergo.vcode.editorfiles.CodeView
+                android:id="@+id/editor_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/editor_Container_SplitScreen3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:weightSum="2">
+
+            <com.clevergo.vcode.editorfiles.CodeView
+                android:id="@+id/editor_4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <com.clevergo.vcode.editorfiles.CodeView
+                    android:id="@+id/editor_5"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+                <com.clevergo.vcode.editorfiles.CodeView
+                    android:id="@+id/editor_6"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/editor_Container_SplitScreen4"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            android:weightSum="2">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/pick_File_Text"
-                android:textColor="@color/grey"
-                android:textSize="26sp"
-                android:textStyle="italic"
-                android:visibility="visible" />
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:weightSum="2">
 
-            <com.clevergo.vcode.codeviewer.CodeView
-                android:id="@+id/codeview_Main"
+                <com.clevergo.vcode.editorfiles.CodeView
+                    android:id="@+id/editor_7"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+                <com.clevergo.vcode.editorfiles.CodeView
+                    android:id="@+id/editor_8"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="2"
-                android:visibility="gone" />
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:weightSum="2">
 
-            <com.clevergo.vcode.codeviewer.CodeView
-                android:id="@+id/codeview_SplitScreen1"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="0"
-                android:visibility="gone">
+                <com.clevergo.vcode.editorfiles.CodeView
+                    android:id="@+id/editor_9"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
 
+                <com.clevergo.vcode.editorfiles.CodeView
+                    android:id="@+id/editor_10"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
 
-            </com.clevergo.vcode.codeviewer.CodeView>
+            </LinearLayout>
         </LinearLayout>
+
+        <HorizontalScrollView
+            android:id="@+id/buttonControls_HorizontalScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/buttonControls_LinearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@color/dark_background"
+                android:elevation="@dimen/dimen5dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+            </LinearLayout>
+        </HorizontalScrollView>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/searchResult_Layout"

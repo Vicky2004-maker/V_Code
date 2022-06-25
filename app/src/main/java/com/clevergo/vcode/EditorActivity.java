@@ -68,8 +68,6 @@ public class EditorActivity extends AppCompatActivity {
     private CodeViewFile file;
     private UndoRedoManager undoRedoManager;
     private CustomWorkerThread customWorkerThread;
-    private List<String> buttonStringList = List.of("\t", "{\n    }", "()", "[]", "<", ">", ";", "=", ",", "&", "<>", "|", "!",
-            "~", "+", "-", "*", "/", "%", ":");
     private ExpandableListView expandableListView_Editor;
     private ExpandableListView expandableListView;
     private ExpandableListAdapter expandableListAdapter;
@@ -98,15 +96,6 @@ public class EditorActivity extends AppCompatActivity {
         super.onStop();
 
         customWorkerThread.stop();
-    }
-
-    private void addTextButton(CodeView editor, final String text) {
-        editor.getText().insert(editor.getSelectionStart(), text);
-        if (text.equals(buttonStringList.get(1))
-                || text.equals(buttonStringList.get(2))
-                || text.equals(buttonStringList.get(3)))
-            editor.setSelection(editor.getSelectionStart() - 1);
-        //editor.getText().insert(editor.getSelectionStart(), "\t");
     }
 
     private MaterialButton createMaterialButton() {
@@ -235,7 +224,6 @@ public class EditorActivity extends AppCompatActivity {
         navView = findViewById(R.id.navView_Editor);
         actionBar.setTitle(getString(R.string.editor));
         //fileEditor_ExpandableList = findViewById(R.id.fileEditor_ExpandableList);
-        LinearLayout buttonControls_LinearLayout = findViewById(R.id.buttonControls_LinearLayout);
         buttonSwitcher_LinearLayout = findViewById(R.id.buttonSwitcherEditor_LinearLayout);
         expandableListView = findViewById(R.id.expandableListView_Editor);
         customWorkerThread = new CustomWorkerThread();
@@ -244,20 +232,6 @@ public class EditorActivity extends AppCompatActivity {
         expandableListTitle.add("Opened Files");
         expandableListTitle.add("All Methods");
         expandableListTitle.add("Settings");
-
-        for (int i = 0; i < buttonStringList.size(); i++) {
-            AppCompatButton simpleButton = new AppCompatButton(EditorActivity.this);
-            simpleButton.setId(i);
-            String txt = buttonStringList.get(i);
-            if (i == 0) txt = "->";
-            if (i == 1) txt = "{}";
-            simpleButton.setText(txt);
-            simpleButton.setOnClickListener(new BottomControlsClickListener());
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    ((int) getResources().getDimension(R.dimen.dimen40dp)),
-                    ((int) getResources().getDimension(R.dimen.dimen45dp)));
-            buttonControls_LinearLayout.addView(simpleButton, i, layoutParams);
-        }
 
         actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.nav_open, R.string.nav_close);
         drawerLayout.addDrawerListener(actionBarDrawerToggle);
@@ -352,7 +326,7 @@ public class EditorActivity extends AppCompatActivity {
     private class BottomControlsClickListener implements View.OnClickListener {
         @Override
         public void onClick(View v) {
-            addTextButton(editorList.get(activeEditor), buttonStringList.get(v.getId()));
+            //addTextButton(editorList.get(activeEditor), buttonStringList.get(v.getId()));
         }
     }
 

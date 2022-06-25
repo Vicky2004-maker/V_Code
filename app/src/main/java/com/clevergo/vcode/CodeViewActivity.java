@@ -4,7 +4,6 @@ import static com.clevergo.vcode.Helper.ALL_FILES_MIME;
 import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_NORMAL;
 import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_PDF;
 import static com.clevergo.vcode.Helper.CODE_HIGHLIGHTER_MAX_LINES;
-import static com.clevergo.vcode.Helper.CREATE_FILE_CODE;
 import static com.clevergo.vcode.Helper.CREATE_FILE_NORMAL_CODE;
 import static com.clevergo.vcode.Helper.CREATE_FILE_PDF_CODE;
 import static com.clevergo.vcode.Helper.PDF_MIME;
@@ -53,6 +52,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -64,6 +64,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -109,11 +110,13 @@ public class CodeViewActivity extends AppCompatActivity
     private final HashSet<String> activeFileNames = new HashSet<>();
     public DrawerLayout drawerLayout;
     public ActionBarDrawerToggle actionBarDrawerToggle;
-    //Expandable ListView
-    ExpandableListView expandableListView;
-    ExpandableListAdapter expandableListAdapter;
-    List<String> expandableListTitle = new ArrayList<>();
-    HashMap<String, List<String>> expandableListDetail = new HashMap<>();
+    public List<String> buttonStringList = List.of("\t", "{\n    }", "()", "[]", "<", ">", ";", "=", ",", "&", "<>", "|", "!",
+            "~", "+", "-", "*", "/", "%", ":");
+    private HorizontalScrollView buttonControls_HorizontalScrollView;
+    private ExpandableListView expandableListView;
+    private ExpandableListAdapter expandableListAdapter;
+    private List<String> expandableListTitle = new ArrayList<>();
+    private HashMap<String, List<String>> expandableListDetail = new HashMap<>();
     private HashMap<String, Integer> allMethods = new HashMap<>();
     private NavigationView navView;
     private ConstraintLayout searchResult_Layout;
@@ -226,6 +229,7 @@ public class CodeViewActivity extends AppCompatActivity
         navView = findViewById(R.id.navView);
         expandableListView = findViewById(R.id.fileSelector_ExpandableList);
         allFileSwitcherParent = findViewById(R.id.allFileSwitcherParent);
+        buttonControls_HorizontalScrollView = findViewById(R.id.buttonControls_HorizontalScrollView);
         actionBar = getSupportActionBar();
 
         expandableListTitle.add("Active Files");
@@ -892,16 +896,39 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void editFile() {
-        Intent i = new Intent();
-        i.putExtra("currentFileObject", fileList.get(currentActiveID));
-        i.setAction(Intent.ACTION_VIEW);
-        i.setClass(CodeViewActivity.this, EditorActivity.class);
-        startActivity(i);
+        //TODO : Make all view required for edit visible and others gone
     }
 
     private void disableHighlighting(CodeView codeView, int totalLines) {
         codeView.setOnHighlightListener(totalLines > CODE_HIGHLIGHTER_MAX_LINES ? null : CodeViewActivity.this);
     }
+
+    private void addEditorButtons() {
+        LinearLayout buttonControls_LinearLayout = findViewById(R.id.buttonControls_LinearLayout);
+        for (int i = 0; i < buttonStringList.size(); i++) {
+            AppCompatButton simpleButton = new AppCompatButton(CodeViewActivity.this);
+            simpleButton.setId(i);
+            String txt = buttonStringList.get(i);
+            if (i == 0) txt = "->";
+            if (i == 1) txt = "{}";
+            simpleButton.setText(txt);
+            simpleButton.setOnClickListener(new CodeViewActivity.BottomControlsClickListener());
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    ((int) getResources().getDimension(R.dimen.dimen40dp)),
+                    ((int) getResources().getDimension(R.dimen.dimen45dp)));
+            buttonControls_LinearLayout.addView(simpleButton, i, layoutParams);
+        }
+    }
+
+    private void addTextButton(com.clevergo.vcode.editorfiles.CodeView editor, final String text) {
+        editor.getText().insert(editor.getSelectionStart(), text);
+        if (text.equals(buttonStringList.get(1))
+                || text.equals(buttonStringList.get(2))
+                || text.equals(buttonStringList.get(3)))
+            editor.setSelection(editor.getSelectionStart() - 1);
+        //editor.getText().insert(editor.getSelectionStart(), "\t");
+    }
+
     //endregion
 
     //region Menu
@@ -1118,6 +1145,13 @@ public class CodeViewActivity extends AppCompatActivity
             case ConvertToPDF:
                 chooseDirectory(CodeViewActivity.this, CHOOSE_DIRECTORY_PDF);
                 break;
+        }
+    }
+
+    private class BottomControlsClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            //addTextButton(editorList.get(activeEditor), buttonStringList.get(v.getId()));
         }
     }
 //endregion
