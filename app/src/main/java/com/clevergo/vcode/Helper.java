@@ -454,6 +454,12 @@ public class Helper {
         }
     }
 
+    public static int getScreenWidth_Pixels(Context context) {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        return displayMetrics.widthPixels;
+    }
+
     public static float getScreenWidth_DP(Context context) {
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
         return displayMetrics.widthPixels / displayMetrics.xdpi;

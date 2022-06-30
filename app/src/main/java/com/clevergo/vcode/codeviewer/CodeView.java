@@ -1,8 +1,8 @@
 package com.clevergo.vcode.codeviewer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Html;
@@ -21,18 +21,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CodeView extends WebView {
-
-    public interface OnHighlightListener {
-        void onStartCodeHighlight();
-
-        void onFinishCodeHighlight();
-
-        void onLanguageDetected(com.clevergo.vcode.codeviewer.Language language, int relevance);
-
-        void onFontSizeChanged(int sizeInPx);
-
-        void onLineClicked(int lineNumber, String content);
-    }
 
     private String code = "";
     private String escapeCode;
@@ -58,10 +46,10 @@ public class CodeView extends WebView {
 
     public CodeView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        //Inicialização.
         init(context, attrs);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (isZoomEnabled()) {
@@ -70,10 +58,10 @@ public class CodeView extends WebView {
         return super.onTouchEvent(event);
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private void init(Context context, AttributeSet attrs) {
         TypedArray attributes = context.getTheme().obtainStyledAttributes(attrs,
                 R.styleable.CodeView, 0, 0);
-        //Define os atributos
         setWrapLine(attributes.getBoolean(R.styleable.CodeView_cv_wrap_line, false));
         setFontSize(attributes.getInt(R.styleable.CodeView_cv_font_size, 14));
         setZoomEnabled(attributes.getBoolean(R.styleable.CodeView_cv_zoom_enable, false));
@@ -89,21 +77,13 @@ public class CodeView extends WebView {
         getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
         getSettings().setLoadWithOverviewMode(true);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            WebView.setWebContentsDebuggingEnabled(true);
-        }
+        WebView.setWebContentsDebuggingEnabled(true);
     }
 
-    /**
-     * Define um listener.
-     */
     public CodeView setOnHighlightListener(OnHighlightListener listener) {
-        //Definir um listener.
         if (listener != null) {
-            //Definir um novo listener
             if (onHighlightListener != listener) {
                 onHighlightListener = listener;
-                //Adiciona o objeto que atenderá os eventos js e disparará o listener definido.
                 addJavascriptInterface(new Object() {
                     @JavascriptInterface
                     public void onStartCodeHighlight() {
@@ -115,13 +95,10 @@ public class CodeView extends WebView {
                     @JavascriptInterface
                     public void onFinishCodeHighlight() {
                         if (onHighlightListener != null) {
-                            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    fillLineNumbers();
-                                    showHideLineNumber(isShowLineNumber());
-                                    highlightLineNumber(getHighlightLineNumber());
-                                }
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                fillLineNumbers();
+                                showHideLineNumber(isShowLineNumber());
+                                highlightLineNumber(getHighlightLineNumber());
                             });
                             onHighlightListener.onFinishCodeHighlight();
                         }
@@ -142,24 +119,16 @@ public class CodeView extends WebView {
                     }
                 }, "android");
             }
-        }
-        //Remover o listener.
-        else {
+        } else {
             removeJavascriptInterface("android");
         }
         return this;
     }
 
-    /**
-     * Obtém o tamanho da fonte do texto em pixels.
-     */
     public float getFontSize() {
         return fontSize;
     }
 
-    /**
-     * Define o tamanho da fonte do texto em pixels.
-     */
     public CodeView setFontSize(float fontSize) {
         if (fontSize < 8) fontSize = 8;
         this.fontSize = fontSize;
@@ -169,16 +138,10 @@ public class CodeView extends WebView {
         return this;
     }
 
-    /**
-     * Obtém o código exibido.
-     */
     public String getCode() {
         return code;
     }
 
-    /**
-     * Define o código que será exibido.
-     */
     public CodeView setCode(String code) {
         if (code == null) code = "";
         this.code = code;
@@ -186,115 +149,70 @@ public class CodeView extends WebView {
         return this;
     }
 
-    /**
-     * Obtém o tema.
-     */
     public Theme getTheme() {
         return theme;
     }
 
-    /**
-     * Define o tema.
-     */
     public CodeView setTheme(Theme theme) {
         this.theme = theme;
         return this;
     }
 
-    /**
-     * Obtém a linguagem.
-     */
     public com.clevergo.vcode.codeviewer.Language getLanguage() {
         return language;
     }
 
-    /**
-     * Define a linguagem.
-     */
     public CodeView setLanguage(com.clevergo.vcode.codeviewer.Language language) {
         this.language = language;
         return this;
     }
 
-    /**
-     * Verifica se está aplicando a quebra de linha.
-     */
     public boolean isWrapLine() {
         return wrapLine;
     }
 
-    /**
-     * Define se aplicará a quebra de linha.
-     */
     public CodeView setWrapLine(boolean wrapLine) {
         this.wrapLine = wrapLine;
         return this;
     }
 
-    /**
-     * Verifica se o zoom está habilitado.
-     */
     public boolean isZoomEnabled() {
         return zoomEnabled;
     }
 
-    /**
-     * Define que o zoom estará habilitado ou não.
-     */
     public CodeView setZoomEnabled(boolean zoomEnabled) {
         this.zoomEnabled = zoomEnabled;
         return this;
     }
 
-    /**
-     * Verifica se o número da linha está sendo exibido.
-     */
     public boolean isShowLineNumber() {
         return showLineNumber;
     }
 
-    /**
-     * Define a visibilidade do número da linha.
-     */
     public CodeView setShowLineNumber(boolean showLineNumber) {
         this.showLineNumber = showLineNumber;
         return this;
     }
 
-    /**
-     * Obtém o número da primeira linha.
-     */
     public int getStartLineNumber() {
         return startLineNumber;
     }
 
-    /**
-     * Define o número da primeira linha.
-     */
     public CodeView setStartLineNumber(int startLineNumber) {
         if (startLineNumber < 0) startLineNumber = 1;
         this.startLineNumber = startLineNumber;
         return this;
     }
 
-    /**
-     * Obtém a quantidade de linhas no código.
-     */
     public int getLineCount() {
         return lineCount;
     }
 
-    /**
-     * Exibe ou oculta o número da linha.
-     */
     public void toggleLineNumber() {
         showLineNumber = !showLineNumber;
         showHideLineNumber(showLineNumber);
     }
 
-    /**
-     * Aplica os atributos e exibe o código.
-     */
     public void apply() {
         loadDataWithBaseURL("",
                 toHtml(),
@@ -303,34 +221,28 @@ public class CodeView extends WebView {
                 "");
     }
 
+    @SuppressLint("DefaultLocale")
     private String toHtml() {
         StringBuilder sb = new StringBuilder();
-        //html
         sb.append("<!DOCTYPE html>\n")
                 .append("<html>\n")
                 .append("<head>\n");
-        //style
         sb.append("<link rel='stylesheet' href='").append(getTheme().getPath()).append("' />\n");
         sb.append("<style>\n");
-        //body
         sb.append("body {");
         sb.append("font-size:").append(String.format("%dpx;", (int) getFontSize()));
         sb.append("margin: 0px; line-height: 1.2;");
         sb.append("}\n");
-        //.hljs
         sb.append(".hljs {");
         sb.append("}\n");
-        //pre
         sb.append("pre {");
         sb.append("margin: 0px; position: relative;");
         sb.append("}\n");
-        //line
         if (isWrapLine()) {
             sb.append("td.line {");
             sb.append("word-wrap: break-word; white-space: pre-wrap; word-break: break-all;");
             sb.append("}\n");
         }
-        //Outros
         sb.append("table, td, tr {");
         sb.append("margin: 0px; padding: 0px;");
         sb.append("}\n");
@@ -354,11 +266,7 @@ public class CodeView extends WebView {
     }
 
     private void executeJavaScript(String js) {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-            evaluateJavascript("javascript:" + js, null);
-        } else {
-            loadUrl("javascript:" + js);
-        }
+        evaluateJavascript("javascript:" + js, null);
     }
 
     private void changeFontSize(int sizeInPx) {
@@ -392,11 +300,8 @@ public class CodeView extends WebView {
     private String insertLineNumber(String code) {
         Matcher m = Pattern.compile("(.*?)&#10;").matcher(code);
         StringBuffer sb = new StringBuffer();
-        //Posição atual da linha.
         int pos = getStartLineNumber();
-        //Quantidade de linhas.
         lineCount = 0;
-        //Para cada linha encontrada, encapsulá-la dentro uma linha de uma tabela.
         while (m.find()) {
             m.appendReplacement(sb,
                     String.format(Locale.ENGLISH,
@@ -409,9 +314,18 @@ public class CodeView extends WebView {
         return "<table>\n" + sb.toString().trim() + "</table>\n";
     }
 
-    /**
-     * Eventos de pinça.
-     */
+    public interface OnHighlightListener {
+        void onStartCodeHighlight();
+
+        void onFinishCodeHighlight();
+
+        void onLanguageDetected(com.clevergo.vcode.codeviewer.Language language, int relevance);
+
+        void onFontSizeChanged(int sizeInPx);
+
+        void onLineClicked(int lineNumber, String content);
+    }
+
     private class PinchListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
 
         private float fontSize;

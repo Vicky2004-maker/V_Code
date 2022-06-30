@@ -3,13 +3,15 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/drawable/ic_close_split_screen.xml" value="0.2775" />
         <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/drawable/ic_compile_24.xml" value="0.2775" />
         <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/drawable/ic_delete_file.xml" value="0.2775" />
         <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/drawable/ic_edit_24.xml" value="0.2775" />
+        <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/drawable/ic_save.xml" value="0.2775" />
         <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/drawable/ic_split_screen.xml" value="0.2775" />
         <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/layout-land/activity_code_view.xml" value="0.2310405643738977" />
         <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/layout-land/info_bottom_sheet.xml" value="0.536" />
-        <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/layout/activity_code_view.xml" value="0.2564102564102564" />
+        <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/layout/activity_code_view.xml" value="0.2" />
         <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/layout/activity_compile_link.xml" value="0.22402736212056434" />
         <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/layout/activity_editor.xml" value="0.22402736212056434" />
         <entry key="..\:/PROJECT/AndroidStudioProjects/VCode/app/src/main/res/layout/activity_main.xml" value="0.264" />

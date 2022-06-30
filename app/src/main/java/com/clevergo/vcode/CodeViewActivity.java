@@ -30,12 +30,14 @@ import static com.clevergo.vcode.Helper.setBtnIcon;
 import static com.clevergo.vcode.Helper.showAlertDialog;
 import static com.clevergo.vcode.Helper.uiHandler;
 import static com.clevergo.vcode.Helper.validateRegex;
+import static com.clevergo.vcode.Helper.writeFile;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -72,6 +74,9 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.clevergo.vcode.codeviewer.CodeView;
 import com.clevergo.vcode.codeviewer.Language;
 import com.clevergo.vcode.codeviewer.Theme;
+import com.clevergo.vcode.editorfiles.syntax.LanguageManager;
+import com.clevergo.vcode.editorfiles.syntax.LanguageName;
+import com.clevergo.vcode.editorfiles.syntax.ThemeName;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.navigation.NavigationView;
@@ -84,6 +89,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -97,13 +103,13 @@ public class CodeViewActivity extends AppCompatActivity
     public static final List<CodeViewFile> fileList = new ArrayList<>();
     private static final List<String> codeList = new ArrayList<>();
     public static int activeFilePosition = 0, currentActiveID = -1;
-    public static String[] selectedFileNames = new String[2];
+    public static List<String> selectedFileNames = new ArrayList<>();
     public static boolean isScreenSplit = false;
     public static String activeSplitScreenFileName;
     public static int filesOpened = 0;
     public static List<Uri> uri_List;
     public static CustomWorkerThread customWorkerThread;
-    private static boolean isEditorMode = false;
+    public static boolean isEditorMode = false;
     private static ProgressDialog progressDialog;
     private final boolean loadIntoRAM = true;
     private final List<String> fileNames = new ArrayList<>();
@@ -121,8 +127,9 @@ public class CodeViewActivity extends AppCompatActivity
     private HashMap<String, Integer> allMethods = new HashMap<>();
     private NavigationView navView;
     private ConstraintLayout searchResult_Layout;
-    private LinearLayout codeView_Container_Main, codeView_Container_SplitScreen2, codeView_Container_SplitScreen3, codeView_Container_SplitScreen4;
-    private LinearLayout codeView_Container_SplitScreen3_Child;
+    private LinearLayout codeView_Container_Main, codeView_Container_SplitScreen2, codeView_Container_SplitScreen3, codeView_Container_SplitScreen4,
+            editor_Container_Main, editor_Container_SplitScreen2, editor_Container_SplitScreen3, editor_Container_SplitScreen4;
+    private LinearLayout codeView_Container_SplitScreen3_Child, editor_Container_SplitScreen3_Child;
     private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout, allFileSwitcherParent;
     private TextView pickFile_TextView, lineInfo_TextView, fileSize_TextView, searchWord_TextView, findResultNum_TextView;
     private boolean searchResult = false;
@@ -131,7 +138,7 @@ public class CodeViewActivity extends AppCompatActivity
     private ActionBar actionBar;
     private ActiveLayout activeLayout;
 
-    private List<com.clevergo.vcode.editorfiles.CodeView> activeEditorList = new ArrayList<>();
+    private List<com.clevergo.vcode.editorfiles.CodeView> editorList = new ArrayList<>();
     private List<CodeView> codeViewList = new ArrayList<>();
 
     @Override
@@ -234,7 +241,11 @@ public class CodeViewActivity extends AppCompatActivity
         codeView_Container_SplitScreen2 = findViewById(R.id.codeView_Container_SplitScreen2);
         codeView_Container_SplitScreen3 = findViewById(R.id.codeView_Container_SplitScreen3);
         codeView_Container_SplitScreen4 = findViewById(R.id.codeView_Container_SplitScreen4);
-        codeView_Container_SplitScreen3_Child = findViewById(R.id.codeView_Container_SplitScreen3_Child);
+        editor_Container_Main = findViewById(R.id.editor_Container_Main);
+        editor_Container_SplitScreen2 = findViewById(R.id.editor_Container_SplitScreen2);
+        editor_Container_SplitScreen3 = findViewById(R.id.editor_Container_SplitScreen3);
+        editor_Container_SplitScreen4 = findViewById(R.id.editor_Container_SplitScreen4);
+        editor_Container_SplitScreen3_Child = findViewById(R.id.editor_Container_SplitScreen3_Child);
         drawerLayout = findViewById(R.id.drawer_layout);
         navView = findViewById(R.id.navView);
         expandableListView = findViewById(R.id.fileSelector_ExpandableList);
@@ -246,6 +257,7 @@ public class CodeViewActivity extends AppCompatActivity
 
         updateViewEditorLists();
         codeViewList.add(((CodeView) MAIN_VIEW_HOLDER.get(codeView_Container_Main).get(0)));
+        editorList.add((com.clevergo.vcode.editorfiles.CodeView) MAIN_VIEW_HOLDER.get(editor_Container_Main).get(0));
 
         expandableListTitle.add("Active Files");
         expandableListTitle.add("Opened Files");
@@ -397,21 +409,6 @@ public class CodeViewActivity extends AppCompatActivity
         lineInfo_TextView.setText(codeView.getLineCount() + ":Nil (" + codeView.getCode().length() + ")");
     }
 
-    private void setCodeViewSplitScreen(final CodeView[] codeView, @NonNull final String[] code) {
-        for (int i = 0; i < codeView.length; i++) {
-            codeView[i].setTheme(Theme.MONOKAI)
-                    .setCode(code[i])
-                    .setLanguage(Language.AUTO)
-                    .setWrapLine(false)
-                    .setZoomEnabled(true)
-                    .setShowLineNumber(true)
-                    .apply();
-            codeView[i].setFindListener(this);
-            disableHighlighting(codeView[i], getLines(code[i]));
-            codeView[i].setVisibility(View.VISIBLE);
-        }
-    }
-
     private void addUI_FileURI(final Uri uri, final boolean isLastFile, boolean isUrl) {
         if (isLowerSDK()) {
             uri_List.add(uri);
@@ -435,7 +432,7 @@ public class CodeViewActivity extends AppCompatActivity
         }
 
         String fileNameTemp = isUrl ? getFileName(uri.toString()) : getFileName(CodeViewActivity.this, uri);
-        if (isScreenSplit && isLastFile) selectedFileNames[activeFilePosition] = fileNameTemp;
+        if (isScreenSplit && isLastFile) selectedFileNames.set(activeFilePosition, fileNameTemp);
 
         final CodeViewFile file = fileList.get(filesOpened);
         MaterialButton materialButton = new MaterialButton(CodeViewActivity.this);
@@ -479,7 +476,7 @@ public class CodeViewActivity extends AppCompatActivity
         }
 
         if (isScreenSplit)
-            selectedFileNames[activeFilePosition] = getFileName(CodeViewActivity.this, data);
+            selectedFileNames.set(activeFilePosition, getFileName(CodeViewActivity.this, data));
 
         MaterialButton materialButton = new MaterialButton(CodeViewActivity.this);
         materialButton.setText(fileList.get(fileList.size() - 1).getName());
@@ -771,12 +768,12 @@ public class CodeViewActivity extends AppCompatActivity
         }
 
         layoutDialog.setPositiveButton(getString(R.string.splitScreen), (dialog, which) -> {
-            isScreenSplit = true;
-
             if (isEditorMode) {
 
             } else {
                 if (layout2.isChecked()) {
+                    isScreenSplit = true;
+
                     activeLayout = ActiveLayout.CodeView_SplitScreen2;
                     codeView_Container_Main.setVisibility(View.GONE);
                     codeView_Container_SplitScreen2.setVisibility(View.VISIBLE);
@@ -814,6 +811,8 @@ public class CodeViewActivity extends AppCompatActivity
                     }
 
                 } else if (layout3A.isChecked()) {
+                    isScreenSplit = true;
+
                     activeLayout = ActiveLayout.CodeView_SplitScreen3;
                     codeView_Container_Main.setVisibility(View.GONE);
                     codeView_Container_SplitScreen2.setVisibility(View.GONE);
@@ -876,6 +875,8 @@ public class CodeViewActivity extends AppCompatActivity
                         }
                     }
                 } else if (layout3B.isChecked()) {
+                    isScreenSplit = true;
+
                     activeLayout = ActiveLayout.CodeView_SplitScreen3;
                     codeView_Container_Main.setVisibility(View.GONE);
                     codeView_Container_SplitScreen2.setVisibility(View.GONE);
@@ -938,6 +939,8 @@ public class CodeViewActivity extends AppCompatActivity
                         }
                     }
                 } else if (layout4.isChecked()) {
+                    isScreenSplit = true;
+
                     activeLayout = ActiveLayout.CodeView_SplitScreen4;
                     codeView_Container_Main.setVisibility(View.GONE);
                     codeView_Container_SplitScreen2.setVisibility(View.GONE);
@@ -994,6 +997,8 @@ public class CodeViewActivity extends AppCompatActivity
                         }
                     }
                 }
+                List<String> tempList = List.copyOf(activeFileNames);
+                selectedFileNames = new ArrayList<>(tempList);
             }
         });
 
@@ -1032,6 +1037,7 @@ public class CodeViewActivity extends AppCompatActivity
             updateInfo(Uri.parse(file.getUri()));
         }
         currentActiveID = fileList.size() - 1;
+        activeFilePosition = 0;
     }
 
     private void addNavMenu(final String fileName) {
@@ -1049,7 +1055,7 @@ public class CodeViewActivity extends AppCompatActivity
 
         if (isScreenSplit) {
             for (int i = 0; i < fileList.size(); i++) {
-                if (fileList.get(i).getName().equals(String.valueOf(selectedFileNames[activeFilePosition])))
+                if (fileList.get(i).getName().equals(String.valueOf(selectedFileNames.get(activeFilePosition))))
                     currentActiveID = i;
             }
         }
@@ -1181,7 +1187,54 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void editFile() {
+        addEditorButtons();
+        isEditorMode = true;
+
+        if (isScreenSplit) {
+
+        } else {
+            editor_Container_Main.setVisibility(View.VISIBLE);
+            codeView_Container_Main.setVisibility(View.GONE);
+
+            CodeViewFile file = fileList.get(currentActiveID);
+
+            com.clevergo.vcode.editorfiles.CodeView editor = editorList.get(0);
+            setEditor(editor, readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+        }
+
         //TODO : Make all view required for edit visible and others gone
+    }
+
+    private void setEditor(@NonNull final com.clevergo.vcode.editorfiles.CodeView editor, @NonNull final String code) {
+        LanguageManager languageManager = new LanguageManager(CodeViewActivity.this, editor);
+        languageManager.applyTheme(LanguageName.JAVA, ThemeName.MONOKAI);
+        editor.setText(code);
+        editor.setHighlightWhileTextChanging(true);
+        editor.setEnableAutoIndentation(true);
+        editor.setEnableLineNumber(true);
+        editor.setLineNumberTextColor(Color.GRAY);
+        editor.setLineNumberTextSize(35);
+        editor.setTabLength(4);
+        //editor.setIndentationStarts(indentationStarts);
+        //editor.setIndentationEnds(indentationEnds);
+
+        String[] languageKeywords = getResources().getStringArray(R.array.java_keywords);
+        ArrayAdapter<String> codeAdapter = new ArrayAdapter<>(CodeViewActivity.this,
+                R.layout.list_item_suggestion,
+                R.id.suggestItemTextView,
+                languageKeywords);
+
+        editor.setAdapter(codeAdapter);
+        editor.enablePairComplete(true);
+        editor.enablePairCompleteCenterCursor(true);
+        Map<Character, Character> pairCompleteMap = new HashMap<>();
+        pairCompleteMap.put('{', '}');
+        pairCompleteMap.put('[', ']');
+        pairCompleteMap.put('(', ')');
+        pairCompleteMap.put('<', '>');
+        pairCompleteMap.put('"', '"');
+        pairCompleteMap.put('\'', '\'');
+        editor.setPairCompleteMap(pairCompleteMap);
     }
 
     private void disableHighlighting(CodeView codeView, int totalLines) {
@@ -1190,6 +1243,8 @@ public class CodeViewActivity extends AppCompatActivity
 
     private void addEditorButtons() {
         LinearLayout buttonControls_LinearLayout = findViewById(R.id.buttonControls_LinearLayout);
+        buttonControls_HorizontalScrollView.setVisibility(View.VISIBLE);
+        buttonControls_LinearLayout.removeAllViews();
         for (int i = 0; i < buttonStringList.size(); i++) {
             AppCompatButton simpleButton = new AppCompatButton(CodeViewActivity.this);
             simpleButton.setId(i);
@@ -1202,6 +1257,30 @@ public class CodeViewActivity extends AppCompatActivity
                     ((int) getResources().getDimension(R.dimen.dimen40dp)),
                     ((int) getResources().getDimension(R.dimen.dimen45dp)));
             buttonControls_LinearLayout.addView(simpleButton, i, layoutParams);
+        }
+    }
+
+    private void saveEdit() {
+        CodeViewFile file = fileList.get(currentActiveID);
+
+        writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(0).getText().toString());
+        exitEditMode();
+    }
+
+    private void exitEditMode() {
+        isEditorMode = false;
+
+        buttonControls_HorizontalScrollView.setVisibility(View.GONE);
+        if (isScreenSplit) {
+
+        } else {
+            editor_Container_Main.setVisibility(View.GONE);
+            codeView_Container_Main.setVisibility(View.VISIBLE);
+
+            CodeViewFile file = fileList.get(currentActiveID);
+
+            CodeView codeView = codeViewList.get(0);
+            setCodeView(codeView, readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
         }
     }
 
@@ -1228,8 +1307,21 @@ public class CodeViewActivity extends AppCompatActivity
                         findViewById(R.id.codeview_8),
                         findViewById(R.id.codeview_9),
                         findViewById(R.id.codeview_10)));
-    }
 
+        MAIN_VIEW_HOLDER.put(editor_Container_Main, List.of(findViewById(R.id.editor_1)));
+        MAIN_VIEW_HOLDER.put(editor_Container_SplitScreen2,
+                List.of(findViewById(R.id.editor_2),
+                        findViewById(R.id.editor_3)));
+        MAIN_VIEW_HOLDER.put(editor_Container_SplitScreen3,
+                List.of(findViewById(R.id.editor_4),
+                        findViewById(R.id.editor_5),
+                        findViewById(R.id.editor_6)));
+        MAIN_VIEW_HOLDER.put(editor_Container_SplitScreen4,
+                List.of(findViewById(R.id.editor_7),
+                        findViewById(R.id.editor_8),
+                        findViewById(R.id.editor_9),
+                        findViewById(R.id.editor_10)));
+    }
     //endregion
 
     //region Menu
@@ -1246,7 +1338,6 @@ public class CodeViewActivity extends AppCompatActivity
         if (actionBarDrawerToggle.onOptionsItemSelected(item)) {
             return true;
         }
-
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.addFile_menu:
@@ -1264,7 +1355,6 @@ public class CodeViewActivity extends AppCompatActivity
     //endregion
 
     //region CodeView OnHighlightListener & OnFindListener & Button OnCLickListener & Data from InfoBottomSheet
-
     @SuppressLint("SwitchIntDef")
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
@@ -1276,8 +1366,8 @@ public class CodeViewActivity extends AppCompatActivity
                     makeFullScreen(CodeViewActivity.this);
                     configFullScreen = false;
                 }
-                if(isScreenSplit) {
-                    switch (activeLayout){
+                if (isScreenSplit) {
+                    switch (activeLayout) {
                         case CodeView_SplitScreen2:
                             codeView_Container_SplitScreen2.setOrientation(LinearLayout.HORIZONTAL);
                             break;
@@ -1285,9 +1375,7 @@ public class CodeViewActivity extends AppCompatActivity
                             codeView_Container_SplitScreen3.setOrientation(LinearLayout.HORIZONTAL);
                             codeView_Container_SplitScreen3_Child.setOrientation(LinearLayout.VERTICAL);
                             break;
-
                     }
-
                 }
                 break;
             case Configuration.ORIENTATION_PORTRAIT:
@@ -1296,7 +1384,7 @@ public class CodeViewActivity extends AppCompatActivity
                     configFullScreen = true;
                 }
                 if (isScreenSplit) {
-                    switch (activeLayout){
+                    switch (activeLayout) {
                         case CodeView_SplitScreen2:
                             codeView_Container_SplitScreen2.setOrientation(LinearLayout.VERTICAL);
                             break;
@@ -1371,7 +1459,7 @@ public class CodeViewActivity extends AppCompatActivity
         if (loadIntoRAM) {
             setCodeView(codeViewList.get(activeFilePosition), codeList.get(clicked_ID));
             if (isScreenSplit)
-                selectedFileNames[activeFilePosition] = ((MaterialButton) view).getText().toString();
+                selectedFileNames.set(activeFilePosition, ((MaterialButton) view).getText().toString());
         } else {
             if (file.isURL)
                 setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, file.getUrl()));
@@ -1437,13 +1525,19 @@ public class CodeViewActivity extends AppCompatActivity
             case ConvertToPDF:
                 chooseDirectory(CodeViewActivity.this, CHOOSE_DIRECTORY_PDF);
                 break;
+            case SaveEdits:
+                saveEdit();
+                break;
+            case ExitEditMode:
+                exitEditMode();
+                break;
         }
     }
 
     private class BottomControlsClickListener implements View.OnClickListener {
         @Override
         public void onClick(View v) {
-            //addTextButton(editorList.get(activeEditor), buttonStringList.get(v.getId()));
+            addTextButton(editorList.get(activeFilePosition), buttonStringList.get(v.getId()));
         }
     }
 //endregion

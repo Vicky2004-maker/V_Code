@@ -11,5 +11,7 @@ public enum BottomSheetCode {
     DeleteFile,
     SetActiveCodeViewFile,
     RemoveSplitScreen,
-    ConvertToPDF
+    ConvertToPDF,
+    SaveEdits,
+    ExitEditMode
 }

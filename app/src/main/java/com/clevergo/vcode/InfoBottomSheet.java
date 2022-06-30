@@ -39,11 +39,13 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
 
         ImageView fullScreen_imageView = v.findViewById(R.id.fullScreen_imageView);
         ImageView splitScreen_ImageView = v.findViewById(R.id.splitScreen_imageView);
+        ImageView convertPDF_ImageView = v.findViewById(R.id.convertPDF_ImageView);
+        ImageView edit_ImageView = v.findViewById(R.id.edit_imageView);
         AutoCompleteTextView activeCodeView_Selector = v.findViewById(R.id.activeCodeView_Selector);
         TextInputLayout activeFile_TextInputLayout = v.findViewById(R.id.activeFile_TextInputLayout);
         activeFile_TextInputLayout.setVisibility(View.GONE);
 
-        if (CodeViewActivity.selectedFileNames[0] != null && CodeViewActivity.isScreenSplit) {
+        if (CodeViewActivity.isScreenSplit) {
             ArrayAdapter<String> myAdapter = new ArrayAdapter<>(getActivity(),
                     androidx.appcompat.R.layout.support_simple_spinner_dropdown_item,
                     CodeViewActivity.selectedFileNames);
@@ -66,10 +68,18 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
             fullScreen_imageView.setImageResource(R.drawable.ic_fullscreen_24);
         }
 
-        if(CodeViewActivity.isScreenSplit) {
+        if (CodeViewActivity.isScreenSplit) {
             splitScreen_ImageView.setImageResource(R.drawable.ic_close_split_screen);
         } else {
             splitScreen_ImageView.setImageResource(R.drawable.ic_split_screen_01);
+        }
+
+        if (CodeViewActivity.isEditorMode) {
+            convertPDF_ImageView.setImageResource(R.drawable.ic_save);
+            edit_ImageView.setImageResource(R.drawable.ic_exit_edit);
+        } else {
+            convertPDF_ImageView.setImageResource(R.drawable.ic_pdf);
+            edit_ImageView.setImageResource(R.drawable.ic_edit_24);
         }
 
         fullScreen_imageView.setOnClickListener(a -> {
@@ -99,18 +109,26 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
             dismiss();
         });
 
-        v.findViewById(R.id.edit_imageView).setOnClickListener(a -> {
-            inputListener.sendInput(BottomSheetCode.Edit);
-            dismiss();
-        });
-
         v.findViewById(R.id.compile_imageView).setOnClickListener(a -> {
             inputListener.sendInput(BottomSheetCode.Compile);
             dismiss();
         });
 
-        v.findViewById(R.id.convertPDF_ImageView).setOnClickListener(a -> {
-            inputListener.sendInput(BottomSheetCode.ConvertToPDF);
+        edit_ImageView.setOnClickListener(a -> {
+            if (CodeViewActivity.isEditorMode) {
+                inputListener.sendInput(BottomSheetCode.ExitEditMode);
+            } else {
+                inputListener.sendInput(BottomSheetCode.Edit);
+            }
+            dismiss();
+        });
+
+        convertPDF_ImageView.setOnClickListener(a -> {
+            if (CodeViewActivity.isEditorMode) {
+                inputListener.sendInput(BottomSheetCode.SaveEdits);
+            } else {
+                inputListener.sendInput(BottomSheetCode.ConvertToPDF);
+            }
             dismiss();
         });
 

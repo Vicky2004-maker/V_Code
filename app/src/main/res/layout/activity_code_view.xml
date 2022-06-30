@@ -50,15 +50,15 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:orientation="vertical"
             android:visibility="gone">
 
             <com.clevergo.vcode.codeviewer.CodeView
                 android:id="@+id/codeview_1"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"/>
 
         </LinearLayout>
-
 
         <LinearLayout
             android:id="@+id/codeView_Container_SplitScreen2"
@@ -182,7 +182,8 @@
         <LinearLayout
             android:id="@+id/editor_Container_Main"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:visibility="gone">
 
             <com.clevergo.vcode.editorfiles.CodeView
@@ -194,7 +195,8 @@
         <LinearLayout
             android:id="@+id/editor_Container_SplitScreen2"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="vertical"
             android:visibility="gone"
             android:weightSum="2">
@@ -216,9 +218,10 @@
         <LinearLayout
             android:id="@+id/editor_Container_SplitScreen3"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:orientation="vertical"
             android:visibility="gone"
+            android:layout_weight="1"
             android:weightSum="2">
 
             <com.clevergo.vcode.editorfiles.CodeView
@@ -228,6 +231,7 @@
                 android:layout_weight="1" />
 
             <LinearLayout
+                android:id="@+id/editor_Container_SplitScreen3_Child"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
@@ -253,8 +257,9 @@
         <LinearLayout
             android:id="@+id/editor_Container_SplitScreen4"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:baselineAligned="false"
+            android:layout_weight="1"
             android:orientation="horizontal"
             android:visibility="gone"
             android:weightSum="2">
