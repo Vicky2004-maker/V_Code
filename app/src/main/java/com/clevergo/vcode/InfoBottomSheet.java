@@ -38,6 +38,7 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
         View v = inflater.inflate(R.layout.info_bottom_sheet, container, false);
 
         ImageView fullScreen_imageView = v.findViewById(R.id.fullScreen_imageView);
+        ImageView splitScreen_ImageView = v.findViewById(R.id.splitScreen_imageView);
         AutoCompleteTextView activeCodeView_Selector = v.findViewById(R.id.activeCodeView_Selector);
         TextInputLayout activeFile_TextInputLayout = v.findViewById(R.id.activeFile_TextInputLayout);
         activeFile_TextInputLayout.setVisibility(View.GONE);
@@ -63,6 +64,12 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
             fullScreen_imageView.setImageResource(R.drawable.ic_fullscreen_exit);
         } else {
             fullScreen_imageView.setImageResource(R.drawable.ic_fullscreen_24);
+        }
+
+        if(CodeViewActivity.isScreenSplit) {
+            splitScreen_ImageView.setImageResource(R.drawable.ic_close_split_screen);
+        } else {
+            splitScreen_ImageView.setImageResource(R.drawable.ic_split_screen_01);
         }
 
         fullScreen_imageView.setOnClickListener(a -> {
@@ -107,16 +114,13 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
             dismiss();
         });
 
-        ImageView splitScreen_imageView = v.findViewById(R.id.splitScreen_imageView);
-        splitScreen_imageView.setOnClickListener(a -> {
-            inputListener.sendInput(BottomSheetCode.SplitScreen);
+        splitScreen_ImageView.setOnClickListener(a -> {
+            if (CodeViewActivity.isScreenSplit) {
+                inputListener.sendInput(BottomSheetCode.RemoveSplitScreen);
+            } else {
+                inputListener.sendInput(BottomSheetCode.SplitScreen);
+            }
             dismiss();
-        });
-
-        splitScreen_imageView.setOnLongClickListener(a -> {
-            inputListener.sendInput(BottomSheetCode.RemoveSplitScreen);
-            dismiss();
-            return false;
         });
 
         return v;

@@ -76,4 +76,17 @@
     <string name="malformedURL">Malformed URL</string>
     <string name="fileName_demo">file_name.language_extension</string>
     <string name="convertToPDF">Convert to PDF</string>
+    <string name="number_2">2</string>
+    <string name="layout_2">2 Screen layout</string>
+    <string name="layout_3A">3 Screen layout - A</string>
+    <string name="selectLayout">Select Layout Style and Files</string>
+    <string name="layout_3B">3 Screens layout - B</string>
+    <string name="layout_4">4 Screens layout</string>
+    <string name="layout">Layouts</string>
+    <string name="files">Files</string>
+    <string name="file">File</string>
+    <string name="file1">File 1</string>
+    <string name="file2">File 2</string>
+    <string name="file3">File 3</string>
+    <string name="file4">File 4</string>
 </resources>

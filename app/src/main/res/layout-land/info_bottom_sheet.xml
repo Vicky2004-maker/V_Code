@@ -64,7 +64,7 @@
         android:contentDescription="@string/splitScreen"
         app:layout_constraintEnd_toStartOf="@+id/search_imageView"
         app:layout_constraintTop_toTopOf="@+id/search_imageView"
-        app:srcCompat="@drawable/ic_split_screen" />
+        app:srcCompat="@drawable/ic_split_screen_01" />
 
     <ImageView
         android:id="@+id/deleteFile_imageView"
