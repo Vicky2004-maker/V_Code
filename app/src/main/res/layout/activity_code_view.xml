@@ -188,6 +188,7 @@
 
             <com.clevergo.vcode.editorfiles.CodeView
                 android:id="@+id/editor_1"
+                android:gravity="start"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
         </LinearLayout>
@@ -203,12 +204,14 @@
 
             <com.clevergo.vcode.editorfiles.CodeView
                 android:id="@+id/editor_2"
+                android:gravity="start"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
             <com.clevergo.vcode.editorfiles.CodeView
                 android:id="@+id/editor_3"
+                android:gravity="start"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
@@ -226,27 +229,30 @@
 
             <com.clevergo.vcode.editorfiles.CodeView
                 android:id="@+id/editor_4"
+                android:gravity="start"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1" />
 
             <LinearLayout
                 android:id="@+id/editor_Container_SplitScreen3_Child"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="horizontal"
                 android:weightSum="2">
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_5"
-                    android:layout_width="0dp"
+                    android:gravity="start"
+                    android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1" />
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_6"
-                    android:layout_width="0dp"
+                    android:gravity="start"
+                    android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1" />
 
@@ -273,12 +279,14 @@
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_7"
+                    android:gravity="start"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1" />
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_8"
+                    android:gravity="start"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1" />
@@ -294,12 +302,14 @@
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_9"
+                    android:gravity="start"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1" />
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_10"
+                    android:gravity="start"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1" />

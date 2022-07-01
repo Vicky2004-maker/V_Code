@@ -47,6 +47,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -324,7 +325,7 @@ public class Helper {
 
     public static void getAllMethods(HashMap<String, Integer> toAdd, String code) {
         String[] lines = code.split("\n");
-        Pattern pattern = Pattern.compile("(?s)(String|byte|void|int|float|double|long|short|byte\\[\\]|String\\[\\]|int\\[\\]|float\\[\\]|double\\[\\]|long\\[\\]|short\\[\\]) (\\w|\\d|\\w\\d)+(\\((\\w|,|\\d|\\w\\d|\\w,|\\d,|\\w\\d,|\\s|\\[\\])+\\))(?s)");
+        Pattern pattern = Pattern.compile("/(public|private|protected|synchronized|\\W) (\\W|\\w+) (\\w+\\<\\w+\\, \\w+\\>|\\w+\\<\\w+\\>|void|int|long|short|(D|d)ouble|(f|f)loat|\\w+|\\w+\\.\\w+) (\\w\\d|\\w)+\\((\\)|\\w+\\s\\w+\\,|\\w+\\<\\w+\\>|((\\s|\\S)\\w+\\s\\w+)|\\w+\\<\\w+\\, \\w+\\>)/gm");
         Matcher matcher;
         for (int i = 0; i < lines.length; i++) {
             matcher = pattern.matcher(lines[i]);
@@ -332,10 +333,38 @@ public class Helper {
         }
     }
 
+    public static int getCurrentColumn(String code, int selectionStart) {
+        String subString = code.substring(0, selectionStart);
+        String[] lines = subString.split("\\n");
+        int toReturn;
+        if (subString.length() == 0) {
+            toReturn = 0;
+        } else {
+            toReturn = lines[lines.length - 1].length();
+        }
+
+        return toReturn + 1;
+    }
+
+    public static int getSelectedLineNumber(String code, int selectionStart) {
+        String subString = code.substring(0, selectionStart);
+        BufferedReader bufferedReader = new BufferedReader(new StringReader(subString));
+
+        int lineNumber = 0;
+        try {
+            while (bufferedReader.readLine() != null) {
+                lineNumber++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return lineNumber;
+    }
+
     public static HashMap<String, Integer> getAllMethods(String code) {
         HashMap<String, Integer> methods = new HashMap<>();
         String[] lines = code.split("\n");
-        Pattern pattern = Pattern.compile("(?s)(String|byte|void|int|float|double|long|short|byte\\[\\]|String\\[\\]|int\\[\\]|float\\[\\]|double\\[\\]|long\\[\\]|short\\[\\]) (\\w|\\d|\\w\\d)+(\\((\\w|,|\\d|\\w\\d|\\w,|\\d,|\\w\\d,|\\s|\\[\\])+\\))(?s)");
+        Pattern pattern = Pattern.compile("/(public|private|protected|synchronized|\\W) (\\W|\\w+) (\\w+\\<\\w+\\, \\w+\\>|\\w+\\<\\w+\\>|void|int|long|short|(D|d)ouble|(f|f)loat|\\w+|\\w+\\.\\w+) (\\w\\d|\\w)+\\((\\)|\\w+\\s\\w+\\,|\\w+\\<\\w+\\>|((\\s|\\S)\\w+\\s\\w+)|\\w+\\<\\w+\\, \\w+\\>)/gm");
         Matcher matcher;
         for (int i = 0; i < lines.length; i++) {
             matcher = pattern.matcher(lines[i]);
@@ -434,11 +463,14 @@ public class Helper {
 
     public static int getLines(String code) {
         int toReturn = 0;
-
-        for (String str : code.split("\r\n|\r|\n")) {
-            toReturn++;
+        BufferedReader bufferedReader = new BufferedReader(new StringReader(code));
+        try {
+            while (bufferedReader.readLine() != null) {
+                toReturn++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
         return toReturn;
     }
 

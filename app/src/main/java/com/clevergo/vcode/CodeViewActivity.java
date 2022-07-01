@@ -14,10 +14,12 @@ import static com.clevergo.vcode.Helper.createACodeViewFile;
 import static com.clevergo.vcode.Helper.createFile;
 import static com.clevergo.vcode.Helper.generatePDF;
 import static com.clevergo.vcode.Helper.getAllMethods;
+import static com.clevergo.vcode.Helper.getCurrentColumn;
 import static com.clevergo.vcode.Helper.getFileExtension;
 import static com.clevergo.vcode.Helper.getFileName;
 import static com.clevergo.vcode.Helper.getFileSize;
 import static com.clevergo.vcode.Helper.getLines;
+import static com.clevergo.vcode.Helper.getSelectedLineNumber;
 import static com.clevergo.vcode.Helper.isFullScreen;
 import static com.clevergo.vcode.Helper.isLowerSDK;
 import static com.clevergo.vcode.Helper.isScreenLandscape;
@@ -87,7 +89,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -113,11 +114,13 @@ public class CodeViewActivity extends AppCompatActivity
     private static ProgressDialog progressDialog;
     private final boolean loadIntoRAM = true;
     private final List<String> fileNames = new ArrayList<>();
-    private final HashSet<String> activeFileNames = new HashSet<>();
+    private final List<String> activeFileNames = new ArrayList<>();
     public DrawerLayout drawerLayout;
     public ActionBarDrawerToggle actionBarDrawerToggle;
     public List<String> buttonStringList = List.of("\t", "{\n    }", "()", "[]", "<", ">", ";", "=", ",", "&", "<>", "|", "!",
             "~", "+", "-", "*", "/", "%", ":");
+    public List<com.clevergo.vcode.editorfiles.CodeView> editorList = new ArrayList<>();
+    public List<CodeView> codeViewList = new ArrayList<>();
     private HashMap<LinearLayout, List<View>> MAIN_VIEW_HOLDER = new HashMap<>();
     private HorizontalScrollView buttonControls_HorizontalScrollView;
     private ExpandableListView expandableListView;
@@ -137,9 +140,6 @@ public class CodeViewActivity extends AppCompatActivity
     private String searchWord = "";
     private ActionBar actionBar;
     private ActiveLayout activeLayout;
-
-    private List<com.clevergo.vcode.editorfiles.CodeView> editorList = new ArrayList<>();
-    private List<CodeView> codeViewList = new ArrayList<>();
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -495,6 +495,28 @@ public class CodeViewActivity extends AppCompatActivity
         filesOpened++;
     }
 
+    private void updateInfoEditor(Uri uri) {
+        customWorkerThread.addWork(() -> {
+            String actionBarSubtitle = getFileName(CodeViewActivity.this, uri);
+            String fileSize_Text = actionBarSubtitle
+                    + " - "
+                    + getFileSize(CodeViewActivity.this, uri) + " KB";
+
+            activeFileNames.clear();
+            activeFileNames.add(actionBarSubtitle);
+            expandableListDetail.put("Active Files", activeFileNames);
+            allMethods.clear();
+            allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
+            navView.postInvalidate();
+
+            uiHandler.post(() -> {
+                Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
+                fileSize_TextView.setText(fileSize_Text);
+            });
+        });
+    }
+
     @SuppressLint("SetTextI18n")
     private void updateInfo(Uri uri) {
         customWorkerThread.addWork(() -> {
@@ -505,7 +527,7 @@ public class CodeViewActivity extends AppCompatActivity
 
             activeFileNames.clear();
             activeFileNames.add(actionBarSubtitle);
-            expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            expandableListDetail.put("Active Files", activeFileNames);
             allMethods.clear();
             allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
@@ -526,7 +548,7 @@ public class CodeViewActivity extends AppCompatActivity
 
             activeFileNames.clear();
             activeFileNames.add(actionBarSubtitle);
-            expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            expandableListDetail.put("Active Files", activeFileNames);
             allMethods.clear();
             allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
@@ -549,7 +571,7 @@ public class CodeViewActivity extends AppCompatActivity
 
             activeFileNames.clear();
             activeFileNames.add(actionBarSubtitle);
-            expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            expandableListDetail.put("Active Files", activeFileNames);
             allMethods.clear();
             allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
@@ -569,7 +591,7 @@ public class CodeViewActivity extends AppCompatActivity
 
             activeFileNames.clear();
             activeFileNames.add(actionBarSubtitle);
-            expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+            expandableListDetail.put("Active Files", activeFileNames);
             allMethods.clear();
             allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
@@ -648,6 +670,8 @@ public class CodeViewActivity extends AppCompatActivity
         searchDialog.create();
         searchDialog.show();
     }
+
+    //region Split Screen
 
     private void splitScreen() {
         int fileListSize = fileList.size();
@@ -769,77 +793,35 @@ public class CodeViewActivity extends AppCompatActivity
 
         layoutDialog.setPositiveButton(getString(R.string.splitScreen), (dialog, which) -> {
             if (isEditorMode) {
-
-            } else {
+                //Editor
                 if (layout2.isChecked()) {
                     isScreenSplit = true;
 
-                    activeLayout = ActiveLayout.CodeView_SplitScreen2;
-                    codeView_Container_Main.setVisibility(View.GONE);
-                    codeView_Container_SplitScreen2.setVisibility(View.VISIBLE);
-                    codeView_Container_SplitScreen3.setVisibility(View.GONE);
-                    codeView_Container_SplitScreen4.setVisibility(View.GONE);
-
-                    codeViewList.clear();
-
-                    for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(codeView_Container_SplitScreen2))) {
-                        codeViewList.add((CodeView) v);
-                    }
+                    activeLayout = ActiveLayout.Editor_SplitScreen2;
+                    editor_Container_Main.setVisibility(View.GONE);
+                    editor_Container_SplitScreen2.setVisibility(View.VISIBLE);
+                    editor_Container_SplitScreen3.setVisibility(View.GONE);
+                    editor_Container_SplitScreen4.setVisibility(View.GONE);
 
                     activeFileNames.clear();
                     String fileName1 = file1_Input.getText().toString();
                     String fileName2 = file2_Input.getText().toString();
                     activeFileNames.add(fileName1);
                     activeFileNames.add(fileName2);
-                    expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+                    expandableListDetail.put("Active Files", activeFileNames);
 
-                    for (CodeViewFile file : fileList) {
-                        if (file.getName().equals(fileName1)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-                        if (file.getName().equals(fileName2)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-                    }
+                    editorSplitScreen_2CommonPart(fileName1, fileName2);
 
                 } else if (layout3A.isChecked()) {
                     isScreenSplit = true;
 
-                    activeLayout = ActiveLayout.CodeView_SplitScreen3;
-                    codeView_Container_Main.setVisibility(View.GONE);
-                    codeView_Container_SplitScreen2.setVisibility(View.GONE);
-                    codeView_Container_SplitScreen3.setVisibility(View.VISIBLE);
-                    codeView_Container_SplitScreen4.setVisibility(View.GONE);
+                    activeLayout = ActiveLayout.Editor_SplitScreen3A;
+                    editor_Container_Main.setVisibility(View.GONE);
+                    editor_Container_SplitScreen2.setVisibility(View.GONE);
+                    editor_Container_SplitScreen3.setVisibility(View.VISIBLE);
+                    editor_Container_SplitScreen4.setVisibility(View.GONE);
 
-                    View child1 = codeView_Container_SplitScreen3.getChildAt(0);
-                    View child2 = codeView_Container_SplitScreen3.getChildAt(1);
-                    CodeView codeView = null;
-                    LinearLayout linearLayout = null;
-
-                    if (child1.getClass().equals(CodeView.class)) {
-                        codeView = (CodeView) child1;
-                        linearLayout = (LinearLayout) child2;
-                    } else if (child1.getClass().equals(LinearLayout.class)) {
-                        linearLayout = (LinearLayout) child1;
-                        codeView = (CodeView) child2;
-                    }
-
-                    codeView_Container_SplitScreen3.removeAllViews();
-                    codeView_Container_SplitScreen3.addView(codeView, 0);
-                    codeView_Container_SplitScreen3.addView(linearLayout, 1);
-
-                    codeViewList.clear();
-                    for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(codeView_Container_SplitScreen3))) {
-                        codeViewList.add((CodeView) v);
-                    }
+                    layout_3A_AlignView_Editor();
 
                     activeFileNames.clear();
                     String fileName1 = file1_Input.getText().toString();
@@ -848,62 +830,19 @@ public class CodeViewActivity extends AppCompatActivity
                     activeFileNames.add(fileName1);
                     activeFileNames.add(fileName2);
                     activeFileNames.add(fileName3);
-                    expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+                    expandableListDetail.put("Active Files", activeFileNames);
 
-                    for (CodeViewFile file : fileList) {
-                        if (file.getName().equals(fileName1)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-                        if (file.getName().equals(fileName2)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-
-                        if (file.getName().equals(fileName3)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-                    }
+                    editorSplitScreen_3CommonPart(fileName1, fileName2, fileName3);
                 } else if (layout3B.isChecked()) {
                     isScreenSplit = true;
 
-                    activeLayout = ActiveLayout.CodeView_SplitScreen3;
-                    codeView_Container_Main.setVisibility(View.GONE);
-                    codeView_Container_SplitScreen2.setVisibility(View.GONE);
-                    codeView_Container_SplitScreen3.setVisibility(View.VISIBLE);
-                    codeView_Container_SplitScreen4.setVisibility(View.GONE);
+                    activeLayout = ActiveLayout.Editor_SplitScreen3B;
+                    editor_Container_Main.setVisibility(View.GONE);
+                    editor_Container_SplitScreen2.setVisibility(View.GONE);
+                    editor_Container_SplitScreen3.setVisibility(View.VISIBLE);
+                    editor_Container_SplitScreen4.setVisibility(View.GONE);
 
-                    View child1 = codeView_Container_SplitScreen3.getChildAt(0);
-                    View child2 = codeView_Container_SplitScreen3.getChildAt(1);
-                    CodeView codeView = null;
-                    LinearLayout linearLayout = null;
-
-                    if (child1.getClass().equals(CodeView.class)) {
-                        codeView = (CodeView) child1;
-                        linearLayout = (LinearLayout) child2;
-                    } else if (child1.getClass().equals(LinearLayout.class)) {
-                        linearLayout = (LinearLayout) child1;
-                        codeView = (CodeView) child2;
-                    }
-
-                    codeView_Container_SplitScreen3.removeAllViews();
-                    codeView_Container_SplitScreen3.addView(linearLayout, 0);
-                    codeView_Container_SplitScreen3.addView(codeView, 1);
-
-                    codeViewList.clear();
-                    for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(codeView_Container_SplitScreen3))) {
-                        codeViewList.add((CodeView) v);
-                    }
+                    layout_3B_AlignView_Editor();
 
                     activeFileNames.clear();
                     String fileName1 = file1_Input.getText().toString();
@@ -912,46 +851,17 @@ public class CodeViewActivity extends AppCompatActivity
                     activeFileNames.add(fileName1);
                     activeFileNames.add(fileName2);
                     activeFileNames.add(fileName3);
-                    expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+                    expandableListDetail.put("Active Files", activeFileNames);
 
-                    for (CodeViewFile file : fileList) {
-                        if (file.getName().equals(fileName1)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-                        if (file.getName().equals(fileName2)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-
-                        if (file.getName().equals(fileName3)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-                    }
+                    editorSplitScreen_3CommonPart(fileName1, fileName2, fileName3);
                 } else if (layout4.isChecked()) {
                     isScreenSplit = true;
 
-                    activeLayout = ActiveLayout.CodeView_SplitScreen4;
-                    codeView_Container_Main.setVisibility(View.GONE);
-                    codeView_Container_SplitScreen2.setVisibility(View.GONE);
-                    codeView_Container_SplitScreen3.setVisibility(View.GONE);
-                    codeView_Container_SplitScreen4.setVisibility(View.VISIBLE);
-
-                    codeViewList.clear();
-
-                    for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(codeView_Container_SplitScreen4))) {
-                        codeViewList.add((CodeView) v);
-                    }
+                    activeLayout = ActiveLayout.Editor_SplitScreen4;
+                    editor_Container_Main.setVisibility(View.GONE);
+                    editor_Container_SplitScreen2.setVisibility(View.GONE);
+                    editor_Container_SplitScreen3.setVisibility(View.GONE);
+                    editor_Container_SplitScreen4.setVisibility(View.VISIBLE);
 
                     activeFileNames.clear();
                     String fileName1 = file1_Input.getText().toString();
@@ -962,42 +872,95 @@ public class CodeViewActivity extends AppCompatActivity
                     activeFileNames.add(fileName2);
                     activeFileNames.add(fileName3);
                     activeFileNames.add(fileName4);
-                    expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
+                    expandableListDetail.put("Active Files", activeFileNames);
 
-                    for (CodeViewFile file : fileList) {
-                        if (file.getName().equals(fileName1)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-                        if (file.getName().equals(fileName2)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-
-                        if (file.getName().equals(fileName3)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-
-                        if (file.getName().equals(fileName4)) {
-                            if (file.isURL) {
-                                setCodeView(codeViewList.get(3), readFile(CodeViewActivity.this, file.getUrl()));
-                            } else {
-                                setCodeView(codeViewList.get(3), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-                            }
-                        }
-                    }
+                    editorSplitScreen_4CommonPart(fileName1, fileName2, fileName3, fileName4);
                 }
-                List<String> tempList = List.copyOf(activeFileNames);
+            } else {
+                //Code View
+                if (layout2.isChecked()) {
+                    isScreenSplit = true;
+
+                    activeLayout = ActiveLayout.CodeView_SplitScreen2;
+                    codeView_Container_Main.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen2.setVisibility(View.VISIBLE);
+                    codeView_Container_SplitScreen3.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen4.setVisibility(View.GONE);
+
+                    activeFileNames.clear();
+                    String fileName1 = file1_Input.getText().toString();
+                    String fileName2 = file2_Input.getText().toString();
+                    activeFileNames.add(fileName1);
+                    activeFileNames.add(fileName2);
+                    expandableListDetail.put("Active Files", activeFileNames);
+
+                    codeViewSplitScreen_2CommonPart(fileName1, fileName2);
+
+                } else if (layout3A.isChecked()) {
+                    isScreenSplit = true;
+
+                    activeLayout = ActiveLayout.CodeView_SplitScreen3A;
+                    codeView_Container_Main.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen2.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen3.setVisibility(View.VISIBLE);
+                    codeView_Container_SplitScreen4.setVisibility(View.GONE);
+
+                    layout_3A_AlignView_CodeView();
+
+                    activeFileNames.clear();
+                    String fileName1 = file1_Input.getText().toString();
+                    String fileName2 = file2_Input.getText().toString();
+                    String fileName3 = file3_Input.getText().toString();
+                    activeFileNames.add(fileName1);
+                    activeFileNames.add(fileName2);
+                    activeFileNames.add(fileName3);
+                    expandableListDetail.put("Active Files", activeFileNames);
+
+                    codeViewSplitScreen_3CommonPart(fileName1, fileName2, fileName3);
+                } else if (layout3B.isChecked()) {
+                    isScreenSplit = true;
+
+                    activeLayout = ActiveLayout.CodeView_SplitScreen3B;
+                    codeView_Container_Main.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen2.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen3.setVisibility(View.VISIBLE);
+                    codeView_Container_SplitScreen4.setVisibility(View.GONE);
+
+                    layout_3B_AlignView_CodeView();
+
+                    activeFileNames.clear();
+                    String fileName1 = file1_Input.getText().toString();
+                    String fileName2 = file2_Input.getText().toString();
+                    String fileName3 = file3_Input.getText().toString();
+                    activeFileNames.add(fileName1);
+                    activeFileNames.add(fileName2);
+                    activeFileNames.add(fileName3);
+                    expandableListDetail.put("Active Files", activeFileNames);
+
+                    codeViewSplitScreen_3CommonPart(fileName1, fileName2, fileName3);
+                } else if (layout4.isChecked()) {
+                    isScreenSplit = true;
+
+                    activeLayout = ActiveLayout.CodeView_SplitScreen4;
+                    codeView_Container_Main.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen2.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen3.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen4.setVisibility(View.VISIBLE);
+
+                    activeFileNames.clear();
+                    String fileName1 = file1_Input.getText().toString();
+                    String fileName2 = file2_Input.getText().toString();
+                    String fileName3 = file3_Input.getText().toString();
+                    String fileName4 = file4_Input.getText().toString();
+                    activeFileNames.add(fileName1);
+                    activeFileNames.add(fileName2);
+                    activeFileNames.add(fileName3);
+                    activeFileNames.add(fileName4);
+                    expandableListDetail.put("Active Files", activeFileNames);
+
+                    codeViewSplitScreen_4CommonPart(fileName1, fileName2, fileName3, fileName4);
+                }
+                List<String> tempList = activeFileNames;
                 selectedFileNames = new ArrayList<>(tempList);
             }
         });
@@ -1008,37 +971,329 @@ public class CodeViewActivity extends AppCompatActivity
         layoutDialog.show();
     }
 
-    private void removeSplitScreen() {
-        isScreenSplit = false;
-        activeLayout = ActiveLayout.CodeView_Main;
+    private void layout_3A_AlignView_Editor() {
+        View child1 = editor_Container_SplitScreen3.getChildAt(0);
+        View child2 = editor_Container_SplitScreen3.getChildAt(1);
+        com.clevergo.vcode.editorfiles.CodeView editor = null;
+        LinearLayout linearLayout = null;
 
-        codeView_Container_Main.setVisibility(View.VISIBLE);
-        codeView_Container_SplitScreen2.setVisibility(View.GONE);
-        codeView_Container_SplitScreen3.setVisibility(View.GONE);
-        codeView_Container_SplitScreen4.setVisibility(View.GONE);
+        if (child1.getClass().equals(com.clevergo.vcode.editorfiles.CodeView.class)) {
+            editor = (com.clevergo.vcode.editorfiles.CodeView) child1;
+            linearLayout = (LinearLayout) child2;
+        } else if (child1.getClass().equals(LinearLayout.class)) {
+            linearLayout = (LinearLayout) child1;
+            editor = (com.clevergo.vcode.editorfiles.CodeView) child2;
+        }
 
+        editor_Container_SplitScreen3.removeAllViews();
+        editor_Container_SplitScreen3.addView(editor, 0);
+        editor_Container_SplitScreen3.addView(linearLayout, 1);
+    }
+
+    private void layout_3B_AlignView_Editor() {
+        View child1 = editor_Container_SplitScreen3.getChildAt(0);
+        View child2 = editor_Container_SplitScreen3.getChildAt(1);
+        com.clevergo.vcode.editorfiles.CodeView editor = null;
+        LinearLayout linearLayout = null;
+
+        if (child1.getClass().equals(com.clevergo.vcode.editorfiles.CodeView.class)) {
+            editor = (com.clevergo.vcode.editorfiles.CodeView) child1;
+            linearLayout = (LinearLayout) child2;
+        } else if (child1.getClass().equals(LinearLayout.class)) {
+            linearLayout = (LinearLayout) child1;
+            editor = (com.clevergo.vcode.editorfiles.CodeView) child2;
+        }
+
+        editor_Container_SplitScreen3.removeAllViews();
+        editor_Container_SplitScreen3.addView(linearLayout, 0);
+        editor_Container_SplitScreen3.addView(editor, 1);
+    }
+
+    private void editorSplitScreen_2CommonPart(String fileName1, String fileName2) {
+        editorList.clear();
+
+        for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(editor_Container_SplitScreen2))) {
+            editorList.add((com.clevergo.vcode.editorfiles.CodeView) v);
+        }
+
+        for (CodeViewFile file : fileList) {
+            if (file.getName().equals(fileName1)) {
+                if (file.isURL) {
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+            if (file.getName().equals(fileName2)) {
+                if (file.isURL) {
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+        }
+    }
+
+    private void editorSplitScreen_3CommonPart(String fileName1, String fileName2, String fileName3) {
+        editorList.clear();
+        for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(editor_Container_SplitScreen3))) {
+            editorList.add((com.clevergo.vcode.editorfiles.CodeView) v);
+        }
+        for (CodeViewFile file : fileList) {
+            if (file.getName().equals(fileName1)) {
+                if (file.isURL) {
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+            if (file.getName().equals(fileName2)) {
+                if (file.isURL) {
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+
+            if (file.getName().equals(fileName3)) {
+                if (file.isURL) {
+                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+        }
+    }
+
+    private void editorSplitScreen_4CommonPart(String fileName1, String fileName2, String fileName3, String fileName4) {
+        editorList.clear();
+
+        for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(editor_Container_SplitScreen4))) {
+            editorList.add((com.clevergo.vcode.editorfiles.CodeView) v);
+        }
+
+        for (CodeViewFile file : fileList) {
+            if (file.getName().equals(fileName1)) {
+                if (file.isURL) {
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+            if (file.getName().equals(fileName2)) {
+                if (file.isURL) {
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+
+            if (file.getName().equals(fileName3)) {
+                if (file.isURL) {
+                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+
+            if (file.getName().equals(fileName4)) {
+                if (file.isURL) {
+                    setEditor(editorList.get(3), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setEditor(editorList.get(3), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+        }
+    }
+
+    private void layout_3A_AlignView_CodeView() {
+        View child1 = codeView_Container_SplitScreen3.getChildAt(0);
+        View child2 = codeView_Container_SplitScreen3.getChildAt(1);
+        CodeView codeView = null;
+        LinearLayout linearLayout = null;
+
+        if (child1.getClass().equals(CodeView.class)) {
+            codeView = (CodeView) child1;
+            linearLayout = (LinearLayout) child2;
+        } else if (child1.getClass().equals(LinearLayout.class)) {
+            linearLayout = (LinearLayout) child1;
+            codeView = (CodeView) child2;
+        }
+
+        codeView_Container_SplitScreen3.removeAllViews();
+        codeView_Container_SplitScreen3.addView(codeView, 0);
+        codeView_Container_SplitScreen3.addView(linearLayout, 1);
+    }
+
+    private void layout_3B_AlignView_CodeView() {
+        View child1 = codeView_Container_SplitScreen3.getChildAt(0);
+        View child2 = codeView_Container_SplitScreen3.getChildAt(1);
+        CodeView codeView = null;
+        LinearLayout linearLayout = null;
+
+        if (child1.getClass().equals(CodeView.class)) {
+            codeView = (CodeView) child1;
+            linearLayout = (LinearLayout) child2;
+        } else if (child1.getClass().equals(LinearLayout.class)) {
+            linearLayout = (LinearLayout) child1;
+            codeView = (CodeView) child2;
+        }
+
+        codeView_Container_SplitScreen3.removeAllViews();
+        codeView_Container_SplitScreen3.addView(linearLayout, 0);
+        codeView_Container_SplitScreen3.addView(codeView, 1);
+    }
+
+    private void codeViewSplitScreen_2CommonPart(String fileName1, String fileName2) {
         codeViewList.clear();
 
-        for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(codeView_Container_Main))) {
+        for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(codeView_Container_SplitScreen2))) {
             codeViewList.add((CodeView) v);
         }
 
+        for (CodeViewFile file : fileList) {
+            if (file.getName().equals(fileName1)) {
+                if (file.isURL) {
+                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+            if (file.getName().equals(fileName2)) {
+                if (file.isURL) {
+                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+        }
+    }
+
+    private void codeViewSplitScreen_3CommonPart(String fileName1, String fileName2, String fileName3) {
+        codeViewList.clear();
+        for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(codeView_Container_SplitScreen3))) {
+            codeViewList.add((CodeView) v);
+        }
+
+        for (CodeViewFile file : fileList) {
+            if (file.getName().equals(fileName1)) {
+                if (file.isURL) {
+                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+            if (file.getName().equals(fileName2)) {
+                if (file.isURL) {
+                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+
+            if (file.getName().equals(fileName3)) {
+                if (file.isURL) {
+                    setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+        }
+    }
+
+    private void codeViewSplitScreen_4CommonPart(String fileName1, String fileName2, String fileName3, String fileName4) {
+        codeViewList.clear();
+
+        for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(codeView_Container_SplitScreen4))) {
+            codeViewList.add((CodeView) v);
+        }
+        for (CodeViewFile file : fileList) {
+            if (file.getName().equals(fileName1)) {
+                if (file.isURL) {
+                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+            if (file.getName().equals(fileName2)) {
+                if (file.isURL) {
+                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+
+            if (file.getName().equals(fileName3)) {
+                if (file.isURL) {
+                    setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+
+            if (file.getName().equals(fileName4)) {
+                if (file.isURL) {
+                    setCodeView(codeViewList.get(3), readFile(CodeViewActivity.this, file.getUrl()));
+                } else {
+                    setCodeView(codeViewList.get(3), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
+            }
+        }
+    }
+
+    private void removeSplitScreen() {
+        isScreenSplit = false;
         CodeViewFile file = fileList.get(fileList.size() - 1);
 
+        if (isEditorMode) {
+            activeLayout = ActiveLayout.Editor_Main;
+
+            editor_Container_Main.setVisibility(View.VISIBLE);
+            editor_Container_SplitScreen2.setVisibility(View.GONE);
+            editor_Container_SplitScreen3.setVisibility(View.GONE);
+            editor_Container_SplitScreen4.setVisibility(View.GONE);
+
+            editorList.clear();
+            for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(editor_Container_Main))) {
+                editorList.add((com.clevergo.vcode.editorfiles.CodeView) v);
+            }
+
+            if (file.isURL) {
+                setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+            } else {
+                setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+            }
+
+        } else {
+            activeLayout = ActiveLayout.CodeView_Main;
+
+            codeView_Container_Main.setVisibility(View.VISIBLE);
+            codeView_Container_SplitScreen2.setVisibility(View.GONE);
+            codeView_Container_SplitScreen3.setVisibility(View.GONE);
+            codeView_Container_SplitScreen4.setVisibility(View.GONE);
+
+            codeViewList.clear();
+
+            for (View v : Objects.requireNonNull(MAIN_VIEW_HOLDER.get(codeView_Container_Main))) {
+                codeViewList.add((CodeView) v);
+            }
+
+            if (file.isURL) {
+                setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                updateInfo(file.getUrl());
+            } else {
+                setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                updateInfo(Uri.parse(file.getUri()));
+            }
+        }
         activeFileNames.clear();
         activeFileNames.add(file.getName());
-        expandableListDetail.put("Active Files", List.copyOf(activeFileNames));
-
-        if (file.isURL) {
-            setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
-            updateInfo(file.getUrl());
-        } else {
-            setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-            updateInfo(Uri.parse(file.getUri()));
-        }
+        expandableListDetail.put("Active Files", activeFileNames);
         currentActiveID = fileList.size() - 1;
         activeFilePosition = 0;
     }
+
+    //endregion
 
     private void addNavMenu(final String fileName) {
         customWorkerThread.addWork(() -> {
@@ -1191,18 +1446,55 @@ public class CodeViewActivity extends AppCompatActivity
         isEditorMode = true;
 
         if (isScreenSplit) {
+            switch (activeLayout) {
+                case CodeView_SplitScreen2:
+                    activeLayout = ActiveLayout.Editor_SplitScreen2;
+                    codeView_Container_SplitScreen2.setVisibility(View.GONE);
+                    editor_Container_SplitScreen2.setVisibility(View.VISIBLE);
 
+                    codeViewList.clear();
+                    editorSplitScreen_2CommonPart(activeFileNames.get(0), activeFileNames.get(1));
+                    break;
+                case CodeView_SplitScreen3A:
+                    activeLayout = ActiveLayout.Editor_SplitScreen3A;
+                    codeView_Container_SplitScreen3.setVisibility(View.GONE);
+                    editor_Container_SplitScreen3.setVisibility(View.VISIBLE);
+
+                    layout_3A_AlignView_Editor();
+
+                    codeViewList.clear();
+                    editorSplitScreen_3CommonPart(activeFileNames.get(0), activeFileNames.get(1), activeFileNames.get(2));
+                    break;
+                case CodeView_SplitScreen3B:
+                    activeLayout = ActiveLayout.Editor_SplitScreen3B;
+                    codeView_Container_SplitScreen3.setVisibility(View.GONE);
+                    editor_Container_SplitScreen3.setVisibility(View.VISIBLE);
+
+                    layout_3B_AlignView_Editor();
+
+                    codeViewList.clear();
+                    editorSplitScreen_3CommonPart(activeFileNames.get(0), activeFileNames.get(1), activeFileNames.get(2));
+                    break;
+                case CodeView_SplitScreen4:
+                    activeLayout = ActiveLayout.Editor_SplitScreen4;
+                    codeView_Container_SplitScreen4.setVisibility(View.GONE);
+                    editor_Container_SplitScreen4.setVisibility(View.VISIBLE);
+
+                    codeViewList.clear();
+                    editorSplitScreen_4CommonPart(activeFileNames.get(0), activeFileNames.get(1), activeFileNames.get(2), activeFileNames.get(3));
+                    break;
+            }
         } else {
             editor_Container_Main.setVisibility(View.VISIBLE);
             codeView_Container_Main.setVisibility(View.GONE);
 
             CodeViewFile file = fileList.get(currentActiveID);
-
+            List<View> tempList = new ArrayList<>(Objects.requireNonNull(MAIN_VIEW_HOLDER.get(editor_Container_Main)));
+            if (editorList.size() == 0)
+                editorList.add((com.clevergo.vcode.editorfiles.CodeView) tempList.get(0));
             com.clevergo.vcode.editorfiles.CodeView editor = editorList.get(0);
             setEditor(editor, readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
         }
-
-        //TODO : Make all view required for edit visible and others gone
     }
 
     private void setEditor(@NonNull final com.clevergo.vcode.editorfiles.CodeView editor, @NonNull final String code) {
@@ -1213,7 +1505,7 @@ public class CodeViewActivity extends AppCompatActivity
         editor.setEnableAutoIndentation(true);
         editor.setEnableLineNumber(true);
         editor.setLineNumberTextColor(Color.GRAY);
-        editor.setLineNumberTextSize(35);
+        editor.setLineNumberTextSize((float) getResources().getDimension(R.dimen.dimen15sp));
         editor.setTabLength(4);
         //editor.setIndentationStarts(indentationStarts);
         //editor.setIndentationEnds(indentationEnds);
@@ -1235,6 +1527,7 @@ public class CodeViewActivity extends AppCompatActivity
         pairCompleteMap.put('"', '"');
         pairCompleteMap.put('\'', '\'');
         editor.setPairCompleteMap(pairCompleteMap);
+        editor.addTextChangedListener(new EditorTextWatcher());
     }
 
     private void disableHighlighting(CodeView codeView, int totalLines) {
@@ -1261,9 +1554,66 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void saveEdit() {
-        CodeViewFile file = fileList.get(currentActiveID);
+        //TODO: Save Edits when in split screen mode.
+        if (isScreenSplit) {
+            switch (activeLayout) {
+                case Editor_SplitScreen2: {
+                    String fileName1 = activeFileNames.get(0), fileName2 = activeFileNames.get(1);
 
-        writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(0).getText().toString());
+                    for (CodeViewFile file : fileList) {
+                        if (file.getName().equals(fileName1)) {
+                            writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(0).getText().toString());
+                        }
+                        if (file.getName().equals(fileName2)) {
+                            writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(1).getText().toString());
+                        }
+                    }
+                    break;
+                }
+                case Editor_SplitScreen3A:
+                case Editor_SplitScreen3B: {
+                    String fileName1 = activeFileNames.get(0), fileName2 = activeFileNames.get(1), fileName3 = activeFileNames.get(2);
+
+                    for (CodeViewFile file : fileList) {
+                        if (file.getName().equals(fileName1)) {
+                            writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(0).getText().toString());
+                        }
+                        if (file.getName().equals(fileName2)) {
+                            writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(1).getText().toString());
+                        }
+                        if (file.getName().equals(fileName3)) {
+                            writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(2).getText().toString());
+                        }
+                    }
+                    break;
+                }
+                case Editor_SplitScreen4: {
+                    String fileName1 = activeFileNames.get(0),
+                            fileName2 = activeFileNames.get(1),
+                            fileName3 = activeFileNames.get(2),
+                            fileName4 = activeFileNames.get(3);
+
+                    for (CodeViewFile file : fileList) {
+                        if (file.getName().equals(fileName1)) {
+                            writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(0).getText().toString());
+                        }
+                        if (file.getName().equals(fileName2)) {
+                            writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(1).getText().toString());
+                        }
+                        if (file.getName().equals(fileName3)) {
+                            writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(2).getText().toString());
+                        }
+                        if (file.getName().equals(fileName4)) {
+                            writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(3).getText().toString());
+                        }
+                    }
+                    break;
+                }
+            }
+        } else {
+            CodeViewFile file = fileList.get(currentActiveID);
+            writeFile(CodeViewActivity.this, Uri.parse(file.getUri()), editorList.get(0).getText().toString());
+        }
         exitEditMode();
     }
 
@@ -1272,13 +1622,51 @@ public class CodeViewActivity extends AppCompatActivity
 
         buttonControls_HorizontalScrollView.setVisibility(View.GONE);
         if (isScreenSplit) {
+            switch (activeLayout) {
+                case Editor_SplitScreen2:
+                    activeLayout = ActiveLayout.CodeView_SplitScreen2;
+                    editor_Container_SplitScreen2.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen2.setVisibility(View.VISIBLE);
+                    editorList.clear();
+                    codeViewSplitScreen_2CommonPart(activeFileNames.get(0), activeFileNames.get(1));
+                    break;
+                case Editor_SplitScreen3A:
+                    activeLayout = ActiveLayout.CodeView_SplitScreen3A;
+                    editor_Container_SplitScreen3.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen3.setVisibility(View.VISIBLE);
+                    editorList.clear();
 
+                    layout_3A_AlignView_CodeView();
+
+                    codeViewSplitScreen_3CommonPart(activeFileNames.get(0), activeFileNames.get(1), activeFileNames.get(2));
+                    break;
+                case Editor_SplitScreen3B:
+                    activeLayout = ActiveLayout.CodeView_SplitScreen3B;
+                    editor_Container_SplitScreen3.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen3.setVisibility(View.VISIBLE);
+                    editorList.clear();
+
+                    layout_3B_AlignView_CodeView();
+
+                    codeViewSplitScreen_3CommonPart(activeFileNames.get(0), activeFileNames.get(1), activeFileNames.get(2));
+                    break;
+                case Editor_SplitScreen4:
+                    activeLayout = ActiveLayout.CodeView_SplitScreen4;
+                    editor_Container_SplitScreen4.setVisibility(View.GONE);
+                    codeView_Container_SplitScreen4.setVisibility(View.VISIBLE);
+                    editorList.clear();
+                    codeViewSplitScreen_4CommonPart(activeFileNames.get(0), activeFileNames.get(1),
+                            activeFileNames.get(2), activeFileNames.get(3));
+                    break;
+            }
         } else {
             editor_Container_Main.setVisibility(View.GONE);
             codeView_Container_Main.setVisibility(View.VISIBLE);
 
             CodeViewFile file = fileList.get(currentActiveID);
-
+            if (codeViewList.size() == 0) {
+                codeViewList.add((CodeView) Objects.requireNonNull(MAIN_VIEW_HOLDER.get(codeView_Container_Main)).get(0));
+            }
             CodeView codeView = codeViewList.get(0);
             setCodeView(codeView, readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
         }
@@ -1371,9 +1759,18 @@ public class CodeViewActivity extends AppCompatActivity
                         case CodeView_SplitScreen2:
                             codeView_Container_SplitScreen2.setOrientation(LinearLayout.HORIZONTAL);
                             break;
-                        case CodeView_SplitScreen3:
+                        case CodeView_SplitScreen3A:
+                        case CodeView_SplitScreen3B:
                             codeView_Container_SplitScreen3.setOrientation(LinearLayout.HORIZONTAL);
                             codeView_Container_SplitScreen3_Child.setOrientation(LinearLayout.VERTICAL);
+                            break;
+                        case Editor_SplitScreen2:
+                            editor_Container_SplitScreen2.setOrientation(LinearLayout.HORIZONTAL);
+                            break;
+                        case Editor_SplitScreen3A:
+                        case Editor_SplitScreen3B:
+                            editor_Container_SplitScreen3.setOrientation(LinearLayout.HORIZONTAL);
+                            editor_Container_SplitScreen3_Child.setOrientation(LinearLayout.VERTICAL);
                             break;
                     }
                 }
@@ -1388,9 +1785,18 @@ public class CodeViewActivity extends AppCompatActivity
                         case CodeView_SplitScreen2:
                             codeView_Container_SplitScreen2.setOrientation(LinearLayout.VERTICAL);
                             break;
-                        case CodeView_SplitScreen3:
+                        case CodeView_SplitScreen3A:
+                        case CodeView_SplitScreen3B:
                             codeView_Container_SplitScreen3.setOrientation(LinearLayout.VERTICAL);
                             codeView_Container_SplitScreen3_Child.setOrientation(LinearLayout.HORIZONTAL);
+                            break;
+                        case Editor_SplitScreen2:
+                            editor_Container_SplitScreen2.setOrientation(LinearLayout.VERTICAL);
+                            break;
+                        case Editor_SplitScreen3A:
+                        case Editor_SplitScreen3B:
+                            editor_Container_SplitScreen3.setOrientation(LinearLayout.VERTICAL);
+                            editor_Container_SplitScreen3_Child.setOrientation(LinearLayout.HORIZONTAL);
                             break;
                     }
                 }
@@ -1453,23 +1859,31 @@ public class CodeViewActivity extends AppCompatActivity
             Toast.makeText(CodeViewActivity.this, getString(R.string.fileAreadyDisplayed), Toast.LENGTH_SHORT).show();
             return;
         }
-
         final CodeViewFile file = fileList.get(clicked_ID);
 
-        if (loadIntoRAM) {
-            setCodeView(codeViewList.get(activeFilePosition), codeList.get(clicked_ID));
-            if (isScreenSplit)
-                selectedFileNames.set(activeFilePosition, ((MaterialButton) view).getText().toString());
-        } else {
+        if (isEditorMode) {
             if (file.isURL)
-                setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, file.getUrl()));
+                setEditor(editorList.get(activeFilePosition), readFile(CodeViewActivity.this, file.getUrl()));
             else
-                setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                setEditor(editorList.get(activeFilePosition), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+
+        } else {
+            if (loadIntoRAM) {
+                setCodeView(codeViewList.get(activeFilePosition), codeList.get(clicked_ID));
+                if (isScreenSplit)
+                    selectedFileNames.set(activeFilePosition, ((MaterialButton) view).getText().toString());
+            } else {
+                if (file.isURL)
+                    setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, file.getUrl()));
+                else
+                    setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+            }
+
+            if (file.isURL) updateInfo(file.url);
+            else updateInfo(clicked_ID);
         }
 
         currentActiveID = clicked_ID;
-        if (file.isURL) updateInfo(file.url);
-        else updateInfo(clicked_ID);
         //isScreenSplit == true ? updateInfo_SplitScreen(clicked_ID) : updateInfo(clicked_ID);
     }
 
@@ -1538,6 +1952,36 @@ public class CodeViewActivity extends AppCompatActivity
         @Override
         public void onClick(View v) {
             addTextButton(editorList.get(activeFilePosition), buttonStringList.get(v.getId()));
+        }
+    }
+
+    private class EditorTextWatcher implements TextWatcher {
+        com.clevergo.vcode.editorfiles.CodeView editor = editorList.get(activeFilePosition);
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            customWorkerThread.addWork(() -> {
+                String code = editor.getText().toString();
+                String infoText = getSelectedLineNumber(code, editor.getSelectionStart()) +
+                        ":" +
+                        getCurrentColumn(code, editor.getSelectionStart()) +
+                        "(" +
+                        (getLines(code) + 1) +
+                        ":" +
+                        editor.getText().length() +
+                        ")";
+                uiHandler.post(() -> lineInfo_TextView.setText(infoText));
+            });
         }
     }
 //endregion
