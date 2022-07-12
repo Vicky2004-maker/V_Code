@@ -1,10 +1,5 @@
 package com.clevergo.vcode.editorfiles;
 
-/**
- * Token is class to represent a position on the source code
- *
- * @since 1.2.1
- */
 public class Token {
 
     private final int start;

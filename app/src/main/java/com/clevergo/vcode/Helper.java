@@ -25,9 +25,13 @@ import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import android.text.Editable;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.TextWatcher;
+import android.text.style.BackgroundColorSpan;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -35,6 +39,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
 
+import com.clevergo.vcode.editorfiles.CodeView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -483,6 +488,22 @@ public class Helper {
             uiHandler.post(() -> Toast.makeText(context, context.getString(R.string.copySuccess), Toast.LENGTH_LONG).show());
         } catch (Exception exception) {
             uiHandler.post(() -> Toast.makeText(context, context.getString(R.string.copyFalied), Toast.LENGTH_LONG).show());
+        }
+    }
+
+    public static void setHighLightedText(CodeView editor, String textToHighlight) {
+        String tvt = editor.getText().toString();
+        int ofe = tvt.indexOf(textToHighlight);
+        Spannable wordToSpan = new SpannableString(editor.getText());
+        for (int ofs = 0; ofs < tvt.length() && ofe != -1; ofs = ofe + 1) {
+            ofe = tvt.indexOf(textToHighlight, ofs);
+            if (ofe == -1)
+                break;
+            else {
+                wordToSpan.setSpan(new BackgroundColorSpan(0xFFFFFF00), ofe, ofe + textToHighlight.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                editor.setText(wordToSpan, TextView.BufferType.SPANNABLE);
+            }
         }
     }
 

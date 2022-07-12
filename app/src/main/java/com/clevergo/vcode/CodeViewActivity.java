@@ -31,7 +31,6 @@ import static com.clevergo.vcode.Helper.revertFullScreen;
 import static com.clevergo.vcode.Helper.setBtnIcon;
 import static com.clevergo.vcode.Helper.showAlertDialog;
 import static com.clevergo.vcode.Helper.uiHandler;
-import static com.clevergo.vcode.Helper.validateRegex;
 import static com.clevergo.vcode.Helper.writeFile;
 
 import android.annotation.SuppressLint;
@@ -76,6 +75,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.clevergo.vcode.codeviewer.CodeView;
 import com.clevergo.vcode.codeviewer.Language;
 import com.clevergo.vcode.codeviewer.Theme;
+import com.clevergo.vcode.editorfiles.Token;
 import com.clevergo.vcode.editorfiles.syntax.LanguageManager;
 import com.clevergo.vcode.editorfiles.syntax.LanguageName;
 import com.clevergo.vcode.editorfiles.syntax.ThemeName;
@@ -92,8 +92,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class CodeViewActivity extends AppCompatActivity
         implements CodeView.OnHighlightListener,
@@ -121,6 +119,7 @@ public class CodeViewActivity extends AppCompatActivity
             "~", "+", "-", "*", "/", "%", ":");
     public List<com.clevergo.vcode.editorfiles.CodeView> editorList = new ArrayList<>();
     public List<CodeView> codeViewList = new ArrayList<>();
+    private int totalSearchResult = 0;
     private HashMap<LinearLayout, List<View>> MAIN_VIEW_HOLDER = new HashMap<>();
     private HorizontalScrollView buttonControls_HorizontalScrollView;
     private ExpandableListView expandableListView;
@@ -306,12 +305,14 @@ public class CodeViewActivity extends AppCompatActivity
         });
 
         closeSearch_ImageView.setOnClickListener(a -> {
+            //TODO : Change This too
             if (searchResult) {
                 searchWord = "";
                 codeViewList.get(activeFilePosition).findAllAsync("");
                 searchResult_Layout.setVisibility(View.GONE);
             }
             searchResult = false;
+            totalSearchResult = 0;
         });
 
         bottomSheet_ImageView.setOnClickListener(a -> {
@@ -605,74 +606,61 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void showSearchDialog() {
-        CodeView codeView_Main = codeViewList.get(activeFilePosition);
+        //TODO : Implement Search and Replace Interface
 
         AlertDialog.Builder searchDialog = new AlertDialog.Builder(CodeViewActivity.this);
-        final View searchDialogView = getLayoutInflater().inflate(R.layout.search_dialog, null);
-        final TextInputEditText findTextInput = searchDialogView.findViewById(R.id.searchInputTextField);
-        final SwitchCompat isRegexSwitch = searchDialogView.findViewById(R.id.isRegex_switch);
-        final SwitchCompat isExactMatchSwitch = searchDialogView.findViewById(R.id.exactMatch_switch);
+        final View searchView = getLayoutInflater().inflate(R.layout.search_dialog, null);
+        searchDialog.setView(searchView);
+        final TextInputEditText findWord_Input = searchView.findViewById(R.id.searchInputTextField);
+        final TextInputEditText findReplace_Input = searchView.findViewById(R.id.findReplace_Input);
+        final TextInputLayout findReplace_Layout = searchView.findViewById(R.id.findReplace_Layout);
+        final SwitchCompat findReplace_switch = searchView.findViewById(R.id.findReplace_switch);
+        final SwitchCompat isRegex_switch = searchView.findViewById(R.id.isRegex_switch);
+        final SwitchCompat exactMatch_switch = searchView.findViewById(R.id.exactMatch_switch);
 
-        isRegexSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            TextWatcher textWatcher = validateRegex(CodeViewActivity.this, findTextInput);
+        if (isEditorMode) {
+            findReplace_Layout.setEnabled(true);
+            findReplace_Input.setEnabled(true);
+            findReplace_switch.setEnabled(true);
+            findReplace_switch.setTextColor(Color.WHITE);
+        } else {
+            findReplace_Layout.setEnabled(false);
+            findReplace_Input.setEnabled(false);
+            findReplace_switch.setEnabled(false);
+            findReplace_switch.setTextColor(Color.GRAY);
+        }
 
-            if (isChecked) {
-                findTextInput.addTextChangedListener(textWatcher);
-            } else {
-                findTextInput.removeTextChangedListener(textWatcher);
+        searchDialog.setPositiveButton(getString(R.string.continueStr), (dialog, which) -> {
+            String searchWord = null;
+            try {
+                searchWord = Objects.requireNonNull(findWord_Input.getText()).toString();
+            } catch (Exception ex) {
+                Toast.makeText(CodeViewActivity.this, getString(R.string.emptyField), Toast.LENGTH_SHORT).show();
+                return;
+            } finally {
+                if (searchWord != null) {
+                    if (isEditorMode) {
+                        com.clevergo.vcode.editorfiles.CodeView editor = editorList.get(0);
+                        //Helper.setHighLightedText(editor, searchWord);
+
+
+                        List<Token> tokens = editor.findMatches(searchWord);
+                        for (Token token : tokens) {
+
+                        }
+                    }
+                }
             }
         });
 
-        searchDialog.setTitle(getString(R.string.search));
-        searchDialog.setView(searchDialogView);
-        searchDialog.setPositiveButton(getString(R.string.search), (a, b) -> {
-            searchWord = Objects.requireNonNull(findTextInput.getText()).toString();
-            if (isRegexSwitch.isChecked()) {
-                Pattern pattern = Pattern.compile(searchWord);
-                Matcher matcher = pattern.matcher(codeView_Main.getCode());
-                int groups = matcher.groupCount();
-                StringBuilder matcherString = new StringBuilder();
+        searchDialog.setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
 
-                for (int i = 0; i < groups; i++) {
-                    matcherString.append(matcher.group(i));
-                }
-
-                if (matcher.find()) {
-                    codeView_Main.findAllAsync(matcherString.toString());
-                } else {
-                    Toast.makeText(CodeViewActivity.this, getString(R.string.noMatchFound), Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            if (isExactMatchSwitch.isChecked()) {
-                Pattern pattern = Pattern.compile(searchWord);
-                Matcher matcher = pattern.matcher(codeView_Main.getCode());
-
-                if (matcher.find()) {
-                    codeView_Main.findAllAsync(matcher.group());
-                } else {
-                    Toast.makeText(CodeViewActivity.this, getString(R.string.noResultFound), Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            if (!isExactMatchSwitch.isChecked() && !isRegexSwitch.isChecked()) {
-                codeView_Main.findAllAsync(searchWord);
-            }
-
-            searchWord_TextView.setText(searchWord);
-            searchWord = null;
         });
 
-        searchDialog.setNegativeButton(getString(R.string.cancel), (a, b) -> {
-        });
-
-        searchDialog.setCancelable(true);
-        searchDialog.create();
         searchDialog.show();
     }
 
     //region Split Screen
-
     private void splitScreen() {
         int fileListSize = fileList.size();
         AlertDialog.Builder layoutDialog = new AlertDialog.Builder(CodeViewActivity.this);
@@ -1241,6 +1229,8 @@ public class CodeViewActivity extends AppCompatActivity
         }
     }
 
+    //endregion
+
     private void removeSplitScreen() {
         isScreenSplit = false;
         CodeViewFile file = fileList.get(fileList.size() - 1);
@@ -1292,8 +1282,6 @@ public class CodeViewActivity extends AppCompatActivity
         currentActiveID = fileList.size() - 1;
         activeFilePosition = 0;
     }
-
-    //endregion
 
     private void addNavMenu(final String fileName) {
         customWorkerThread.addWork(() -> {
@@ -1505,7 +1493,7 @@ public class CodeViewActivity extends AppCompatActivity
         editor.setEnableAutoIndentation(true);
         editor.setEnableLineNumber(true);
         editor.setLineNumberTextColor(Color.GRAY);
-        editor.setLineNumberTextSize((float) getResources().getDimension(R.dimen.dimen15sp));
+        editor.setLineNumberTextSize(getResources().getDimension(R.dimen.dimen15sp));
         editor.setTabLength(4);
         //editor.setIndentationStarts(indentationStarts);
         //editor.setIndentationEnds(indentationEnds);
@@ -1554,7 +1542,6 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void saveEdit() {
-        //TODO: Save Edits when in split screen mode.
         if (isScreenSplit) {
             switch (activeLayout) {
                 case Editor_SplitScreen2: {
@@ -1672,6 +1659,24 @@ public class CodeViewActivity extends AppCompatActivity
         }
     }
 
+    private void copyAll() {
+        customWorkerThread.addWork(() -> {
+            if (isScreenSplit) {
+                if (isEditorMode) {
+                    //TODO : Copy All for Split Screen
+                } else {
+
+                }
+            } else {
+                if (isEditorMode) {
+                    copyCode(CodeViewActivity.this, editorList.get(0).getText().toString());
+                } else {
+                    copyCode(CodeViewActivity.this, codeViewList.get(0).getCode());
+                }
+            }
+        });
+    }
+
     private void addTextButton(com.clevergo.vcode.editorfiles.CodeView editor, final String text) {
         editor.getText().insert(editor.getSelectionStart(), text);
         if (text.equals(buttonStringList.get(1))
@@ -1680,6 +1685,7 @@ public class CodeViewActivity extends AppCompatActivity
             editor.setSelection(editor.getSelectionStart() - 1);
         //editor.getText().insert(editor.getSelectionStart(), "\t");
     }
+    //endregion
 
     private void updateViewEditorLists() {
         MAIN_VIEW_HOLDER.put(codeView_Container_Main, List.of(findViewById(R.id.codeview_1)));
@@ -1710,7 +1716,6 @@ public class CodeViewActivity extends AppCompatActivity
                         findViewById(R.id.editor_9),
                         findViewById(R.id.editor_10)));
     }
-    //endregion
 
     //region Menu
     @Override
@@ -1720,6 +1725,7 @@ public class CodeViewActivity extends AppCompatActivity
 
         return true;
     }
+    //endregion
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -1733,14 +1739,13 @@ public class CodeViewActivity extends AppCompatActivity
                 addFileMenu();
                 break;
             case R.id.settings_Menu:
-                //TODO : Navigate to Setting Page
+                startActivity(new Intent(CodeViewActivity.this, SettingsActivity.class));
                 break;
             default:
                 return super.onOptionsItemSelected(item);
         }
         return false;
     }
-    //endregion
 
     //region CodeView OnHighlightListener & OnFindListener & Button OnCLickListener & Data from InfoBottomSheet
     @SuppressLint("SwitchIntDef")
@@ -1846,8 +1851,13 @@ public class CodeViewActivity extends AppCompatActivity
         searchResult_Layout.setVisibility(View.VISIBLE);
 
         if (b) {
+            if (isScreenSplit) {
+                totalSearchResult += i1;
+                findResultNum_TextView.setText(totalSearchResult + " results");
+            } else {
+                findResultNum_TextView.setText(i1 + " results");
+            }
             searchResult = true;
-            findResultNum_TextView.setText(i1 + " results");
         }
     }
 
@@ -1910,7 +1920,7 @@ public class CodeViewActivity extends AppCompatActivity
                 showSearchDialog();
                 break;
             case CopyAll:
-                customWorkerThread.addWork(() -> copyCode(CodeViewActivity.this, codeViewList.get(activeFilePosition).getCode()));
+                copyAll();
                 break;
             case FullScreen:
                 if (isFullScreen) {
@@ -1972,6 +1982,7 @@ public class CodeViewActivity extends AppCompatActivity
         public void afterTextChanged(Editable s) {
             customWorkerThread.addWork(() -> {
                 String code = editor.getText().toString();
+                if (editor.getSelectionStart() == -1) editor.setSelection(0);
                 String infoText = getSelectedLineNumber(code, editor.getSelectionStart()) +
                         ":" +
                         getCurrentColumn(code, editor.getSelectionStart()) +

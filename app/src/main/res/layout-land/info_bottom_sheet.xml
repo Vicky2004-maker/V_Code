@@ -23,7 +23,7 @@
         android:contentDescription="@string/search"
         app:layout_constraintEnd_toStartOf="@+id/fullScreen_imageView"
         app:layout_constraintTop_toTopOf="@+id/fullScreen_imageView"
-        app:srcCompat="@drawable/ic_search_24" />
+        app:srcCompat="@drawable/ic_find_replace" />
 
     <ImageView
         android:id="@+id/copy_imageView"

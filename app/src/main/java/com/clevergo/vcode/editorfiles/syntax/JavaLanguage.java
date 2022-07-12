@@ -43,7 +43,6 @@ public class JavaLanguage {
         codeView.resetHighlighter();
 
         Resources resources = context.getResources();
-
         //View Background
         codeView.setBackgroundColor(resources.getColor(R.color.monokia_pro_black));
 
