@@ -19,6 +19,67 @@
         <item>Atelier Heath Light</item>
         <item>Atelier Lakeside Dark</item>
         <item>Atelier Lakeside Light</item>
+        <item>Atelier Plateau Dark</item>
+        <item>Atelier Plateau Light</item>
+        <item>Atelier Savanna Dark</item>
+        <item>Atelier Savanna Light</item>
+        <item>Atelier Seaside Dark</item>
+        <item>Atelier Seaside Light</item>
+        <item>Atelier Sulphurpool Dark</item>
+        <item>Atelier Sulphurpool Light</item>
+        <item>Atom One Dark</item>
+        <item>Atom One Light</item>
+        <item>Brown Paper</item>
+        <item>Codepen Embed</item>
+        <item>Color Brewer</item>
+        <item>Darcula</item>
+        <item>Dark</item>
+        <item>Darkula</item>
+        <item>Default</item>
+        <item>Docco</item>
+        <item>Dracula</item>
+        <item>Far</item>
+        <item>Foundation</item>
+        <item>Github</item>
+        <item>Github Gist</item>
+        <item>Google Code</item>
+        <item>Gray Scale</item>
+        <item>Gruv Box Dark</item>
+        <item>Gruv Box Light</item>
+        <item>Hopscotch</item>
+        <item>Hybrid</item>
+        <item>Idea</item>
+        <item>IR Black</item>
+        <item>Kimbie Dark</item>
+        <item>Kimbie Light</item>
+        <item>Magula</item>
+        <item>Mono Blue</item>
+        <item>Monokai</item>
+        <item>Monokai Sublime</item>
+        <item>Obsidian</item>
+        <item>Ocean</item>
+        <item>Paraiso Dark</item>
+        <item>Paraiso Light</item>
+        <item>Pojoaque</item>
+        <item>Pure Basic</item>
+        <item>QT Creator Dark</item>
+        <item>QT Creator Light</item>
+        <item>Railscasts</item>
+        <item>Rainbow</item>
+        <item>School Book</item>
+        <item>Solarized Dark</item>
+        <item>Solarized Light</item>
+        <item>Sunburst</item>
+        <item>Tomorrow</item>
+        <item>Tomorrow Night</item>
+        <item>Tomorrow Night Blue</item>
+        <item>Tomorrow Night Bright</item>
+        <item>Tomorrow Night Eighties</item>
+        <item>Visual Studio</item>
+        <item>Visual Studio 2015</item>
+        <item>X Code</item>
+        <item>XT 256</item>
+        <item>Zen Burn</item>
     </string-array>
 
     <string-array name="codeView_Theme_values">
@@ -39,6 +100,67 @@
         <item>atelier-heath-light</item>
         <item>atelier-lakeside-dark</item>
         <item>atelier-lakeside-light</item>
+        <item>atelier-plateau-dark</item>
+        <item>atelier-plateau-light</item>
+        <item>atelier-savanna-dark</item>
+        <item>atelier-savanna-light</item>
+        <item>atelier-seaside-dark</item>
+        <item>atelier-seaside-light</item>
+        <item>atelier-sulphurpool-dark</item>
+        <item>atelier-sulphurpool-light</item>
+        <item>atom-one-dark</item>
+        <item>atom-one-light</item>
+        <item>brown-paper</item>
+        <item>codepen-embed</item>
+        <item>color-brewer</item>
+        <item>darcula</item>
+        <item>dark</item>
+        <item>darkula</item>
+        <item>default</item>
+        <item>docco</item>
+        <item>dracula</item>
+        <item>far</item>
+        <item>foundation</item>
+        <item>github</item>
+        <item>github-gist</item>
+        <item>googlecode</item>
+        <item>grayscale</item>
+        <item>gruvbox-dark</item>
+        <item>gruvbox-light</item>
+        <item>hopscotch</item>
+        <item>hybrid</item>
+        <item>idea</item>
+        <item>ir black</item>
+        <item>kimbie.dark</item>
+        <item>kimbie.light</item>
+        <item>magula</item>
+        <item>mono-blue</item>
+        <item>monokai</item>
+        <item>monokai-sublime</item>
+        <item>obsidian</item>
+        <item>ocean</item>
+        <item>paraiso-dark</item>
+        <item>paraiso-light</item>
+        <item>pojoaque</item>
+        <item>pure basic</item>
+        <item>qtcreator-dark</item>
+        <item>qtcreator-light</item>
+        <item>railscasts</item>
+        <item>rainbow</item>
+        <item>school-book</item>
+        <item>solarized-dark</item>
+        <item>solarized-light</item>
+        <item>sunburst</item>
+        <item>tomorrow</item>
+        <item>tomorrow-night</item>
+        <item>tomorrow-night-blue</item>
+        <item>tomorrow-night-bright</item>
+        <item>tomorrow-night-eighties</item>
+        <item>vs</item>
+        <item>vs2015</item>
+        <item>xcode</item>
+        <item>xt256</item>
+        <item>zenburn</item>
     </string-array>
     <!--Java Keywords List-->
     <string-array name="java_keywords">

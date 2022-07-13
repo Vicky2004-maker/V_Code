@@ -118,4 +118,15 @@
     <string name="dis_hl_largerFiles">Disable highlight dialog for larger files</string>
     <string name="lineLimit_disableHighlight">Maximum line limit</string>
     <string name="lineLimit_summary">If the total lines in a file is greater than this limit then highlight will be disabled.</string>
+    <string name="commonTheme">Common Theme</string>
+    <string name="commonTheme_codeViewOFF">Same theme will be used for all the split screen view as chosen above.</string>
+    <string name="commonTheme_codeViewON">Individual Theme will be set for each view.</string>
+    <string name="theme1">Theme 1</string>
+    <string name="theme2">Theme 2</string>
+    <string name="theme3">Theme 3</string>
+    <string name="theme4">Theme 4</string>
+    <string name="individualTheme">Individual Themes</string>
+    <string name="pinchZoom">Pinch Zoom</string>
+    <string name="textSize">Font size</string>
+    <string name="inputOnlyNumbers">Please type in only numbers.</string>
 </resources>

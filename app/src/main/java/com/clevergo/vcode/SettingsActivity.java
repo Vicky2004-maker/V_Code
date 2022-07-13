@@ -8,9 +8,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
-import java.util.Objects;
-
 public class SettingsActivity extends AppCompatActivity {
+
+    public static boolean refresh = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +25,7 @@ public class SettingsActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setTitle(getString(R.string.setting));
         }
     }
 
@@ -36,6 +37,13 @@ public class SettingsActivity extends AppCompatActivity {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
 
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity());
+            sharedPreferences.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
+                if (key.equals("pref_codeviewThemes") ||
+                        key.equals("pref_wrapLines_codeView") ||
+                        key.equals("pref_pinchZoom") ||
+                        key.equals("pref_lineNumber_codeView") ||
+                        key.equals("pref_textSize_codeView")) refresh = true;
+            });
         }
     }
 }

@@ -5,7 +5,7 @@
         app:title="@string/codeView">
 
         <ListPreference
-            app:defaultValue="androidstudio"
+            app:defaultValue="monokai-sublime"
             app:entries="@array/codeView_Theme"
             app:entryValues="@array/codeView_Theme_values"
             app:icon="@drawable/ic_theme"
@@ -27,6 +27,17 @@
 
         <CheckBoxPreference
             app:defaultValue="false"
+            app:key="pref_pinchZoom"
+            app:title="@string/pinchZoom"/>
+
+        <EditTextPreference
+            app:defaultValue="15"
+            app:key="pref_textSize_codeView"
+            app:title="@string/textSize"
+            app:dialogMessage="@string/inputOnlyNumbers"/>
+
+        <CheckBoxPreference
+            app:defaultValue="false"
             app:key="pref_fastLoad"
             app:summaryOff="@string/fastLoad_summaryOFF"
             app:summaryOn="@string/fastLoad_summaryON"
@@ -43,10 +54,60 @@
         <EditTextPreference
             app:defaultValue="1000"
             app:dependency="pref_disableHighlightLargerFile"
-            app:title="@string/lineLimit_disableHighlight"
             app:key="maxLineLimit"
-            app:summary="@string/lineLimit_summary"/>
+            app:summary="@string/lineLimit_summary"
+            app:title="@string/lineLimit_disableHighlight"
+            app:dialogMessage="@string/inputOnlyNumbers"/>
 
+    </PreferenceCategory>
+    <PreferenceCategory app:title="@string/splitScreen">
+
+        <CheckBoxPreference
+            app:defaultValue="false"
+            app:key="individualTheme_codeView"
+            app:summaryOff="@string/commonTheme_codeViewOFF"
+            app:summaryOn="@string/commonTheme_codeViewON"
+            app:title="@string/individualTheme" />
+
+        <ListPreference
+            app:defaultValue="monokai-sublime"
+            app:dependency="individualTheme_codeView"
+            app:entries="@array/codeView_Theme"
+            app:entryValues="@array/codeView_Theme_values"
+            app:icon="@drawable/ic_theme"
+            app:key="pref_codeviewThemes1"
+            app:title="@string/theme1"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:defaultValue="monokai-sublime"
+            app:dependency="individualTheme_codeView"
+            app:entries="@array/codeView_Theme"
+            app:entryValues="@array/codeView_Theme_values"
+            app:icon="@drawable/ic_theme"
+            app:key="pref_codeviewThemes2"
+            app:title="@string/theme2"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:defaultValue="monokai-sublime"
+            app:dependency="individualTheme_codeView"
+            app:entries="@array/codeView_Theme"
+            app:entryValues="@array/codeView_Theme_values"
+            app:icon="@drawable/ic_theme"
+            app:key="pref_codeviewThemes3"
+            app:title="@string/theme3"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:defaultValue="monokai-sublime"
+            app:dependency="individualTheme_codeView"
+            app:entries="@array/codeView_Theme"
+            app:entryValues="@array/codeView_Theme_values"
+            app:icon="@drawable/ic_theme"
+            app:key="pref_codeviewThemes4"
+            app:title="@string/theme4"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -188,6 +188,20 @@ public class CodeViewActivity extends AppCompatActivity
             EditorActivity.reload = false;
         }
 
+        if (SettingsActivity.refresh && fileList.size() != 0) {
+            final CodeViewFile file = fileList.get(currentActiveID);
+            final CodeView codeView = codeViewList.get(activeFilePosition);
+            if (file.isURL) {
+                setCodeView(codeView,
+                        readFile(CodeViewActivity.this, file.getUrl()));
+            } else {
+                setCodeView(codeView,
+                        readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+            }
+            if (loadIntoRAM) codeList.set(currentActiveID, codeView.getCode());
+            SettingsActivity.refresh = false;
+        }
+
         if (EditorActivity.newFileAdded) {
             for (int i = 0; i < fileList.size(); i++) {
                 Uri uri = Uri.parse(fileList.get(i).getUri());
@@ -257,7 +271,7 @@ public class CodeViewActivity extends AppCompatActivity
         actionBar = getSupportActionBar();
         try {
             CODE_HIGHLIGHTER_MAX_LINES = Integer.parseInt(sharedPreferences.getString("maxLineLimit", String.valueOf(1000)));
-        } catch (NumberFormatException ex){
+        } catch (NumberFormatException ex) {
             sharedPreferences.edit().putString("maxLineLimit", String.valueOf(100)).apply();
             CODE_HIGHLIGHTER_MAX_LINES = 100;
         }
@@ -409,10 +423,41 @@ public class CodeViewActivity extends AppCompatActivity
 
     @SuppressLint("SetTextI18n")
     private void setCodeView(CodeView codeView, String code) {
-        codeView.setTheme(new Theme(sharedPreferences.getString("pref_codeviewThemes", "agate")))
+        int textSize;
+        try {
+            textSize = Integer.parseInt(sharedPreferences.getString("pref_textSize_codeView", "15"));
+        } catch (NumberFormatException e) {
+            sharedPreferences.edit().putString("pref_textSize_codeView", "15").apply();
+            textSize = 15;
+        }
+        codeView.setTheme(new Theme(sharedPreferences.getString("pref_codeviewThemes", "monokai-sublime")))
                 .setCode(code)
                 .setLanguage(Language.AUTO)
+                .setZoomEnabled(sharedPreferences.getBoolean("pref_pinchZoom", false))
                 .setWrapLine(sharedPreferences.getBoolean("pref_wrapLines_codeView", false))
+                .setFontSize(textSize)
+                .setShowLineNumber(sharedPreferences.getBoolean("pref_lineNumber_codeView", true))
+                .apply();
+        codeView.setFindListener(this);
+        disableHighlighting(codeView, getLines(code));
+        lineInfo_TextView.setText(codeView.getLineCount() + ":Nil (" + codeView.getCode().length() + ")");
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void setCodeView_SplitScreen(CodeView codeView, final String code, Theme theme) {
+        int textSize;
+        try {
+            textSize = Integer.parseInt(sharedPreferences.getString("pref_textSize_codeView", "15"));
+        } catch (NumberFormatException e) {
+            sharedPreferences.edit().putString("pref_textSize_codeView", "15").apply();
+            textSize = 15;
+        }
+        codeView.setTheme(theme)
+                .setCode(code)
+                .setLanguage(Language.AUTO)
+                .setZoomEnabled(sharedPreferences.getBoolean("pref_pinchZoom", false))
+                .setWrapLine(sharedPreferences.getBoolean("pref_wrapLines_codeView", false))
+                .setFontSize(textSize)
                 .setShowLineNumber(sharedPreferences.getBoolean("pref_lineNumber_codeView", true))
                 .apply();
         codeView.setFindListener(this);
@@ -1151,17 +1196,41 @@ public class CodeViewActivity extends AppCompatActivity
 
         for (CodeViewFile file : fileList) {
             if (file.getName().equals(fileName1)) {
-                if (file.isURL) {
-                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                if (sharedPreferences.getBoolean("individualTheme_codeView", false)) {
+                    if (file.isURL) {
+                        setCodeView_SplitScreen(codeViewList.get(0),
+                                readFile(CodeViewActivity.this, file.getUrl()),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes1", "monokai-sublime")));
+                    } else {
+                        setCodeView_SplitScreen(codeViewList.get(0),
+                                readFile(CodeViewActivity.this, Uri.parse(file.getUri())),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes1", "monokai-sublime")));
+                    }
                 } else {
-                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    if (file.isURL) {
+                        setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                    } else {
+                        setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    }
                 }
             }
             if (file.getName().equals(fileName2)) {
-                if (file.isURL) {
-                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                if (sharedPreferences.getBoolean("individualTheme_codeView", false)) {
+                    if (file.isURL) {
+                        setCodeView_SplitScreen(codeViewList.get(1),
+                                readFile(CodeViewActivity.this, file.getUrl()),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes2", "monokai-sublime")));
+                    } else {
+                        setCodeView_SplitScreen(codeViewList.get(1),
+                                readFile(CodeViewActivity.this, Uri.parse(file.getUri())),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes2", "monokai-sublime")));
+                    }
                 } else {
-                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    if (file.isURL) {
+                        setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                    } else {
+                        setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    }
                 }
             }
         }
@@ -1175,25 +1244,61 @@ public class CodeViewActivity extends AppCompatActivity
 
         for (CodeViewFile file : fileList) {
             if (file.getName().equals(fileName1)) {
-                if (file.isURL) {
-                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                if (sharedPreferences.getBoolean("individualTheme_codeView", false)) {
+                    if (file.isURL) {
+                        setCodeView_SplitScreen(codeViewList.get(0),
+                                readFile(CodeViewActivity.this, file.getUrl()),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes1", "monokai-sublime")));
+                    } else {
+                        setCodeView_SplitScreen(codeViewList.get(0),
+                                readFile(CodeViewActivity.this, Uri.parse(file.getUri())),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes1", "monokai-sublime")));
+                    }
                 } else {
-                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    if (file.isURL) {
+                        setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                    } else {
+                        setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    }
                 }
             }
             if (file.getName().equals(fileName2)) {
-                if (file.isURL) {
-                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                if (sharedPreferences.getBoolean("individualTheme_codeView", false)) {
+                    if (file.isURL) {
+                        setCodeView_SplitScreen(codeViewList.get(1),
+                                readFile(CodeViewActivity.this, file.getUrl()),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes2", "monokai-sublime")));
+                    } else {
+                        setCodeView_SplitScreen(codeViewList.get(1),
+                                readFile(CodeViewActivity.this, Uri.parse(file.getUri())),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes2", "monokai-sublime")));
+                    }
                 } else {
-                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    if (file.isURL) {
+                        setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                    } else {
+                        setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    }
                 }
             }
 
             if (file.getName().equals(fileName3)) {
-                if (file.isURL) {
-                    setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
+                if (sharedPreferences.getBoolean("individualTheme_codeView", false)) {
+                    if (file.isURL) {
+                        setCodeView_SplitScreen(codeViewList.get(2),
+                                readFile(CodeViewActivity.this, file.getUrl()),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes3", "monokai-sublime")));
+                    } else {
+                        setCodeView_SplitScreen(codeViewList.get(2),
+                                readFile(CodeViewActivity.this, Uri.parse(file.getUri())),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes3", "monokai-sublime")));
+                    }
                 } else {
-                    setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    if (file.isURL) {
+                        setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
+                    } else {
+                        setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    }
                 }
             }
         }
@@ -1207,33 +1312,81 @@ public class CodeViewActivity extends AppCompatActivity
         }
         for (CodeViewFile file : fileList) {
             if (file.getName().equals(fileName1)) {
-                if (file.isURL) {
-                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                if (sharedPreferences.getBoolean("individualTheme_codeView", false)) {
+                    if (file.isURL) {
+                        setCodeView_SplitScreen(codeViewList.get(0),
+                                readFile(CodeViewActivity.this, file.getUrl()),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes1", "monokai-sublime")));
+                    } else {
+                        setCodeView_SplitScreen(codeViewList.get(0),
+                                readFile(CodeViewActivity.this, Uri.parse(file.getUri())),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes1", "monokai-sublime")));
+                    }
                 } else {
-                    setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    if (file.isURL) {
+                        setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                    } else {
+                        setCodeView(codeViewList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    }
                 }
             }
             if (file.getName().equals(fileName2)) {
-                if (file.isURL) {
-                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                if (sharedPreferences.getBoolean("individualTheme_codeView", false)) {
+                    if (file.isURL) {
+                        setCodeView_SplitScreen(codeViewList.get(1),
+                                readFile(CodeViewActivity.this, file.getUrl()),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes2", "monokai-sublime")));
+                    } else {
+                        setCodeView_SplitScreen(codeViewList.get(1),
+                                readFile(CodeViewActivity.this, Uri.parse(file.getUri())),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes2", "monokai-sublime")));
+                    }
                 } else {
-                    setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    if (file.isURL) {
+                        setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                    } else {
+                        setCodeView(codeViewList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    }
                 }
             }
 
             if (file.getName().equals(fileName3)) {
-                if (file.isURL) {
-                    setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
+                if (sharedPreferences.getBoolean("individualTheme_codeView", false)) {
+                    if (file.isURL) {
+                        setCodeView_SplitScreen(codeViewList.get(2),
+                                readFile(CodeViewActivity.this, file.getUrl()),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes3", "monokai-sublime")));
+                    } else {
+                        setCodeView_SplitScreen(codeViewList.get(2),
+                                readFile(CodeViewActivity.this, Uri.parse(file.getUri())),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes3", "monokai-sublime")));
+                    }
                 } else {
-                    setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    if (file.isURL) {
+                        setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
+                    } else {
+                        setCodeView(codeViewList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    }
                 }
             }
 
             if (file.getName().equals(fileName4)) {
-                if (file.isURL) {
-                    setCodeView(codeViewList.get(3), readFile(CodeViewActivity.this, file.getUrl()));
+                if (sharedPreferences.getBoolean("individualTheme_codeView", false)) {
+                    if (file.isURL) {
+                        setCodeView_SplitScreen(codeViewList.get(3),
+                                readFile(CodeViewActivity.this, file.getUrl()),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes4", "monokai-sublime")));
+                    } else {
+                        setCodeView_SplitScreen(codeViewList.get(3),
+                                readFile(CodeViewActivity.this, Uri.parse(file.getUri())),
+                                new Theme(sharedPreferences.getString("pref_codeviewThemes4", "monokai-sublime")));
+                    }
                 } else {
-                    setCodeView(codeViewList.get(3), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    if (file.isURL) {
+                        setCodeView(codeViewList.get(3), readFile(CodeViewActivity.this, file.getUrl()));
+                    } else {
+                        setCodeView(codeViewList.get(3), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    }
                 }
             }
         }
