@@ -2,6 +2,7 @@ package com.clevergo.vcode;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -75,9 +76,6 @@ public class Helper {
     public static final int CREATE_FILE_NORMAL_CODE = 5;
     public static final String ALL_FILES_MIME = "*/*";
     public static final String PDF_MIME = "application/pdf";
-
-    public static final int CODE_HIGHLIGHTER_MAX_LINES = 1000;
-
     public static final Uri PRIVACY_POLICY_URL = Uri.parse("https://clever-go.web.app/privacy-policy-codeviewer.html");
 
     public static final String[] PERMISSIONS =
@@ -489,6 +487,13 @@ public class Helper {
         } catch (Exception exception) {
             uiHandler.post(() -> Toast.makeText(context, context.getString(R.string.copyFalied), Toast.LENGTH_LONG).show());
         }
+    }
+
+    public static double getTotalRAM_GB(Context context) {
+        ActivityManager actManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo memInfo = new ActivityManager.MemoryInfo();
+        actManager.getMemoryInfo(memInfo);
+        return memInfo.totalMem / 1e9d;
     }
 
     public static void setHighLightedText(CodeView editor, String textToHighlight) {

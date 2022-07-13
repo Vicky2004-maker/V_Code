@@ -3,7 +3,6 @@ package com.clevergo.vcode;
 import static com.clevergo.vcode.Helper.ALL_FILES_MIME;
 import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_NORMAL;
 import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_PDF;
-import static com.clevergo.vcode.Helper.CODE_HIGHLIGHTER_MAX_LINES;
 import static com.clevergo.vcode.Helper.CREATE_FILE_NORMAL_CODE;
 import static com.clevergo.vcode.Helper.CREATE_FILE_PDF_CODE;
 import static com.clevergo.vcode.Helper.PDF_MIME;
@@ -37,6 +36,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
@@ -71,6 +71,7 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.preference.PreferenceManager;
 
 import com.clevergo.vcode.codeviewer.CodeView;
 import com.clevergo.vcode.codeviewer.Language;
@@ -110,7 +111,6 @@ public class CodeViewActivity extends AppCompatActivity
     public static CustomWorkerThread customWorkerThread;
     public static boolean isEditorMode = false;
     private static ProgressDialog progressDialog;
-    private final boolean loadIntoRAM = true;
     private final List<String> fileNames = new ArrayList<>();
     private final List<String> activeFileNames = new ArrayList<>();
     public DrawerLayout drawerLayout;
@@ -119,6 +119,7 @@ public class CodeViewActivity extends AppCompatActivity
             "~", "+", "-", "*", "/", "%", ":");
     public List<com.clevergo.vcode.editorfiles.CodeView> editorList = new ArrayList<>();
     public List<CodeView> codeViewList = new ArrayList<>();
+    private boolean loadIntoRAM;
     private int totalSearchResult = 0;
     private HashMap<LinearLayout, List<View>> MAIN_VIEW_HOLDER = new HashMap<>();
     private HorizontalScrollView buttonControls_HorizontalScrollView;
@@ -139,6 +140,8 @@ public class CodeViewActivity extends AppCompatActivity
     private String searchWord = "";
     private ActionBar actionBar;
     private ActiveLayout activeLayout;
+    private SharedPreferences sharedPreferences;
+    private int CODE_HIGHLIGHTER_MAX_LINES;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -221,9 +224,10 @@ public class CodeViewActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_code_view);
         customWorkerThread = new CustomWorkerThread();
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(CodeViewActivity.this);
 
         activeLayout = ActiveLayout.CodeView_Main;
-
+        loadIntoRAM = sharedPreferences.getBoolean("pref_fastLoad", false);
         allFileSwitcher_LinearLayout = findViewById(R.id.allFileSwitcher);
         pickFile_TextView = findViewById(R.id.pickFileTextView);
         info_LinearLayout = findViewById(R.id.info_LinearLayout);
@@ -251,6 +255,12 @@ public class CodeViewActivity extends AppCompatActivity
         allFileSwitcherParent = findViewById(R.id.allFileSwitcherParent);
         buttonControls_HorizontalScrollView = findViewById(R.id.buttonControls_HorizontalScrollView);
         actionBar = getSupportActionBar();
+        try {
+            CODE_HIGHLIGHTER_MAX_LINES = Integer.parseInt(sharedPreferences.getString("maxLineLimit", String.valueOf(1000)));
+        } catch (NumberFormatException ex){
+            sharedPreferences.edit().putString("maxLineLimit", String.valueOf(100)).apply();
+            CODE_HIGHLIGHTER_MAX_LINES = 100;
+        }
 
         isEditorMode = false;
 
@@ -399,11 +409,11 @@ public class CodeViewActivity extends AppCompatActivity
 
     @SuppressLint("SetTextI18n")
     private void setCodeView(CodeView codeView, String code) {
-        codeView.setTheme(Theme.MONOKAI)
+        codeView.setTheme(new Theme(sharedPreferences.getString("pref_codeviewThemes", "agate")))
                 .setCode(code)
                 .setLanguage(Language.AUTO)
-                .setWrapLine(false)
-                .setShowLineNumber(true)
+                .setWrapLine(sharedPreferences.getBoolean("pref_wrapLines_codeView", false))
+                .setShowLineNumber(sharedPreferences.getBoolean("pref_lineNumber_codeView", true))
                 .apply();
         codeView.setFindListener(this);
         disableHighlighting(codeView, getLines(code));
@@ -1519,7 +1529,11 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void disableHighlighting(CodeView codeView, int totalLines) {
-        codeView.setOnHighlightListener(totalLines > CODE_HIGHLIGHTER_MAX_LINES ? null : CodeViewActivity.this);
+        if (sharedPreferences.getBoolean("pref_disableHighlightLargerFile", true)) {
+            codeView.setOnHighlightListener(totalLines > CODE_HIGHLIGHTER_MAX_LINES ? null : CodeViewActivity.this);
+        } else {
+            codeView.setOnHighlightListener(CodeViewActivity.this);
+        }
     }
 
     private void addEditorButtons() {

@@ -107,4 +107,15 @@
     <string name="attachment_summary_on">Automatically download attachments for incoming emails
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="fastLoad">Fast load</string>
+    <string name="fastLoad_summaryON">All the content of your opened files will be put up into RAM hence improving the performance at the cost of high usage of RAM. *</string>
+    <string name="fastLoad_summaryOFF">All the content of opened files will be added to RAM to improve performance but this requires a device with more RAM. *</string>
+    <string name="theme">Theme</string>
+    <string name="wrapLines">Wrap lines</string>
+    <string name="showLineNumber">Show line number</string>
+    <string name="highlight_OFF">App will wait un-till the file is fully highlighted. This depends on the file size, higher file size higher time to highlight.</string>
+    <string name="highlight_ON">App will not wait for the file to get fully highlighted and can be viewed before highlighted.</string>
+    <string name="dis_hl_largerFiles">Disable highlight dialog for larger files</string>
+    <string name="lineLimit_disableHighlight">Maximum line limit</string>
+    <string name="lineLimit_summary">If the total lines in a file is greater than this limit then highlight will be disabled.</string>
 </resources>

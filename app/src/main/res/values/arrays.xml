@@ -1,6 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string-array name="codeView_Theme">
+        <item>Agate</item>
+        <item>Android Studio</item>
+        <item>Arduino Light</item>
+        <item>Arta</item>
+        <item>Ascetic</item>
+        <item>Atelier Cave Dark</item>
+        <item>Atelier Cave Light</item>
+        <item>Atelier Dune Dark</item>
+        <item>Atelier Dune Light</item>
+        <item>Atelier Estuary Dark</item>
+        <item>Atelier Estuary Light</item>
+        <item>Atelier Forest Dark</item>
+        <item>Atelier Forest Light</item>
+        <item>Atelier Heath Dark</item>
+        <item>Atelier Heath Light</item>
+        <item>Atelier Lakeside Dark</item>
+        <item>Atelier Lakeside Light</item>
+    </string-array>
+
+    <string-array name="codeView_Theme_values">
+        <item>agate</item>
+        <item>androidstudio</item>
+        <item>arduino_light</item>
+        <item>arta</item>
+        <item>ascetic</item>
+        <item>atelier-cave-dark</item>
+        <item>atelier-cave-light</item>
+        <item>atelier-dune-dark</item>
+        <item>atelier-dune-light</item>
+        <item>atelier-estuary-dark</item>
+        <item>atelier-estuary-light</item>
+        <item>atelier-forest-dark</item>
+        <item>atelier-forest-light</item>
+        <item>atelier-heath-dark</item>
+        <item>atelier-heath-light</item>
+        <item>atelier-lakeside-dark</item>
+        <item>atelier-lakeside-light</item>
+    </string-array>
     <!--Java Keywords List-->
     <string-array name="java_keywords">
         <item>public </item>
@@ -141,16 +180,6 @@
         <item>if </item>
         <item>or </item>
         <item>yield </item>
-    </string-array>
-    <!-- Reply Preference -->
-    <string-array name="reply_entries">
-        <item>Reply</item>
-        <item>Reply to all</item>
-    </string-array>
-
-    <string-array name="reply_values">
-        <item>reply</item>
-        <item>reply_all</item>
     </string-array>
 
 </resources>
