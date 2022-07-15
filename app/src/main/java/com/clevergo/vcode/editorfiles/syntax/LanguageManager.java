@@ -45,6 +45,16 @@ public class LanguageManager {
                 return PythonLanguage.getKeywords(context);
             case GO_LANG:
                 return GoLanguage.getKeywords(context);
+            case JAVASCRIPT:
+                return null;
+            case CPP:
+                return null;
+            case C_SHARP:
+                return null;
+            case HTML:
+                return null;
+            case CSS:
+                return null;
             default:
                 return new String[]{};
         }
@@ -58,6 +68,16 @@ public class LanguageManager {
                 return PythonLanguage.getCodeList(context);
             case GO_LANG:
                 return GoLanguage.getCodeList(context);
+            case JAVASCRIPT:
+                return null;
+            case CPP:
+                return null;
+            case C_SHARP:
+                return null;
+            case HTML:
+                return null;
+            case CSS:
+                return null;
             default:
                 return new ArrayList<>();
         }
@@ -71,6 +91,16 @@ public class LanguageManager {
                 return PythonLanguage.getIndentationStarts();
             case GO_LANG:
                 return GoLanguage.getIndentationStarts();
+            case JAVASCRIPT:
+                return null;
+            case CPP:
+                return null;
+            case C_SHARP:
+                return null;
+            case HTML:
+                return null;
+            case CSS:
+                return null;
             default:
                 return new HashSet<>();
         }
@@ -84,6 +114,16 @@ public class LanguageManager {
                 return PythonLanguage.getIndentationEnds();
             case GO_LANG:
                 return GoLanguage.getIndentationEnds();
+            case JAVASCRIPT:
+                return null;
+            case CPP:
+                return null;
+            case C_SHARP:
+                return null;
+            case HTML:
+                return null;
+            case CSS:
+                return null;
             default:
                 return new HashSet<>();
         }
@@ -97,6 +137,16 @@ public class LanguageManager {
                 return PythonLanguage.getCommentStart();
             case GO_LANG:
                 return GoLanguage.getCommentStart();
+            case JAVASCRIPT:
+                return null;
+            case CPP:
+                return null;
+            case C_SHARP:
+                return null;
+            case HTML:
+                return null;
+            case CSS:
+                return null;
             default:
                 return "";
         }
@@ -110,6 +160,16 @@ public class LanguageManager {
                 return PythonLanguage.getCommentEnd();
             case GO_LANG:
                 return GoLanguage.getCommentEnd();
+            case JAVASCRIPT:
+                return null;
+            case CPP:
+                return null;
+            case C_SHARP:
+                return null;
+            case HTML:
+                return null;
+            case CSS:
+                return null;
             default:
                 return "";
         }
@@ -126,6 +186,16 @@ public class LanguageManager {
             case GO_LANG:
                 GoLanguage.applyMonokaiTheme(context, codeView);
                 break;
+            case JAVASCRIPT:
+                break;
+            case CPP:
+                break;
+            case C_SHARP:
+                break;
+            case HTML:
+                break;
+            case CSS:
+                break;
         }
     }
 
@@ -139,6 +209,16 @@ public class LanguageManager {
                 break;
             case GO_LANG:
                 GoLanguage.applyNoctisWhiteTheme(context, codeView);
+                break;
+            case JAVASCRIPT:
+                break;
+            case CPP:
+                break;
+            case C_SHARP:
+                break;
+            case HTML:
+                break;
+            case CSS:
                 break;
         }
     }
@@ -154,6 +234,16 @@ public class LanguageManager {
             case GO_LANG:
                 GoLanguage.applyFiveColorsDarkTheme(context, codeView);
                 break;
+            case JAVASCRIPT:
+                break;
+            case CPP:
+                break;
+            case C_SHARP:
+                break;
+            case HTML:
+                break;
+            case CSS:
+                break;
         }
     }
 
@@ -167,6 +257,16 @@ public class LanguageManager {
                 break;
             case GO_LANG:
                 GoLanguage.applyOrangeBoxTheme(context, codeView);
+                break;
+            case JAVASCRIPT:
+                break;
+            case CPP:
+                break;
+            case C_SHARP:
+                break;
+            case HTML:
+                break;
+            case CSS:
                 break;
         }
     }

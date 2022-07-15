@@ -129,4 +129,9 @@
     <string name="pinchZoom">Pinch Zoom</string>
     <string name="textSize">Font size</string>
     <string name="inputOnlyNumbers">Please type in only numbers.</string>
+    <string name="common">Common</string>
+    <string name="organizeFileInfo">Organize file info</string>
+    <string name="organizeFileInfo_summary">All methods dropdown will be well organized.</string>
+    <string name="fileInfo">FIle Info:</string>
+    <string name="totalMethods">Methods :</string>
 </resources>

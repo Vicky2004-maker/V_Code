@@ -155,7 +155,7 @@ public class Helper {
         try {
             bufferedWriter = new BufferedWriter(new FileWriter(settingsFile));
 
-            bufferedWriter.append(key + SETTING_DELIMITER + value);
+            bufferedWriter.append(key).append(SETTING_DELIMITER).append(String.valueOf(value));
 
             bufferedWriter.flush();
         } catch (IOException e) {
@@ -174,7 +174,7 @@ public class Helper {
             bufferedWriter = new BufferedWriter(new FileWriter(settingsFile));
 
             for (Map.Entry<Object, Object> entry : map.entrySet()) {
-                bufferedWriter.append(entry.getKey().toString() + SETTING_DELIMITER + entry.getValue().toString());
+                bufferedWriter.append(entry.getKey().toString()).append(SETTING_DELIMITER).append(entry.getValue().toString());
                 bufferedWriter.newLine();
             }
 
@@ -290,6 +290,35 @@ public class Helper {
         return syllabus[syllabus.length - 1];
     }
 
+    public static String findProgrammingLanguage(final @NonNull String fileName) {
+        String toReturn = null;
+        switch (getFileExtension(fileName)) {
+            case "java":
+                toReturn = "JAVA";
+                break;
+            case "cs":
+                toReturn = "C_SHARP";
+                break;
+            case "cpp":
+                toReturn = "CPP";
+                break;
+            case "py":
+                toReturn = "PYTHON";
+                break;
+            case "js":
+                toReturn = "JAVASCRIPT";
+                break;
+            case "html":
+            case "htm":
+                toReturn = "HTML";
+                break;
+            case "css":
+                toReturn = "CSS";
+                break;
+        }
+        return toReturn;
+    }
+
     public static String readFile(Context context, Uri uri) {
         StringBuilder sb = new StringBuilder();
 
@@ -326,7 +355,7 @@ public class Helper {
         activity.startActivityForResult(Intent.createChooser(i, "Choose directory"), reqCode);
     }
 
-    public static void getAllMethods(HashMap<String, Integer> toAdd, String code) {
+    public static void getAllMethodsLines_JAVA(HashMap<String, Integer> toAdd, String code) {
         String[] lines = code.split("\n");
         Pattern pattern = Pattern.compile("/(public|private|protected|synchronized|\\W) (\\W|\\w+) (\\w+\\<\\w+\\, \\w+\\>|\\w+\\<\\w+\\>|void|int|long|short|(D|d)ouble|(f|f)loat|\\w+|\\w+\\.\\w+) (\\w\\d|\\w)+\\((\\)|\\w+\\s\\w+\\,|\\w+\\<\\w+\\>|((\\s|\\S)\\w+\\s\\w+)|\\w+\\<\\w+\\, \\w+\\>)/gm");
         Matcher matcher;
@@ -362,19 +391,6 @@ public class Helper {
             e.printStackTrace();
         }
         return lineNumber;
-    }
-
-    public static HashMap<String, Integer> getAllMethods(String code) {
-        HashMap<String, Integer> methods = new HashMap<>();
-        String[] lines = code.split("\n");
-        Pattern pattern = Pattern.compile("/(public|private|protected|synchronized|\\W) (\\W|\\w+) (\\w+\\<\\w+\\, \\w+\\>|\\w+\\<\\w+\\>|void|int|long|short|(D|d)ouble|(f|f)loat|\\w+|\\w+\\.\\w+) (\\w\\d|\\w)+\\((\\)|\\w+\\s\\w+\\,|\\w+\\<\\w+\\>|((\\s|\\S)\\w+\\s\\w+)|\\w+\\<\\w+\\, \\w+\\>)/gm");
-        Matcher matcher;
-        for (int i = 0; i < lines.length; i++) {
-            matcher = pattern.matcher(lines[i]);
-            if (matcher.find()) methods.put(lines[i].replace("{", ""), i + 1);
-        }
-
-        return methods;
     }
 
     public static void writeFile(Context context, Uri uri, final String content) {

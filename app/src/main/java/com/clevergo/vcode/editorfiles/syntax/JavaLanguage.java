@@ -1,7 +1,9 @@
 package com.clevergo.vcode.editorfiles.syntax;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.content.res.Resources;
+import android.graphics.Typeface;
 
 import com.clevergo.vcode.R;
 import com.clevergo.vcode.editorfiles.Code;
@@ -25,6 +27,8 @@ public class JavaLanguage {
             "|public|return|short|static|strictfp|super|switch" +
             "|synchronized|this|throw|transient|try|void|volatile|while)\\b");
 
+    //TODO : Add Pattern Classes
+    private static final Pattern PATTERN_CLASSES = Pattern.compile("");
     private static final Pattern PATTERN_BUILTINS = Pattern.compile("[,:;[->]{}()]");
     private static final Pattern PATTERN_SINGLE_LINE_COMMENT = Pattern.compile("//[^\\n]*");
     private static final Pattern PATTERN_MULTI_LINE_COMMENT = Pattern.compile("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/");
@@ -49,6 +53,7 @@ public class JavaLanguage {
         //Syntax Colors
         codeView.addSyntaxPattern(PATTERN_HEX, resources.getColor(R.color.monokia_pro_purple));
         codeView.addSyntaxPattern(PATTERN_CHAR, resources.getColor(R.color.monokia_pro_green));
+        codeView.addSyntaxPattern(PATTERN_CLASSES, resources.getColor(R.color.monokia_pro_sky));
         codeView.addSyntaxPattern(PATTERN_STRING, resources.getColor(R.color.monokia_pro_orange));
         codeView.addSyntaxPattern(PATTERN_NUMBERS, resources.getColor(R.color.monokia_pro_purple));
         codeView.addSyntaxPattern(PATTERN_KEYWORDS, resources.getColor(R.color.monokia_pro_pink));
@@ -65,6 +70,7 @@ public class JavaLanguage {
         codeView.addSyntaxPattern(PATTERN_TODO_COMMENT, resources.getColor(R.color.gold));
 
         codeView.reHighlightSyntax();
+        codeView.setTypeface(Typeface.createFromAsset(context.getAssets(), "fonts/mono_regular.ttf"));
     }
 
     public static void applyNoctisWhiteTheme(Context context, CodeView codeView) {
@@ -96,6 +102,7 @@ public class JavaLanguage {
         codeView.addSyntaxPattern(PATTERN_TODO_COMMENT, resources.getColor(R.color.gold));
 
         codeView.reHighlightSyntax();
+        codeView.setTypeface(Typeface.createFromAsset(context.getAssets(), "fonts/mono_regular.ttf"));
     }
 
     public static void applyFiveColorsDarkTheme(Context context, CodeView codeView) {
@@ -127,6 +134,7 @@ public class JavaLanguage {
         codeView.addSyntaxPattern(PATTERN_TODO_COMMENT, resources.getColor(R.color.gold));
 
         codeView.reHighlightSyntax();
+        codeView.setTypeface(Typeface.createFromAsset(context.getAssets(), "fonts/mono_regular.ttf"));
     }
 
     public static void applyOrangeBoxTheme(Context context, CodeView codeView) {
@@ -158,6 +166,7 @@ public class JavaLanguage {
         codeView.addSyntaxPattern(PATTERN_TODO_COMMENT, resources.getColor(R.color.gold));
 
         codeView.reHighlightSyntax();
+        codeView.setTypeface(Typeface.createFromAsset(context.getAssets(), "fonts/mono_regular.ttf"));
     }
 
     public static String[] getKeywords(Context context) {

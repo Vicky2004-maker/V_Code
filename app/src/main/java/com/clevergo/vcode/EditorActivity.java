@@ -2,7 +2,7 @@ package com.clevergo.vcode;
 
 import static com.clevergo.vcode.Helper.PICK_FILE_CODE;
 import static com.clevergo.vcode.Helper.createACodeViewFile;
-import static com.clevergo.vcode.Helper.getAllMethods;
+import static com.clevergo.vcode.Helper.getAllMethodsLines_JAVA;
 import static com.clevergo.vcode.Helper.getFileExtension;
 import static com.clevergo.vcode.Helper.isLowerSDK;
 import static com.clevergo.vcode.Helper.pickFile;
@@ -31,7 +31,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.clevergo.vcode.editorfiles.CodeView;
@@ -262,7 +261,7 @@ public class EditorActivity extends AppCompatActivity {
                     expandableListDetail);
             expandableListView.setAdapter(expandableListAdapter);
 
-            getAllMethods(methods, editorList.get(activeEditor).getText().toString());
+            getAllMethodsLines_JAVA(methods, editorList.get(activeEditor).getText().toString());
 
             expandableListDetail.put("All Methods", List.copyOf(methods.keySet()));
             navView.postInvalidate();

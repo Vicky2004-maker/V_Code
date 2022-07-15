@@ -11,6 +11,7 @@ import androidx.preference.PreferenceManager;
 public class SettingsActivity extends AppCompatActivity {
 
     public static boolean refresh = false;
+    public static boolean _updateInfo = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +44,8 @@ public class SettingsActivity extends AppCompatActivity {
                         key.equals("pref_pinchZoom") ||
                         key.equals("pref_lineNumber_codeView") ||
                         key.equals("pref_textSize_codeView")) refresh = true;
+
+                if(key.equals("pref_organizeFileInfo")) _updateInfo = true;
             });
         }
     }

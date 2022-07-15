@@ -56,7 +56,7 @@
             <com.clevergo.vcode.codeviewer.CodeView
                 android:id="@+id/codeview_1"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="match_parent" />
 
         </LinearLayout>
 
@@ -188,9 +188,9 @@
 
             <com.clevergo.vcode.editorfiles.CodeView
                 android:id="@+id/editor_1"
-                android:gravity="start"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:gravity="start" />
         </LinearLayout>
 
         <LinearLayout
@@ -204,17 +204,17 @@
 
             <com.clevergo.vcode.editorfiles.CodeView
                 android:id="@+id/editor_2"
-                android:gravity="start"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:gravity="start" />
 
             <com.clevergo.vcode.editorfiles.CodeView
                 android:id="@+id/editor_3"
-                android:gravity="start"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:gravity="start" />
 
         </LinearLayout>
 
@@ -222,17 +222,17 @@
             android:id="@+id/editor_Container_SplitScreen3"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="vertical"
             android:visibility="gone"
-            android:layout_weight="1"
             android:weightSum="2">
 
             <com.clevergo.vcode.editorfiles.CodeView
                 android:id="@+id/editor_4"
-                android:gravity="start"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:gravity="start" />
 
             <LinearLayout
                 android:id="@+id/editor_Container_SplitScreen3_Child"
@@ -244,17 +244,17 @@
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_5"
-                    android:gravity="start"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                    android:layout_weight="1"
+                    android:gravity="start" />
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_6"
-                    android:gravity="start"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                    android:layout_weight="1"
+                    android:gravity="start" />
 
             </LinearLayout>
 
@@ -264,8 +264,8 @@
             android:id="@+id/editor_Container_SplitScreen4"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:baselineAligned="false"
             android:layout_weight="1"
+            android:baselineAligned="false"
             android:orientation="horizontal"
             android:visibility="gone"
             android:weightSum="2">
@@ -279,17 +279,17 @@
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_7"
-                    android:gravity="start"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                    android:layout_weight="1"
+                    android:gravity="start" />
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_8"
-                    android:gravity="start"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                    android:layout_weight="1"
+                    android:gravity="start" />
 
             </LinearLayout>
 
@@ -302,17 +302,17 @@
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_9"
-                    android:gravity="start"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                    android:layout_weight="1"
+                    android:gravity="start" />
 
                 <com.clevergo.vcode.editorfiles.CodeView
                     android:id="@+id/editor_10"
-                    android:gravity="start"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                    android:layout_weight="1"
+                    android:gravity="start" />
 
             </LinearLayout>
         </LinearLayout>
@@ -446,21 +446,46 @@
         android:layout_height="match_parent"
         android:layout_gravity="start">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="5dp">
+            android:orientation="vertical">
 
             <ExpandableListView
                 android:id="@+id/fileSelector_ExpandableList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
                 android:divider="@color/grey"
                 android:dividerHeight="0.25dp"
                 android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft" />
 
-        </LinearLayout>
+            <LinearLayout
+                android:id="@+id/fileInfo_LinearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:orientation="vertical"
+                android:padding="5dp">
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/fileInfo" />
+
+                <TextView
+                    android:id="@+id/totalMethod_TextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp" />
+
+                <TextView
+                    android:id="@+id/totalVariable_TextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp" />
+
+            </LinearLayout>
+        </RelativeLayout>
     </com.google.android.material.navigation.NavigationView>
 </androidx.drawerlayout.widget.DrawerLayout>

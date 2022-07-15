@@ -11,8 +11,8 @@ import static com.clevergo.vcode.Helper.chooseDirectory;
 import static com.clevergo.vcode.Helper.copyCode;
 import static com.clevergo.vcode.Helper.createACodeViewFile;
 import static com.clevergo.vcode.Helper.createFile;
+import static com.clevergo.vcode.Helper.findProgrammingLanguage;
 import static com.clevergo.vcode.Helper.generatePDF;
-import static com.clevergo.vcode.Helper.getAllMethods;
 import static com.clevergo.vcode.Helper.getCurrentColumn;
 import static com.clevergo.vcode.Helper.getFileExtension;
 import static com.clevergo.vcode.Helper.getFileName;
@@ -31,6 +31,7 @@ import static com.clevergo.vcode.Helper.setBtnIcon;
 import static com.clevergo.vcode.Helper.showAlertDialog;
 import static com.clevergo.vcode.Helper.uiHandler;
 import static com.clevergo.vcode.Helper.writeFile;
+import static com.clevergo.vcode.regex.JavaRegexManager.getAllMethodsLines_JAVA;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -133,8 +134,9 @@ public class CodeViewActivity extends AppCompatActivity
     private LinearLayout codeView_Container_Main, codeView_Container_SplitScreen2, codeView_Container_SplitScreen3, codeView_Container_SplitScreen4,
             editor_Container_Main, editor_Container_SplitScreen2, editor_Container_SplitScreen3, editor_Container_SplitScreen4;
     private LinearLayout codeView_Container_SplitScreen3_Child, editor_Container_SplitScreen3_Child;
-    private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout, allFileSwitcherParent;
-    private TextView pickFile_TextView, lineInfo_TextView, fileSize_TextView, searchWord_TextView, findResultNum_TextView;
+    private LinearLayout allFileSwitcher_LinearLayout, info_LinearLayout, allFileSwitcherParent, fileInfo_LinearLayout;
+    private TextView pickFile_TextView, lineInfo_TextView, fileSize_TextView, searchWord_TextView, findResultNum_TextView,
+            totalMethod_TextView, totalVariable_TextView;
     private boolean searchResult = false;
     private boolean configFullScreen = true;
     private String searchWord = "";
@@ -202,6 +204,17 @@ public class CodeViewActivity extends AppCompatActivity
             SettingsActivity.refresh = false;
         }
 
+        if (SettingsActivity._updateInfo) {
+            final CodeViewFile file = fileList.get(currentActiveID);
+            if (file.isURL) {
+                updateInfo(file.getUrl());
+            } else {
+                updateInfo(Uri.parse(file.getUri()));
+            }
+
+            SettingsActivity._updateInfo = false;
+        }
+
         if (EditorActivity.newFileAdded) {
             for (int i = 0; i < fileList.size(); i++) {
                 Uri uri = Uri.parse(fileList.get(i).getUri());
@@ -258,6 +271,7 @@ public class CodeViewActivity extends AppCompatActivity
         codeView_Container_SplitScreen2 = findViewById(R.id.codeView_Container_SplitScreen2);
         codeView_Container_SplitScreen3 = findViewById(R.id.codeView_Container_SplitScreen3);
         codeView_Container_SplitScreen4 = findViewById(R.id.codeView_Container_SplitScreen4);
+        fileInfo_LinearLayout = findViewById(R.id.fileInfo_LinearLayout);
         editor_Container_Main = findViewById(R.id.editor_Container_Main);
         editor_Container_SplitScreen2 = findViewById(R.id.editor_Container_SplitScreen2);
         editor_Container_SplitScreen3 = findViewById(R.id.editor_Container_SplitScreen3);
@@ -268,6 +282,8 @@ public class CodeViewActivity extends AppCompatActivity
         expandableListView = findViewById(R.id.fileSelector_ExpandableList);
         allFileSwitcherParent = findViewById(R.id.allFileSwitcherParent);
         buttonControls_HorizontalScrollView = findViewById(R.id.buttonControls_HorizontalScrollView);
+        totalMethod_TextView = findViewById(R.id.totalMethod_TextView);
+        totalVariable_TextView = findViewById(R.id.totalVariable_TextView);
         actionBar = getSupportActionBar();
         try {
             CODE_HIGHLIGHTER_MAX_LINES = Integer.parseInt(sharedPreferences.getString("maxLineLimit", String.valueOf(1000)));
@@ -291,9 +307,11 @@ public class CodeViewActivity extends AppCompatActivity
                 expandableListTitle,
                 expandableListDetail);
         expandableListView.setAdapter(expandableListAdapter);
+        expandableListView.setOnGroupExpandListener(groupPosition -> fileInfo_LinearLayout.setVisibility(View.INVISIBLE));
+        expandableListView.setOnGroupCollapseListener(groupPosition -> fileInfo_LinearLayout.setVisibility(View.VISIBLE));
         expandableListView.setOnChildClickListener((parent, v, groupPosition, childPosition, id) -> {
-            final CodeViewFile file = fileList.get(childPosition);
             if (groupPosition == 1) {
+                final CodeViewFile file = fileList.get(childPosition);
                 if (currentActiveID == childPosition) {
                     Toast.makeText(CodeViewActivity.this, getString(R.string.fileAreadyDisplayed), Toast.LENGTH_SHORT).show();
                     return false;
@@ -309,7 +327,17 @@ public class CodeViewActivity extends AppCompatActivity
                 currentActiveID = childPosition;
             }
             if (groupPosition == 2) {
-                searchWord = List.copyOf(allMethods.keySet()).get(childPosition);
+                if (sharedPreferences.getBoolean("pref_organizeFileInfo", false)) {
+                    String[] method = List.copyOf(allMethods.keySet()).get(childPosition).split("\n");
+                    for (String str : method) {
+                        if (str.charAt(0) == 'N') {
+                            searchWord = str.substring(6);
+                        }
+                    }
+                } else {
+                    searchWord = List.copyOf(allMethods.keySet()).get(childPosition);
+                }
+
                 codeViewList.get(activeFilePosition).findAllAsync(searchWord);
                 searchWord_TextView.setText(searchWord);
             }
@@ -551,6 +579,7 @@ public class CodeViewActivity extends AppCompatActivity
         filesOpened++;
     }
 
+    @SuppressLint("SetTextI18n")
     private void updateInfoEditor(Uri uri) {
         customWorkerThread.addWork(() -> {
             String actionBarSubtitle = getFileName(CodeViewActivity.this, uri);
@@ -562,13 +591,14 @@ public class CodeViewActivity extends AppCompatActivity
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", activeFileNames);
             allMethods.clear();
-            allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            allMethods = getAllMethodsLines_JAVA(codeViewList.get(activeFilePosition).getCode(), sharedPreferences.getBoolean("pref_organizeFileInfo", true));
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
             uiHandler.post(() -> {
                 Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
+                totalMethod_TextView.setText(getString(R.string.totalMethods) + " " + allMethods.size());
             });
         });
     }
@@ -585,13 +615,14 @@ public class CodeViewActivity extends AppCompatActivity
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", activeFileNames);
             allMethods.clear();
-            allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            allMethods = getAllMethodsLines_JAVA(codeViewList.get(activeFilePosition).getCode(), sharedPreferences.getBoolean("pref_organizeFileInfo", true));
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
             uiHandler.post(() -> {
                 Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
+                totalMethod_TextView.setText(getString(R.string.totalMethods) + " " + allMethods.size());
             });
         });
     }
@@ -606,13 +637,14 @@ public class CodeViewActivity extends AppCompatActivity
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", activeFileNames);
             allMethods.clear();
-            allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            allMethods = getAllMethodsLines_JAVA(codeViewList.get(activeFilePosition).getCode(), sharedPreferences.getBoolean("pref_organizeFileInfo", true));
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
             uiHandler.post(() -> {
                 Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
+                totalMethod_TextView.setText(getString(R.string.totalMethods) + " " + allMethods.size());
             });
         });
     }
@@ -629,17 +661,19 @@ public class CodeViewActivity extends AppCompatActivity
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", activeFileNames);
             allMethods.clear();
-            allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            allMethods = getAllMethodsLines_JAVA(codeViewList.get(activeFilePosition).getCode(), sharedPreferences.getBoolean("pref_organizeFileInfo", true));
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
             uiHandler.post(() -> {
                 Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
+                totalMethod_TextView.setText(getString(R.string.totalMethods) + " " + allMethods.size());
             });
         });
     }
 
+    @SuppressLint("SetTextI18n")
     private void updateInfo(URL url) {
         customWorkerThread.addWork(() -> {
             String actionBarSubtitle = getFileName(url.toString());
@@ -649,13 +683,14 @@ public class CodeViewActivity extends AppCompatActivity
             activeFileNames.add(actionBarSubtitle);
             expandableListDetail.put("Active Files", activeFileNames);
             allMethods.clear();
-            allMethods = getAllMethods(codeViewList.get(activeFilePosition).getCode());
+            allMethods = getAllMethodsLines_JAVA(codeViewList.get(activeFilePosition).getCode(), sharedPreferences.getBoolean("pref_organizeFileInfo", true));
             expandableListDetail.put("All Methods", List.copyOf(allMethods.keySet()));
             navView.postInvalidate();
 
             uiHandler.post(() -> {
                 Objects.requireNonNull(actionBar).setSubtitle(actionBarSubtitle);
                 fileSize_TextView.setText(fileSize_Text);
+                totalMethod_TextView.setText(getString(R.string.totalMethods) + " " + allMethods.size());
             });
         });
     }
@@ -1062,16 +1097,16 @@ public class CodeViewActivity extends AppCompatActivity
         for (CodeViewFile file : fileList) {
             if (file.getName().equals(fileName1)) {
                 if (file.isURL) {
-                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
                 } else {
-                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
                 }
             }
             if (file.getName().equals(fileName2)) {
                 if (file.isURL) {
-                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
                 } else {
-                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
                 }
             }
         }
@@ -1085,24 +1120,24 @@ public class CodeViewActivity extends AppCompatActivity
         for (CodeViewFile file : fileList) {
             if (file.getName().equals(fileName1)) {
                 if (file.isURL) {
-                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
                 } else {
-                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
                 }
             }
             if (file.getName().equals(fileName2)) {
                 if (file.isURL) {
-                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
                 } else {
-                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
                 }
             }
 
             if (file.getName().equals(fileName3)) {
                 if (file.isURL) {
-                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
+                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
                 } else {
-                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
                 }
             }
         }
@@ -1118,32 +1153,32 @@ public class CodeViewActivity extends AppCompatActivity
         for (CodeViewFile file : fileList) {
             if (file.getName().equals(fileName1)) {
                 if (file.isURL) {
-                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
                 } else {
-                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
                 }
             }
             if (file.getName().equals(fileName2)) {
                 if (file.isURL) {
-                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, file.getUrl()));
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
                 } else {
-                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    setEditor(editorList.get(1), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
                 }
             }
 
             if (file.getName().equals(fileName3)) {
                 if (file.isURL) {
-                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, file.getUrl()));
+                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
                 } else {
-                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    setEditor(editorList.get(2), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
                 }
             }
 
             if (file.getName().equals(fileName4)) {
                 if (file.isURL) {
-                    setEditor(editorList.get(3), readFile(CodeViewActivity.this, file.getUrl()));
+                    setEditor(editorList.get(3), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
                 } else {
-                    setEditor(editorList.get(3), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                    setEditor(editorList.get(3), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
                 }
             }
         }
@@ -1412,9 +1447,9 @@ public class CodeViewActivity extends AppCompatActivity
             }
 
             if (file.isURL) {
-                setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()));
+                setEditor(editorList.get(0), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
             } else {
-                setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                setEditor(editorList.get(0), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
             }
 
         } else {
@@ -1644,13 +1679,14 @@ public class CodeViewActivity extends AppCompatActivity
             if (editorList.size() == 0)
                 editorList.add((com.clevergo.vcode.editorfiles.CodeView) tempList.get(0));
             com.clevergo.vcode.editorfiles.CodeView editor = editorList.get(0);
-            setEditor(editor, readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+            setEditor(editor, readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
         }
     }
 
-    private void setEditor(@NonNull final com.clevergo.vcode.editorfiles.CodeView editor, @NonNull final String code) {
+    private void setEditor(@NonNull final com.clevergo.vcode.editorfiles.CodeView editor, @NonNull final String code, @NonNull final String fileName) {
         LanguageManager languageManager = new LanguageManager(CodeViewActivity.this, editor);
-        languageManager.applyTheme(LanguageName.JAVA, ThemeName.MONOKAI);
+        //TODO: Add a Helper method to find the language of the code using the file Extension
+        languageManager.applyTheme(LanguageName.valueOf(findProgrammingLanguage(fileName)), ThemeName.valueOf(sharedPreferences.getString("pref_editorThemes", "MONOKAI")));
         editor.setText(code);
         editor.setHighlightWhileTextChanging(true);
         editor.setEnableAutoIndentation(true);
@@ -2040,9 +2076,9 @@ public class CodeViewActivity extends AppCompatActivity
 
         if (isEditorMode) {
             if (file.isURL)
-                setEditor(editorList.get(activeFilePosition), readFile(CodeViewActivity.this, file.getUrl()));
+                setEditor(editorList.get(activeFilePosition), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
             else
-                setEditor(editorList.get(activeFilePosition), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                setEditor(editorList.get(activeFilePosition), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
 
         } else {
             if (loadIntoRAM) {

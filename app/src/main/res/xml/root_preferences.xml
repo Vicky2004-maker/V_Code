@@ -28,13 +28,13 @@
         <CheckBoxPreference
             app:defaultValue="false"
             app:key="pref_pinchZoom"
-            app:title="@string/pinchZoom"/>
+            app:title="@string/pinchZoom" />
 
         <EditTextPreference
             app:defaultValue="15"
+            app:dialogMessage="@string/inputOnlyNumbers"
             app:key="pref_textSize_codeView"
-            app:title="@string/textSize"
-            app:dialogMessage="@string/inputOnlyNumbers"/>
+            app:title="@string/textSize" />
 
         <CheckBoxPreference
             app:defaultValue="false"
@@ -54,10 +54,10 @@
         <EditTextPreference
             app:defaultValue="1000"
             app:dependency="pref_disableHighlightLargerFile"
+            app:dialogMessage="@string/inputOnlyNumbers"
             app:key="maxLineLimit"
             app:summary="@string/lineLimit_summary"
-            app:title="@string/lineLimit_disableHighlight"
-            app:dialogMessage="@string/inputOnlyNumbers"/>
+            app:title="@string/lineLimit_disableHighlight" />
 
     </PreferenceCategory>
     <PreferenceCategory app:title="@string/splitScreen">
@@ -108,6 +108,37 @@
             app:key="pref_codeviewThemes4"
             app:title="@string/theme4"
             app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/editor">
+
+        <ListPreference
+            app:defaultValue="MONOKAI"
+            app:entries="@array/editor_themes"
+            app:entryValues="@array/editor_themes_values"
+            app:icon="@drawable/ic_theme"
+            app:key="pref_editorThemes"
+            app:title="@string/theme"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/splitScreen">
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/common">
+
+        <CheckBoxPreference
+            app:defaultValue="true"
+            app:key="pref_organizeFileInfo"
+            app:summary="@string/organizeFileInfo_summary"
+            app:title="@string/organizeFileInfo" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>
