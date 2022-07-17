@@ -60,6 +60,7 @@
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:hardwareAccelerated="true"
+            android:theme="@style/Theme.VCode.NoActionBar"
             android:label="@string/codeView"
             android:noHistory="false"
             android:windowSoftInputMode="adjustResize">

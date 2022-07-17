@@ -16,6 +16,16 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="Theme.VCode.NoActionBar" parent="Theme.VCode">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="materialButtonStyle">@style/CustomLogoButton</item>
+    </style>
+
+    <style name="CustomLogoButton" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:background">@drawable/all_file_switcher_selector</item>
+    </style>
+
     <style name="Theme.VCode.Fullscreen" parent="Theme.VCode">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>

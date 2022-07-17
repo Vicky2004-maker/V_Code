@@ -134,4 +134,7 @@
     <string name="organizeFileInfo_summary">All methods dropdown will be well organized.</string>
     <string name="fileInfo">FIle Info:</string>
     <string name="totalMethods">Methods :</string>
+    <string name="miniErrorDisplay">This displays any error in displaying file.</string>
+    <string name="errors">Errors</string>
+    <string name="warnings">Warnings</string>
 </resources>

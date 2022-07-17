@@ -31,7 +31,9 @@ import android.text.SpannableString;
 import android.text.TextWatcher;
 import android.text.style.BackgroundColorSpan;
 import android.util.DisplayMetrics;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,8 +41,11 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.clevergo.vcode.editorfiles.CodeView;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -544,13 +549,23 @@ public class Helper {
         return displayMetrics.heightPixels / displayMetrics.ydpi;
     }
 
-    public static void makeFullScreen(AppCompatActivity activity) {
+    public static void makeFullScreen(AppCompatActivity activity, AppBarLayout appBarLayout, DrawerLayout drawerLayout) {
+        appBarLayout.setVisibility(View.GONE);
+        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(
+                CoordinatorLayout.LayoutParams.MATCH_PARENT, CoordinatorLayout.LayoutParams.MATCH_PARENT);
+        layoutParams.topMargin = 0;
+        drawerLayout.setLayoutParams(layoutParams);
         activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         Objects.requireNonNull(activity.getSupportActionBar()).hide();
         isFullScreen = true;
     }
 
-    public static void revertFullScreen(AppCompatActivity activity) {
+    public static void revertFullScreen(AppCompatActivity activity, AppBarLayout appBarLayout, DrawerLayout drawerLayout) {
+        appBarLayout.setVisibility(View.VISIBLE);
+        CoordinatorLayout.LayoutParams layoutParams = new CoordinatorLayout.LayoutParams(
+                CoordinatorLayout.LayoutParams.MATCH_PARENT, CoordinatorLayout.LayoutParams.MATCH_PARENT);
+        layoutParams.topMargin = (int) activity.getResources().getDimension(R.dimen.toolBarSize);
+        drawerLayout.setLayoutParams(layoutParams);
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         Objects.requireNonNull(activity.getSupportActionBar()).show();
         isFullScreen = false;

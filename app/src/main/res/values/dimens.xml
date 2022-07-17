@@ -9,4 +9,8 @@
     <dimen name="dimen20dp">20dp</dimen>
     <dimen name="dimen15sp">15sp</dimen>
     <dimen name="dimen45dp">45dp</dimen>
+    <dimen name="toolBarSize">56dp</dimen>
+    <dimen name="dimen75dp">75dp</dimen>
+    <dimen name="dimen100dp">100dp</dimen>
+    <dimen name="dimen90dp">90dp</dimen>
 </resources>
