@@ -180,20 +180,6 @@ public class CodeViewActivity extends AppCompatActivity
     protected void onStart() {
         super.onStart();
 
-        if (EditorActivity.reload) {
-            final CodeViewFile file = fileList.get(currentActiveID);
-            final CodeView codeView = codeViewList.get(activeFilePosition);
-            if (file.isURL) {
-                setCodeView(codeView,
-                        readFile(CodeViewActivity.this, file.getUrl()));
-            } else {
-                setCodeView(codeView,
-                        readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
-            }
-            if (loadIntoRAM) codeList.set(currentActiveID, codeView.getCode());
-            EditorActivity.reload = false;
-        }
-
         if (SettingsActivity.refresh && fileList.size() != 0) {
             final CodeViewFile file = fileList.get(currentActiveID);
             final CodeView codeView = codeViewList.get(activeFilePosition);
@@ -217,22 +203,6 @@ public class CodeViewActivity extends AppCompatActivity
             }
 
             SettingsActivity._updateInfo = false;
-        }
-
-        if (EditorActivity.newFileAdded) {
-            for (int i = 0; i < fileList.size(); i++) {
-                Uri uri = Uri.parse(fileList.get(i).getUri());
-                String fileName = getFileName(CodeViewActivity.this, uri);
-                if (!fileNames.contains(fileName)) {
-                    addUI_FileURI(uri, i == (fileList.size() - 1), false);
-                    addNavMenu(getFileName(CodeViewActivity.this, uri));
-                    updateInfo(uri);
-                    allFileSwitcherParent.setVisibility(View.VISIBLE);
-                    setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, uri));
-                }
-            }
-            currentActiveID = fileList.size() - 1;
-            EditorActivity.newFileAdded = false;
         }
     }
 
@@ -531,7 +501,7 @@ public class CodeViewActivity extends AppCompatActivity
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, ((int) getResources().getDimension(R.dimen.dimen50dp)));
         CodeViewFile file = fileList.get(fileList.size() - 1);
-        linearLayout.addView(createMaterialButton(file, isUrl, Uri.parse(file.getUri())));
+        linearLayout.addView(createMaterialButton(file, isUrl, Uri.parse(file.getUri()), isLastFile));
         linearLayout.setElevation(8);
         linearLayout.setPadding(2, 0, 2, 0);
 
@@ -567,7 +537,7 @@ public class CodeViewActivity extends AppCompatActivity
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, ((int) getResources().getDimension(R.dimen.dimen50dp)));
         CodeViewFile file = fileList.get(fileList.size() - 1);
-        linearLayout.addView(createMaterialButton(file, false, Uri.parse(file.getUri())));
+        linearLayout.addView(createMaterialButton(file, false, Uri.parse(file.getUri()), true));
         linearLayout.setElevation(8);
         linearLayout.setPadding(2, 0, 2, 0);
 
@@ -1887,7 +1857,7 @@ public class CodeViewActivity extends AppCompatActivity
         });
     }
 
-    private MaterialButton createMaterialButton(CodeViewFile file, boolean isUrl, Uri uri) {
+    private MaterialButton createMaterialButton(CodeViewFile file, boolean isUrl, Uri uri, boolean isLastFile) {
         MaterialButton materialButton = new MaterialButton(CodeViewActivity.this);
         materialButton.setText(isUrl ? getFileName(uri.toString()) : file.getName());
         materialButton.setId(filesOpened);
@@ -1905,6 +1875,8 @@ public class CodeViewActivity extends AppCompatActivity
         materialButton.setLayoutParams(layoutParams);
         materialButton.setPadding(2, 0, 2, 0);
         materialButton.setIncludeFontPadding(true);
+        materialButton.setSelected(isLastFile);
+        materialButton.setTextColor(getResources().getColor(isLastFile ? R.color.cyan : R.color.white));
 
         return materialButton;
     }
@@ -2098,9 +2070,6 @@ public class CodeViewActivity extends AppCompatActivity
     public void onClick(View view) {
         int clicked_ID = view.getId();
         view.setSelected(true);
-        ((MaterialButton) view).setTextColor(getResources().getColor(R.color.cyan));
-
-        //View[] children = allFileSwitcher_LinearLayout
 
         if (currentActiveID == clicked_ID) {
             Toast.makeText(CodeViewActivity.this, getString(R.string.fileAreadyDisplayed), Toast.LENGTH_SHORT).show();
@@ -2109,21 +2078,24 @@ public class CodeViewActivity extends AppCompatActivity
         final CodeViewFile file = fileList.get(clicked_ID);
 
         if (isEditorMode) {
-            if (file.isURL)
+            if (file.isURL) {
                 setEditor(editorList.get(activeFilePosition), readFile(CodeViewActivity.this, file.getUrl()), file.getName());
-            else
+            } else {
                 setEditor(editorList.get(activeFilePosition), readFile(CodeViewActivity.this, Uri.parse(file.getUri())), file.getName());
+            }
 
         } else {
             if (loadIntoRAM) {
                 setCodeView(codeViewList.get(activeFilePosition), codeList.get(clicked_ID));
-                if (isScreenSplit)
+                if (isScreenSplit) {
                     selectedFileNames.set(activeFilePosition, ((MaterialButton) view).getText().toString());
+                }
             } else {
-                if (file.isURL)
+                if (file.isURL) {
                     setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, file.getUrl()));
-                else
+                } else {
                     setCodeView(codeViewList.get(activeFilePosition), readFile(CodeViewActivity.this, Uri.parse(file.getUri())));
+                }
             }
 
             if (file.isURL) updateInfo(file.url);
@@ -2131,6 +2103,16 @@ public class CodeViewActivity extends AppCompatActivity
         }
 
         currentActiveID = clicked_ID;
+        for (int i = 0; i < allFileSwitcher_LinearLayout.getChildCount(); i++) {
+            MaterialButton tempBtn = ((MaterialButton) ((LinearLayout) allFileSwitcher_LinearLayout.getChildAt(i)).getChildAt(0));
+            if (i == currentActiveID) {
+                tempBtn.setSelected(true);
+                tempBtn.setTextColor(getResources().getColor(R.color.cyan));
+            } else {
+                tempBtn.setSelected(false);
+                tempBtn.setTextColor(getResources().getColor(R.color.white));
+            }
+        }
         //isScreenSplit == true ? updateInfo_SplitScreen(clicked_ID) : updateInfo(clicked_ID);
     }
 

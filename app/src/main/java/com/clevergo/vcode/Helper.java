@@ -629,6 +629,11 @@ public class Helper {
 
                 break;
             }
+            case "js":
+                button.setIcon(AppCompatResources.getDrawable(context, R.drawable.javascript_logo));
+                break;
+            case "py":
+                button.setIcon(AppCompatResources.getDrawable(context, R.drawable.python_logo));
         }
     }
 
