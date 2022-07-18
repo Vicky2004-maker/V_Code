@@ -1,8 +1,10 @@
 package com.clevergo.vcode.regex;
 
-import java.util.ArrayDeque;
+import android.util.Log;
+
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,10 +53,10 @@ public class JavaManager {
     }
 
     //TODO: Complete RegEx for variables, classes, constructors
-    public static HashMap<String, Integer> getAllVariables(String code, boolean organize) {
+    public static HashMap<String, Integer> getAllNormalVariables(String code, boolean organize) {
         HashMap<String, Integer> variables = new HashMap<>();
         String[] lines = code.split("\n");
-        Pattern pattern = Pattern.compile("((public|private|protected|synchronized)?( )?(static)?( )?(int|long|short|double|Double|float|void|Float|boolean|String|byte|int\\[\\]|long\\[\\]|short\\[\\]|void\\[\\]|String\\[\\]|byte\\[\\]|[A-Z]+\\w+|\\w+<\\w+>|\\w+<\\w+, \\w+>)) (\\w+\\()([a-zA-Z0-9 ,<>@_\"\"()]+\\)|\\))");
+        Pattern pattern = Pattern.compile("((public |private )(static )?(final )?([\\w<>.,\\[\\]]+ )([\\w\\d]+)(\\s)?(;)?(=)?(\\s)?([\\w()<>,=\\s\\d-]+)(;)?) (\\w+\\()([a-zA-Z0-9 ,<>@_\"\"()]+\\)|\\))");
         Matcher matcher;
         StringBuilder stringBuilder;
 
@@ -72,6 +74,10 @@ public class JavaManager {
         }
 
         return null;
+    }
+
+    public static HashMap<String, Integer> getAllImports(String code, boolean organize) {
+
     }
 
     public static HashMap<String, Integer> getAllConstructor(String code, boolean organize) {
@@ -97,81 +103,53 @@ public class JavaManager {
         return null;
     }
 
-    private static String getBrackets(String code) {
-        Pattern pattern = Pattern.compile("[{(<\\[]");
-        StringBuilder sb = new StringBuilder();
-        Matcher matcher = pattern.matcher(code);
-        matcher.find();
-        sb.append(matcher.group(0));
-
-        pattern = Pattern.compile("[\\])>}]");
-        matcher = pattern.matcher(code);
-        matcher.find();
-        sb.append(matcher.group(0));
-
-        return sb.toString();
-    }
-
-    //TODO : Run and test isBracketsBalanced method
     public static int getBracketsErrors(String code) {
+        code = code.replaceAll("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/", "");
+        code = code.replaceAll("//[^\\n]*", "");
+        code = code.replaceAll("//TODO[^\n]*", "");
+        code = code.replaceAll("//FIXME[^\n]*", "");
+        code = code.replaceAll("[^\\[\\]{}<>()]", "");
+        Log.e("Brackets ", code);
         int errors = 0;
-        //String code = getBrackets(inputCode);
-        Deque<Character> stack = new ArrayDeque<>();
-
-        for (long i = 0; i < code.length(); i++) {
-            char x = code.charAt((int) i);
-
-            if (x == '(' || x == '[' || x == '{' || x == '<') {
-                stack.push(x);
-                continue;
-            }
-
-            if (stack.isEmpty())
-                return errors;
-
-            char check;
-            switch (x) {
-                case ')':
-                    check = stack.pop();
-                    if (check == '{' || check == '[' || check == '<')
-                        errors++;
-                    break;
-
-                case '}':
-                    check = stack.pop();
-                    if (check == '(' || check == '[' || check == '<')
-                        errors++;
-                    break;
-
-                case ']':
-                    check = stack.pop();
-                    if (check == '(' || check == '{' || check == '<')
-                        errors++;
-                    break;
-                case '>':
-                    check = stack.pop();
-                    if (check == '(' || check == '{' || check == '[')
-                        errors++;
-                    break;
-            }
-        }
-        return errors;
-    }
-
-    //TODO: Remove comments and lines ending with '{' and then check those lines for semicolon
-    public static int getSemiColonErrors(String code) {
-        int errors = 0;
-        String[] lines = code.split("\n");
-        for (int i = 0; i < lines.length; i++) {
-            String trimmedLine = lines[i].trim();
-            if (trimmedLine.length() > 0) {
-                char x = trimmedLine.charAt(trimmedLine.length() - 1);
-                if (x != '{') {
-                    if (x != ';') errors++;
+        Deque<Character> deque = new LinkedList<>();
+        for (char ch : code.toCharArray()) {
+            if (ch == '{' || ch == '[' || ch == '(') {
+                deque.addFirst(ch);
+            } else {
+                if (!deque.isEmpty()
+                        && ((deque.peekFirst() == '{' && ch == '}')
+                        || (deque.peekFirst() == '[' && ch == ']')
+                        || (deque.peekFirst() == '(' && ch == ')'))) {
+                    deque.removeFirst();
+                } else {
+                    errors++;
                 }
             }
         }
+        return errors;
+    }
 
+    public static int getSemiColonErrors(String code) {
+        code = code.replaceAll("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/", "");
+        code = code.replaceAll("//[^\\n]*", "");
+        code = code.replaceAll("@.[a-zA-Z0-9]+", "");
+        code = code.replaceAll("//TODO[^\n]*", "");
+        code = code.replaceAll("//FIXME[^\n]*", "");
+
+        int errors = 0;
+        String[] lines = code.split("\n");
+        for (String line : lines) {
+            String trimmedLine = line.trim();
+            if (trimmedLine.length() > 0) {
+                char x = trimmedLine.charAt(trimmedLine.length() - 1);
+                if (x != ';') {
+                    if (x != '{' && x != '}') {
+                        errors++;
+                    }
+                }
+            }
+        }
         return errors;
     }
 }
+

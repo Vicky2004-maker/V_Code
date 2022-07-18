@@ -37,6 +37,7 @@ public class JavaLanguage {
     private static final Pattern PATTERN_GENERIC = Pattern.compile("<[a-zA-Z0-9,<>]+>");
     private static final Pattern PATTERN_ANNOTATION = Pattern.compile("@.[a-zA-Z0-9]+");
     private static final Pattern PATTERN_TODO_COMMENT = Pattern.compile("//TODO[^\n]*");
+    private static final Pattern PATTERN_FIXME_COMMENT = Pattern.compile("//FIXME[^\n]*");
     private static final Pattern PATTERN_NUMBERS = Pattern.compile("\\b(\\d*[.]?\\d+)\\b");
     private static final Pattern PATTERN_CHAR = Pattern.compile("'[a-zA-Z]'");
     private static final Pattern PATTERN_STRING = Pattern.compile("\".*\"");
@@ -58,12 +59,12 @@ public class JavaLanguage {
         codeView.addSyntaxPattern(PATTERN_NUMBERS, resources.getColor(R.color.monokia_pro_purple));
         codeView.addSyntaxPattern(PATTERN_KEYWORDS, resources.getColor(R.color.monokia_pro_pink));
         codeView.addSyntaxPattern(PATTERN_BUILTINS, resources.getColor(R.color.monokia_pro_white));
-        codeView.addSyntaxPattern(PATTERN_SINGLE_LINE_COMMENT, resources.getColor(R.color.monokia_pro_grey));
-        codeView.addSyntaxPattern(PATTERN_MULTI_LINE_COMMENT, resources.getColor(R.color.monokia_pro_grey));
         codeView.addSyntaxPattern(PATTERN_ANNOTATION, resources.getColor(R.color.monokia_pro_pink));
         codeView.addSyntaxPattern(PATTERN_ATTRIBUTE, resources.getColor(R.color.monokia_pro_sky));
         codeView.addSyntaxPattern(PATTERN_GENERIC, resources.getColor(R.color.monokia_pro_pink));
         codeView.addSyntaxPattern(PATTERN_OPERATION, resources.getColor(R.color.monokia_pro_pink));
+        codeView.addSyntaxPattern(PATTERN_SINGLE_LINE_COMMENT, resources.getColor(R.color.monokia_pro_grey));
+        codeView.addSyntaxPattern(PATTERN_MULTI_LINE_COMMENT, resources.getColor(R.color.monokia_pro_grey));
         //Default Color
         codeView.setTextColor(resources.getColor(R.color.monokia_pro_white));
 

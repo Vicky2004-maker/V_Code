@@ -96,6 +96,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CodeViewActivity extends AppCompatActivity
         implements CodeView.OnHighlightListener,
@@ -1596,8 +1597,9 @@ public class CodeViewActivity extends AppCompatActivity
     }
 
     private void checkUpdateErrors(String code) {
-        //int errors = JavaManager.getBracketsErrors(code);
-        int errors = JavaManager.getSemiColonErrors(code);
+        AtomicInteger errors = new AtomicInteger();
+        errors.addAndGet(JavaManager.getSemiColonErrors(code));
+        errors.addAndGet(JavaManager.getBracketsErrors(code));
         uiHandler.post(() -> errorCount_TextView.setText(String.valueOf(errors)));
     }
 
