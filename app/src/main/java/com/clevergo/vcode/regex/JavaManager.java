@@ -76,8 +76,17 @@ public class JavaManager {
         return null;
     }
 
+    //TODO : Complete these methods
     public static HashMap<String, Integer> getAllImports(String code, boolean organize) {
+        HashMap<String,Integer> allImports = new HashMap<>();
+        int beginIndex = Pattern.compile("(public class)").matcher(code).regionStart();
+        code = code.substring(0, beginIndex);
+        Pattern pattern = Pattern.compile("((import )(static )?([\\w.*]+;))");
+        Matcher matcher = pattern.matcher(code);
+        if(matcher.find())
+        Log.e("Code ", matcher.group());
 
+        return null;
     }
 
     public static HashMap<String, Integer> getAllConstructor(String code, boolean organize) {

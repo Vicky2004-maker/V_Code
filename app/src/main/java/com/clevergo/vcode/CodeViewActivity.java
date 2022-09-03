@@ -43,6 +43,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
@@ -72,7 +73,6 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.preference.PreferenceManager;
 
 import com.clevergo.vcode.codeviewer.CodeView;
 import com.clevergo.vcode.codeviewer.Language;
@@ -88,6 +88,7 @@ import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.perf.metrics.AddTrace;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -97,6 +98,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+
+//TODO : Add Firebase controls
+//TODO : Add Firebase Authentication then Firebase Storage
 
 public class CodeViewActivity extends AppCompatActivity
         implements CodeView.OnHighlightListener,
@@ -151,6 +155,7 @@ public class CodeViewActivity extends AppCompatActivity
     private AppBarLayout appBarLayout;
 
     @Override
+    @AddTrace(name = "onActivityResultTrace")
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 

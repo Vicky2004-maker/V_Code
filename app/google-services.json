@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "212327552305",
+    "project_id": "code-viewer-cd1ee",
+    "storage_bucket": "code-viewer-cd1ee.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:212327552305:android:0fb6fe63af3d15e8724c10",
+        "android_client_info": {
+          "package_name": "com.clevergo.vcode"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "212327552305-103n3f6gqvgadpv1thao6egbvl07oo6i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYw-cOFj_Pn2OkNvNHT2E8CCVCHt3iOnA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "212327552305-103n3f6gqvgadpv1thao6egbvl07oo6i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
