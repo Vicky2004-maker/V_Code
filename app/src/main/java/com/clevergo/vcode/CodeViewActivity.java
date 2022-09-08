@@ -286,7 +286,6 @@ public class CodeViewActivity extends AppCompatActivity
         expandableListTitle.add("Active Files");
         expandableListTitle.add("Opened Files");
         expandableListTitle.add("All Methods");
-        expandableListTitle.add("Settings");
 
         expandableListAdapter = new ExpandableViewAdapterCustom(CodeViewActivity.this,
                 expandableListTitle,
