@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "212327552305-rs2u72vm6gpfqkblub15jrgsoir2tne6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.clevergo.vcode",
+            "certificate_hash": "e4fa647fdaa03c4d8cf4d2bad29c59dfdd207b33"
+          }
+        },
+        {
           "client_id": "212327552305-103n3f6gqvgadpv1thao6egbvl07oo6i.apps.googleusercontent.com",
           "client_type": 3
         }

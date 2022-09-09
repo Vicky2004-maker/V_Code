@@ -18,6 +18,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VCode">
         <activity
+            android:name=".AccountActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CloudFileBrowser"
+            android:exported="false" />
+        <activity
             android:name=".SettingsActivity"
             android:exported="false"
             android:label="@string/title_activity_settings" />
@@ -29,9 +35,9 @@
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:theme="@style/Theme.VCode.NoActionBar"
             android:label="@string/codeView"
             android:noHistory="false"
+            android:theme="@style/Theme.VCode.NoActionBar"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

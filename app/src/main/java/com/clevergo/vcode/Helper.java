@@ -33,7 +33,6 @@ import android.text.style.BackgroundColorSpan;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,9 +44,16 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.clevergo.vcode.editorfiles.CodeView;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.GoogleAuthProvider;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -72,13 +78,14 @@ import java.util.regex.PatternSyntaxException;
 
 public class Helper {
 
-    public static final int PICK_FILE_CODE = 100;
-    public static final int PERMISSION_REQ_CODE = 7;
     public static final int CREATE_FILE_CODE = 1;
     public static final int CHOOSE_DIRECTORY_NORMAL = 2;
     public static final int CHOOSE_DIRECTORY_PDF = 3;
     public static final int CREATE_FILE_PDF_CODE = 4;
     public static final int CREATE_FILE_NORMAL_CODE = 5;
+    public static final int GOOGLE_SIGN_IN = 6;
+    public static final int PERMISSION_REQ_CODE = 7;
+    public static final int PICK_FILE_CODE = 100;
     public static final String ALL_FILES_MIME = "*/*";
     public static final String PDF_MIME = "application/pdf";
     public static final Uri PRIVACY_POLICY_URL = Uri.parse("https://clever-go.web.app/privacy-policy-codeviewer.html");

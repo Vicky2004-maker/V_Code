@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">V Code</string>
     <string name="version">1.0</string>
     <string name="version_name">Version - 1.0</string>
@@ -137,4 +137,17 @@
     <string name="miniErrorDisplay">This displays any error in displaying file.</string>
     <string name="errors">Errors</string>
     <string name="warnings">Warnings</string>
+    <string name="cloud_upload">Cloud Upload</string>
+    <string name="signin_successful">Sign In Successful</string>
+    <string name="cloud_browser">Cloud File Browser</string>
+    <string name="uploaded_files">Uploaded files</string>
+    <string name="account">Account</string>
+    <string name="profile_pic">Profile Picture</string>
+    <string name="username">User Name</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="email_id">Mail ID</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="sign_out_success">"Sign out Success "</string>
+
 </resources>
