@@ -149,5 +149,9 @@
     <string name="sign_out">Sign Out</string>
     <string name="delete_account">Delete Account</string>
     <string name="sign_out_success">"Sign out Success "</string>
+    <string name="language_display_image">Language Display ImageView</string>
+    <string name="deleteFile_browser">Delete cloud file</string>
+    <string name="editFile_browser">Edit cloud file</string>
+    <string name="openFile_browser">Open cloud file</string>
 
 </resources>

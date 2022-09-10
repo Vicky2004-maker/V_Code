@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:backgroundTint="@color/monokai_background"
+    app:cardCornerRadius="10dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/fileLanguageDisplay_imageView"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="@string/language_display_image"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic__temp_fileplacer_24" />
+
+        <TextView
+            android:id="@+id/file_name_browser_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center|end"
+            app:layout_constraintBottom_toBottomOf="@+id/fileLanguageDisplay_imageView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toEndOf="@+id/fileLanguageDisplay_imageView"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/dark_background"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/fileLanguageDisplay_imageView">
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:weightSum="3">
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/deleteFile_browser_imageView"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/dimen45dp"
+                    android:layout_marginStart="@dimen/dimen10dp"
+                    android:layout_marginEnd="@dimen/dimen5dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/dark_background"
+                    android:contentDescription="@string/deleteFile_browser"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_delete_file"
+                    app:tint="@color/red" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/editFile_browser_imageView"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/dimen45dp"
+                    android:layout_marginStart="@dimen/dimen5dp"
+                    android:layout_marginEnd="@dimen/dimen5dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/dark_background"
+                    android:contentDescription="@string/editFile_browser"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_edit_24" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/openFile_browser_imageView"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/dimen45dp"
+                    android:layout_marginStart="@dimen/dimen5dp"
+                    android:layout_marginEnd="@dimen/dimen10dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/dark_background"
+                    android:contentDescription="@string/openFile_browser"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_baseline_file_open_24" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
+        </com.google.android.material.card.MaterialCardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

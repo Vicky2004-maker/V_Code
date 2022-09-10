@@ -1,3 +1,8 @@
+/*
+ * Created by Viknesh on 2022.
+ * Copyright (c) 2022. All rights reserved.
+ */
+
 package com.clevergo.vcode;
 
 import static com.clevergo.vcode.Helper.ALL_FILES_MIME;
@@ -125,6 +130,7 @@ public class CodeViewActivity extends AppCompatActivity
 
     public static final List<CodeViewFile> fileList = new ArrayList<>();
     private static final List<String> codeList = new ArrayList<>();
+    public static SubscriptionModel subscriptionModel;
     public static String UID;
     public static int activeFilePosition = 0, currentActiveID = -1;
     public static List<String> selectedFileNames = new ArrayList<>();
@@ -288,12 +294,7 @@ public class CodeViewActivity extends AppCompatActivity
             UID = currentUser.getUid();
             storageRef_UserFiles = storage.getReference().child("Users_Files/" + UID);
         } else {
-            GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build();
-
-            signInClient = GoogleSignIn.getClient(CodeViewActivity.this, googleSignInOptions);
+            subscriptionModel = SubscriptionModel.Free;
         }
 
         activeLayout = ActiveLayout.CodeView_Main;
@@ -1515,6 +1516,15 @@ public class CodeViewActivity extends AppCompatActivity
         expandableListDetail.put("Active Files", activeFileNames);
         currentActiveID = fileList.size() - 1;
         activeFilePosition = 0;
+    }
+
+    private void createGoogleSignInClient() {
+        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+        signInClient = GoogleSignIn.getClient(CodeViewActivity.this, googleSignInOptions);
     }
 
     private void addNavMenu(final String fileName) {

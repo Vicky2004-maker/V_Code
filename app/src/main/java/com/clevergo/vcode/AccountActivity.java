@@ -1,6 +1,12 @@
+/*
+ * Created by Viknesh on 2022.
+ * Copyright (c) 2022. All rights reserved.
+ */
+
 package com.clevergo.vcode;
 
 import static com.clevergo.vcode.CodeViewActivity.UID;
+import static com.clevergo.vcode.CodeViewActivity.auth;
 import static com.clevergo.vcode.CodeViewActivity.customWorkerThread;
 import static com.clevergo.vcode.Helper.uiHandler;
 
@@ -22,38 +28,40 @@ import java.net.URL;
 
 public class AccountActivity extends AppCompatActivity {
     private ImageView profilePicture_imageView;
-
+    private FirebaseUser user = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_account);
 
         profilePicture_imageView = findViewById(R.id.profilePicture_imageView);
-
-        FirebaseUser user = CodeViewActivity.auth.getCurrentUser();
         ActionBar actionBar = getSupportActionBar();
         assert actionBar != null;
+
         actionBar.setTitle(getString(R.string.account));
-        actionBar.setSubtitle(user.getDisplayName());
         actionBar.setDisplayHomeAsUpEnabled(true);
-
-        customWorkerThread.addWork(() -> {
-            try {
-                Bitmap bitmap = BitmapFactory.decodeStream(new URL(user.getPhotoUrl().toString()).openStream());
-                uiHandler.post(() -> profilePicture_imageView.setImageBitmap(bitmap));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        ((TextInputEditText) findViewById(R.id.userName_TextInput)).setText(user.getDisplayName());
-        ((TextInputEditText) findViewById(R.id.phoneNumber_TextInput)).setText(user.getPhoneNumber());
-        ((TextInputEditText) findViewById(R.id.emailID_TextInput)).setText(user.getEmail());
-
+        if(auth.getCurrentUser() != null) {
+            user = auth.getCurrentUser();
+            actionBar.setSubtitle(user.getDisplayName());
+            customWorkerThread.addWork(() -> {
+                try {
+                    Bitmap bitmap = BitmapFactory.decodeStream(new URL(user.getPhotoUrl().toString()).openStream());
+                    uiHandler.post(() -> profilePicture_imageView.setImageBitmap(bitmap));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            ((TextInputEditText) findViewById(R.id.userName_TextInput)).setText(user.getDisplayName());
+            ((TextInputEditText) findViewById(R.id.phoneNumber_TextInput)).setText(user.getPhoneNumber());
+            ((TextInputEditText) findViewById(R.id.emailID_TextInput)).setText(user.getEmail());
+        }
         findViewById(R.id.signOut_button).setOnClickListener(a -> {
-            CodeViewActivity.auth.signOut();
-            Toast.makeText(AccountActivity.this, getString(R.string.sign_out_success), Toast.LENGTH_SHORT).show();
-            UID = null;
-            AccountActivity.this.finish();
+            if(user != null) {
+                auth.signOut();
+                Toast.makeText(AccountActivity.this, getString(R.string.sign_out_success), Toast.LENGTH_LONG).show();
+                UID = null;
+                AccountActivity.this.finish();
+            }
         });
 
         findViewById(R.id.deleteAccount_button).setOnClickListener(a -> {
