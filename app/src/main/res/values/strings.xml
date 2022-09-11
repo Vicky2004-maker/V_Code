@@ -132,7 +132,7 @@
     <string name="common">Common</string>
     <string name="organizeFileInfo">Organize file info</string>
     <string name="organizeFileInfo_summary">All methods dropdown will be well organized.</string>
-    <string name="fileInfo">FIle Info:</string>
+    <string name="fileInfo">File Info:</string>
     <string name="totalMethods">Methods :</string>
     <string name="miniErrorDisplay">This displays any error in displaying file.</string>
     <string name="errors">Errors</string>
@@ -153,5 +153,9 @@
     <string name="deleteFile_browser">Delete cloud file</string>
     <string name="editFile_browser">Edit cloud file</string>
     <string name="openFile_browser">Open cloud file</string>
+    <string name="file_information">File information</string>
+    <string name="file_details">File details</string>
+    <string name="file_name">File name:</string>
+    <string name="size">Size:</string>
 
 </resources>

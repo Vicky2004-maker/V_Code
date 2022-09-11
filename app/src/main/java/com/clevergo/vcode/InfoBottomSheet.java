@@ -114,6 +114,11 @@ public class InfoBottomSheet extends BottomSheetDialogFragment {
             dismiss();
         });
 
+        v.findViewById(R.id.cloudUpload_imageView).setOnClickListener(a -> {
+            inputListener.sendInput(BottomSheetCode.CloudUpload);
+            dismiss();
+        });
+
         edit_ImageView.setOnClickListener(a -> {
             if (CodeViewActivity.isEditorMode) {
                 inputListener.sendInput(BottomSheetCode.ExitEditMode);

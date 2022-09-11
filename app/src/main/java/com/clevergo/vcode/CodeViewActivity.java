@@ -10,7 +10,6 @@ import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_NORMAL;
 import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_PDF;
 import static com.clevergo.vcode.Helper.CREATE_FILE_NORMAL_CODE;
 import static com.clevergo.vcode.Helper.CREATE_FILE_PDF_CODE;
-import static com.clevergo.vcode.Helper.GOOGLE_SIGN_IN;
 import static com.clevergo.vcode.Helper.PDF_MIME;
 import static com.clevergo.vcode.Helper.PICK_FILE_CODE;
 import static com.clevergo.vcode.Helper.chooseDirectory;
@@ -88,22 +87,15 @@ import com.clevergo.vcode.editorfiles.syntax.LanguageManager;
 import com.clevergo.vcode.editorfiles.syntax.LanguageName;
 import com.clevergo.vcode.editorfiles.syntax.ThemeName;
 import com.clevergo.vcode.regex.JavaManager;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.perf.metrics.AddTrace;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
@@ -142,6 +134,8 @@ public class CodeViewActivity extends AppCompatActivity
     public static boolean isEditorMode = false;
     public static FirebaseAuth auth;
     public static StorageReference storageRef_UserFiles;
+    public static FirebaseStorage storage;
+    public static GoogleSignInClient signInClient;
     private static ProgressDialog progressDialog;
     private final List<String> fileNames = new ArrayList<>();
     private final List<String> activeFileNames = new ArrayList<>();
@@ -151,7 +145,6 @@ public class CodeViewActivity extends AppCompatActivity
             "~", "+", "-", "*", "/", "%", ":");
     public List<com.clevergo.vcode.editorfiles.CodeView> editorList = new ArrayList<>();
     public List<CodeView> codeViewList = new ArrayList<>();
-    private FirebaseStorage storage;
     private Toolbar toolbar;
     private boolean loadIntoRAM;
     private int totalSearchResult = 0;
@@ -178,7 +171,6 @@ public class CodeViewActivity extends AppCompatActivity
     private SharedPreferences sharedPreferences;
     private int CODE_HIGHLIGHTER_MAX_LINES;
     private AppBarLayout appBarLayout;
-    private GoogleSignInClient signInClient;
 
     @Override
     @AddTrace(name = "onActivityResultTrace")
@@ -206,30 +198,6 @@ public class CodeViewActivity extends AppCompatActivity
                 case CREATE_FILE_PDF_CODE:
                     generatePDF(CodeViewActivity.this, data.getData(), fileList.get(currentActiveID));
                     break;
-                case GOOGLE_SIGN_IN: {
-                    Task<GoogleSignInAccount> signInAccountTask = GoogleSignIn.getSignedInAccountFromIntent(data);
-
-                    if (signInAccountTask.isSuccessful()) {
-                        Toast.makeText(CodeViewActivity.this, CodeViewActivity.this.getString(R.string.signin_successful), Toast.LENGTH_LONG).show();
-
-                        GoogleSignInAccount signInAccount = null;
-                        try {
-                            signInAccount = signInAccountTask.getResult(ApiException.class);
-                            if (signInAccount != null) {
-                                AuthCredential authCredential = GoogleAuthProvider.getCredential(signInAccount.getIdToken(), null);
-
-                                auth.signInWithCredential(authCredential).addOnFailureListener(CodeViewActivity.this, m -> {
-                                }).addOnSuccessListener(CodeViewActivity.this, m -> {
-                                    UID = auth.getUid();
-                                    storageRef_UserFiles = storage.getReference().child("Users_Files/" + UID);
-                                });
-                            }
-                        } catch (ApiException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                }
             }
         }
     }
@@ -1518,15 +1486,6 @@ public class CodeViewActivity extends AppCompatActivity
         activeFilePosition = 0;
     }
 
-    private void createGoogleSignInClient() {
-        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
-
-        signInClient = GoogleSignIn.getClient(CodeViewActivity.this, googleSignInOptions);
-    }
-
     private void addNavMenu(final String fileName) {
         customWorkerThread.addWork(() -> {
             fileNames.add(fileName);
@@ -1960,6 +1919,39 @@ public class CodeViewActivity extends AppCompatActivity
         return materialButton;
     }
 
+    private void cloudUpload() {
+        if (auth.getCurrentUser() != null) {
+            CodeViewFile file = fileList.get(currentActiveID);
+            Uri uploadFileUri = Uri.parse(file.getUri());
+            StorageMetadata metadata = new StorageMetadata.Builder()
+                    .setCustomMetadata("User Name", auth.getCurrentUser().getDisplayName())
+                    .setCustomMetadata("Email", auth.getCurrentUser().getEmail())
+                    .setCustomMetadata("App Version Code", String.valueOf(BuildConfig.VERSION_CODE))
+                    .setCustomMetadata("App Version Name", BuildConfig.VERSION_NAME)
+                    .setCustomMetadata("Android Version", String.valueOf(Build.VERSION.SDK_INT))
+                    .build();
+
+            UploadTask uploadTask = storageRef_UserFiles.child(file.getName()).putFile(uploadFileUri, metadata);
+            progressDialog = new ProgressDialog(CodeViewActivity.this);
+            progressDialog.setMessage("Uploading");
+            progressDialog.setCancelable(false);
+            progressDialog.setIndeterminate(true);
+            uploadTask.addOnProgressListener(this, snapshot -> {
+                progressDialog.show();
+            }).addOnSuccessListener(CodeViewActivity.this, taskSnapshot -> {
+                Toast.makeText(CodeViewActivity.this, "Successfully uploaded", Toast.LENGTH_SHORT).show();
+                progressDialog.dismiss();
+                progressDialog = null;
+            }).addOnFailureListener(CodeViewActivity.this, e -> {
+                progressDialog.dismiss();
+                progressDialog = null;
+            }).addOnCanceledListener(CodeViewActivity.this, () -> {
+                progressDialog.dismiss();
+                progressDialog = null;
+            });
+        }
+    }
+
     private void addTextButton(com.clevergo.vcode.editorfiles.CodeView editor, final String text) {
         editor.getText().insert(editor.getSelectionStart(), text);
         if (text.equals(buttonStringList.get(1))
@@ -2024,44 +2016,8 @@ public class CodeViewActivity extends AppCompatActivity
             case R.id.settings_Menu:
                 startActivity(new Intent(CodeViewActivity.this, SettingsActivity.class));
                 break;
-            case R.id.cloud_upload: {
-                if (auth.getCurrentUser() != null && UID != null && fileList.size() > 0) {
-                    CodeViewFile file = fileList.get(activeFilePosition);
-                    Uri uploadFileUri = Uri.parse(file.getUri());
-                    StorageMetadata metadata = new StorageMetadata.Builder()
-                            .setCustomMetadata("User Name", auth.getCurrentUser().getDisplayName())
-                            .setCustomMetadata("Email", auth.getCurrentUser().getEmail())
-                            .setCustomMetadata("App Version Code", String.valueOf(BuildConfig.VERSION_CODE))
-                            .setCustomMetadata("App Version Name", BuildConfig.VERSION_NAME)
-                            .setCustomMetadata("Android Version", String.valueOf(Build.VERSION.SDK_INT))
-                            .build();
-
-                    UploadTask uploadTask = storageRef_UserFiles.child(file.getName()).putFile(uploadFileUri, metadata);
-                    progressDialog = new ProgressDialog(CodeViewActivity.this);
-                    progressDialog.setMessage("Uploading");
-                    progressDialog.setCancelable(false);
-                    progressDialog.setIndeterminate(true);
-                    uploadTask.addOnProgressListener(this, snapshot -> {
-                        progressDialog.show();
-                    }).addOnSuccessListener(CodeViewActivity.this, taskSnapshot -> {
-                        Toast.makeText(CodeViewActivity.this, "Successfully uploaded", Toast.LENGTH_SHORT).show();
-                        progressDialog.dismiss();
-                        progressDialog = null;
-                    }).addOnFailureListener(CodeViewActivity.this, e -> {
-                        progressDialog.dismiss();
-                        progressDialog = null;
-                    }).addOnCanceledListener(CodeViewActivity.this, () -> {
-                        progressDialog.dismiss();
-                        progressDialog = null;
-                    });
-                } else {
-                    startActivityForResult(new Intent(signInClient.getSignInIntent()), GOOGLE_SIGN_IN);
-                }
-
-                break;
-            }
             case R.id.cloud_browser:
-                startActivity(new Intent(CodeViewActivity.this, CloudFileBrowser.class));
+                startActivity(new Intent(CodeViewActivity.this, auth.getCurrentUser() == null ? AccountActivity.class : CloudFileBrowser.class));
                 break;
             case R.id.account:
                 startActivity(new Intent(CodeViewActivity.this, AccountActivity.class));
@@ -2294,6 +2250,9 @@ public class CodeViewActivity extends AppCompatActivity
                 break;
             case ExitEditMode:
                 exitEditMode();
+                break;
+            case CloudUpload:
+                cloudUpload();
                 break;
         }
     }

@@ -62,6 +62,7 @@
 
                 <data android:mimeType="*/*" />
             </intent-filter>
+
         </activity>
         <activity
             android:name=".MainActivity"

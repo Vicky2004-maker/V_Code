@@ -8,12 +8,6 @@
         app:showAsAction="always" />
 
     <item
-        android:id="@+id/cloud_upload"
-        android:icon="@drawable/ic_baseline_cloud_upload_24"
-        android:title="@string/cloud_upload"
-        app:showAsAction="ifRoom" />
-
-    <item
         android:id="@+id/settings_Menu"
         android:icon="@drawable/ic_settings"
         android:title="@string/setting"
@@ -26,5 +20,6 @@
 
     <item
         android:id="@+id/account"
-        android:title="@string/account" />
+        android:title="@string/account"
+        app:showAsAction="collapseActionView"/>
 </menu>

@@ -1,5 +1,10 @@
 package com.clevergo.vcode;
 
+import static com.clevergo.vcode.CodeViewActivity.UID;
+import static com.clevergo.vcode.CodeViewActivity.auth;
+import static com.clevergo.vcode.CodeViewActivity.signInClient;
+import static com.clevergo.vcode.CodeViewActivity.storage;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -46,13 +51,13 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.clevergo.vcode.editorfiles.CodeView;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.GoogleAuthProvider;
 
 import java.io.BufferedReader;
@@ -103,6 +108,18 @@ public class Helper {
     public static HashMap<String, String> settingsMap;
     private static File settingsFile;
     private static BufferedWriter bufferedWriter;
+
+    public static void createGoogleSignInClient(AppCompatActivity activity) {
+        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(activity.getBaseContext().getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+        signInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
+        activity.startActivityForResult(new Intent(signInClient.getSignInIntent()), GOOGLE_SIGN_IN);
+    }
+
+
 
     public static int findIndexFromListOfCodeView(List<CodeViewFile> codeViewFiles, String fileName) {
         int toReturn = -1;

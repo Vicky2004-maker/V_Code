@@ -13,5 +13,6 @@ public enum BottomSheetCode {
     RemoveSplitScreen,
     ConvertToPDF,
     SaveEdits,
-    ExitEditMode
+    ExitEditMode,
+    CloudUpload
 }
