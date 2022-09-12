@@ -155,7 +155,10 @@
     <string name="openFile_browser">Open cloud file</string>
     <string name="file_information">File information</string>
     <string name="file_details">File details</string>
-    <string name="file_name">File name:</string>
+    <string name="name">File name:</string>
     <string name="size">Size:</string>
+    <string name="created_time">File created at:</string>
+    <string name="lastUpdated_time">Last updated:</string>
+    <string name="uploaded_from">Uploaded from:</string>
 
 </resources>

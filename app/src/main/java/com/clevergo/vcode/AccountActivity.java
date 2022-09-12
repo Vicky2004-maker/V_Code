@@ -5,10 +5,10 @@
 
 package com.clevergo.vcode;
 
-import static com.clevergo.vcode.CodeViewActivity.UID;
-import static com.clevergo.vcode.CodeViewActivity.auth;
+import static com.clevergo.vcode.MainActivity.UID;
+import static com.clevergo.vcode.MainActivity.auth;
 import static com.clevergo.vcode.CodeViewActivity.customWorkerThread;
-import static com.clevergo.vcode.CodeViewActivity.storage;
+import static com.clevergo.vcode.MainActivity.storage;
 import static com.clevergo.vcode.Helper.GOOGLE_SIGN_IN;
 import static com.clevergo.vcode.Helper.createGoogleSignInClient;
 import static com.clevergo.vcode.Helper.uiHandler;
@@ -110,7 +110,7 @@ public class AccountActivity extends AppCompatActivity {
                         }).addOnSuccessListener(activity, m -> {
                             displayPages();
                             UID = auth.getUid();
-                            CodeViewActivity.storageRef_UserFiles = storage.getReference().child("Users_Files/" + UID);
+                            MainActivity.storageRef_UserFiles = storage.getReference().child("Users_Files/" + UID);
                         });
                     }
                 } catch (ApiException e) {

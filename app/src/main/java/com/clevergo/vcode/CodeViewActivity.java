@@ -36,6 +36,10 @@ import static com.clevergo.vcode.Helper.setBtnIcon;
 import static com.clevergo.vcode.Helper.showAlertDialog;
 import static com.clevergo.vcode.Helper.uiHandler;
 import static com.clevergo.vcode.Helper.writeFile;
+import static com.clevergo.vcode.MainActivity.UID;
+import static com.clevergo.vcode.MainActivity.auth;
+import static com.clevergo.vcode.MainActivity.storage;
+import static com.clevergo.vcode.MainActivity.storageRef_UserFiles;
 import static com.clevergo.vcode.regex.JavaManager.getAllMethodsLines;
 
 import android.annotation.SuppressLint;
@@ -122,8 +126,6 @@ public class CodeViewActivity extends AppCompatActivity
 
     public static final List<CodeViewFile> fileList = new ArrayList<>();
     private static final List<String> codeList = new ArrayList<>();
-    public static SubscriptionModel subscriptionModel;
-    public static String UID;
     public static int activeFilePosition = 0, currentActiveID = -1;
     public static List<String> selectedFileNames = new ArrayList<>();
     public static boolean isScreenSplit = false;
@@ -132,9 +134,7 @@ public class CodeViewActivity extends AppCompatActivity
     public static List<Uri> uri_List;
     public static CustomWorkerThread customWorkerThread;
     public static boolean isEditorMode = false;
-    public static FirebaseAuth auth;
-    public static StorageReference storageRef_UserFiles;
-    public static FirebaseStorage storage;
+    //TODO: GoogleSignInClient MEMORY LEAK
     public static GoogleSignInClient signInClient;
     private static ProgressDialog progressDialog;
     private final List<String> fileNames = new ArrayList<>();
@@ -252,18 +252,6 @@ public class CodeViewActivity extends AppCompatActivity
         setContentView(R.layout.activity_code_view);
         customWorkerThread = new CustomWorkerThread();
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(CodeViewActivity.this);
-
-        //Firebase
-        auth = FirebaseAuth.getInstance();
-        storage = FirebaseStorage.getInstance();
-        FirebaseUser currentUser = auth.getCurrentUser();
-
-        if (currentUser != null) {
-            UID = currentUser.getUid();
-            storageRef_UserFiles = storage.getReference().child("Users_Files/" + UID);
-        } else {
-            subscriptionModel = SubscriptionModel.Free;
-        }
 
         activeLayout = ActiveLayout.CodeView_Main;
         appBarLayout = findViewById(R.id.appBarLayout);

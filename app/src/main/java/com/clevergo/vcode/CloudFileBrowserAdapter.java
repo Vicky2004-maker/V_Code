@@ -82,18 +82,13 @@ public class CloudFileBrowserAdapter implements ListAdapter {
         AppCompatImageButton openFile_browser_imageView = v.findViewById(R.id.openFile_browser_imageView);
 
         v.findViewById(R.id.fileInfo_browser_imageView).setOnClickListener(a -> {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(context.getString(R.string.file_name)).append(" ").append(storageReference.getName());
-            stringBuilder.append("\n");
 
             storageReference.getMetadata().addOnSuccessListener(storageMetadata -> {
                 long sizeBytes = storageMetadata.getSizeBytes();
                 //TODO: Optimize this calculation
-                stringBuilder.append(context.getString(R.string.size)).append(" ").append((double) (sizeBytes / 1024d) > 1024d ? (double) (sizeBytes / 1024e2) : sizeBytes).append((double) (sizeBytes / 1024d) > 1024d ? "MB" : "KB");
-                stringBuilder.append(storageMetadata);
             }).addOnCompleteListener(task -> new AlertDialog.Builder(context)
                     .setTitle(context.getString(R.string.file_details))
-                    .setMessage(stringBuilder.toString())
+                    .setMessage("")
                     .setIcon(AppCompatResources.getDrawable(context, R.drawable.ic_info_24))
                     .setCancelable(true)
                     .setPositiveButton(context.getString(R.string.ok), (dialog, which) -> {

@@ -1,9 +1,6 @@
 package com.clevergo.vcode;
 
-import static com.clevergo.vcode.CodeViewActivity.UID;
-import static com.clevergo.vcode.CodeViewActivity.auth;
 import static com.clevergo.vcode.CodeViewActivity.signInClient;
-import static com.clevergo.vcode.CodeViewActivity.storage;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -50,15 +47,10 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.clevergo.vcode.editorfiles.CodeView;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.GoogleAuthProvider;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -73,6 +65,7 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,20 +87,41 @@ public class Helper {
     public static final String ALL_FILES_MIME = "*/*";
     public static final String PDF_MIME = "application/pdf";
     public static final Uri PRIVACY_POLICY_URL = Uri.parse("https://clever-go.web.app/privacy-policy-codeviewer.html");
-
     public static final String[] PERMISSIONS =
             {"android.permission.READ_EXTERNAL_STORAGE",
                     "android.permission.WRITE_EXTERNAL_STORAGE"};
     public static final String[] COMPILER_FILENAMES = {"InputJavaClass.java"};
-
     public static final Handler uiHandler = new Handler(Looper.getMainLooper());
     private static final String SETTING_DELIMITER = "-";
     private static final int WRAP_LINE_LIMIT = 65;
+    public static List<CloudFile> cloudFileList = new ArrayList<>();
     public static boolean isFullScreen = false;
     public static boolean thisIsMobile = true;
     public static HashMap<String, String> settingsMap;
     private static File settingsFile;
     private static BufferedWriter bufferedWriter;
+
+    public static float getDifference_progress(int totalCount) {
+        return 100f / Float.parseFloat(String.valueOf(totalCount));
+    }
+
+    public static float getTotalCloudFilesSize_KB() {
+        float total = 0;
+        for (CloudFile file : cloudFileList) {
+            total += Float.parseFloat(String.valueOf(file.getFileSize())) / 1024f;
+        }
+
+        return total;
+    }
+
+    public static float getTotalCloudFilesSize_MB() {
+        float total = 0;
+        for (CloudFile file : cloudFileList) {
+            total += Float.parseFloat(String.valueOf(file.getFileSize())) / 1024e2f;
+        }
+
+        return total;
+    }
 
     public static void createGoogleSignInClient(AppCompatActivity activity) {
         GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -118,7 +132,6 @@ public class Helper {
         signInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
         activity.startActivityForResult(new Intent(signInClient.getSignInIntent()), GOOGLE_SIGN_IN);
     }
-
 
 
     public static int findIndexFromListOfCodeView(List<CodeViewFile> codeViewFiles, String fileName) {
