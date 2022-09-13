@@ -16,8 +16,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatImageButton;
 
-import com.google.firebase.storage.StorageReference;
-
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,10 +25,10 @@ import java.util.TimeZone;
 public class CloudFileBrowserAdapter implements ListAdapter {
 
     private final Context context;
-    private List<StorageReference> cloudFiles = new ArrayList<>();
+    private List<CloudFile> cloudFiles = new ArrayList<>();
     private ImageView fileLanguageDisplay_imageView;
 
-    public CloudFileBrowserAdapter(Context context, List<StorageReference> cloudFiles) {
+    public CloudFileBrowserAdapter(Context context, List<CloudFile> cloudFiles) {
         this.cloudFiles = cloudFiles;
         this.context = context;
     }
@@ -71,7 +69,7 @@ public class CloudFileBrowserAdapter implements ListAdapter {
         LayoutInflater inflater = LayoutInflater.from(context);
         @SuppressLint("ViewHolder") View v = inflater.inflate(R.layout.cloud_file_browser_item, null, true);
 
-        StorageReference storageReference = cloudFiles.get(position);
+        CloudFile file = cloudFiles.get(position);
         //TODO: Delete, Edit, Read Cloud File, Add a Info button to show all the details that we possibly could
 
         fileLanguageDisplay_imageView = v.findViewById(R.id.fileLanguageDisplay_imageView);
@@ -81,28 +79,22 @@ public class CloudFileBrowserAdapter implements ListAdapter {
         AppCompatImageButton editFile_browser_imageView = v.findViewById(R.id.editFile_browser_imageView);
         AppCompatImageButton openFile_browser_imageView = v.findViewById(R.id.openFile_browser_imageView);
 
-        v.findViewById(R.id.fileInfo_browser_imageView).setOnClickListener(a -> {
+        v.findViewById(R.id.fileInfo_browser_imageView).setOnClickListener(a -> new AlertDialog.Builder(context)
+                .setTitle(context.getString(R.string.file_details))
+                .setMessage(file.toString())
+                .setCancelable(true)
+                .setIcon(AppCompatResources.getDrawable(context, R.drawable.ic_info_24))
+                .setPositiveButton(context.getString(R.string.ok), (dialog, which) -> {
+                })
+                .create()
+                .show());
 
-            storageReference.getMetadata().addOnSuccessListener(storageMetadata -> {
-                long sizeBytes = storageMetadata.getSizeBytes();
-                //TODO: Optimize this calculation
-            }).addOnCompleteListener(task -> new AlertDialog.Builder(context)
-                    .setTitle(context.getString(R.string.file_details))
-                    .setMessage("")
-                    .setIcon(AppCompatResources.getDrawable(context, R.drawable.ic_info_24))
-                    .setCancelable(true)
-                    .setPositiveButton(context.getString(R.string.ok), (dialog, which) -> {
-                    }).create().show());
-        });
-
-        setImageViewIcon(Helper.getFileExtension(storageReference.getName()));
-        file_name_browser_textView.setText(storageReference.getName());
-        storageReference.getMetadata().addOnSuccessListener(storageMetadata -> {
-            Date date = new Date(storageMetadata.getUpdatedTimeMillis());
-            DateFormat formatter = DateFormat.getInstance();
-            formatter.setTimeZone(TimeZone.getDefault());
-            updatedTime_textView.setText(formatter.format(date));
-        });
+        setImageViewIcon(Helper.getFileExtension(file.getFileName()));
+        file_name_browser_textView.setText(file.getFileName());
+        Date date = new Date(file.getUpdatedTime_Millis());
+        DateFormat formatter = DateFormat.getInstance();
+        formatter.setTimeZone(TimeZone.getDefault());
+        updatedTime_textView.setText(formatter.format(date));
         return v;
     }
 

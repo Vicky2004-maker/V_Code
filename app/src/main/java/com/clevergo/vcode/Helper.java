@@ -101,8 +101,8 @@ public class Helper {
     private static File settingsFile;
     private static BufferedWriter bufferedWriter;
 
-    public static float getDifference_progress(int totalCount) {
-        return 100f / Float.parseFloat(String.valueOf(totalCount));
+    public static int getDifference_progress(int totalCount) {
+        return (int) (100f / Float.parseFloat(String.valueOf(totalCount)));
     }
 
     public static float getTotalCloudFilesSize_KB() {
@@ -117,10 +117,10 @@ public class Helper {
     public static float getTotalCloudFilesSize_MB() {
         float total = 0;
         for (CloudFile file : cloudFileList) {
-            total += Float.parseFloat(String.valueOf(file.getFileSize())) / 1024e2f;
+            total += file.getFileSize();
         }
 
-        return total;
+        return (total / 1024f) / 1024f;
     }
 
     public static void createGoogleSignInClient(AppCompatActivity activity) {

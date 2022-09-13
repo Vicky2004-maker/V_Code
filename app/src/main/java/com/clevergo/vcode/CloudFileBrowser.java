@@ -5,7 +5,7 @@
 
 package com.clevergo.vcode;
 
-import static com.clevergo.vcode.MainActivity.storageRef_UserFiles;
+import static com.clevergo.vcode.Helper.cloudFileList;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
@@ -18,10 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.storage.StorageReference;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.ZoneId;
 import java.util.Date;
-import java.util.List;
 import java.util.TimeZone;
 
 public class CloudFileBrowser extends AppCompatActivity {
@@ -41,21 +38,12 @@ public class CloudFileBrowser extends AppCompatActivity {
         assert actionBar != null;
 
         actionBar.setTitle(getString(R.string.cloud_browser));
+        actionBar.setSubtitle(String.format("%4.2f MB/ 5 MB", Helper.getTotalCloudFilesSize_MB()));
         actionBar.setDisplayHomeAsUpEnabled(true);
 
         ListView lv = findViewById(R.id.cloud_files_listView);
-        storageRef_UserFiles.listAll().addOnSuccessListener(CloudFileBrowser.this, listResult -> {
-            if (listResult.getItems().size() > 0) {
-                List<StorageReference> storageReferenceList = listResult.getItems();
-                totalFiles = storageReferenceList.size();
-                CloudFileBrowserAdapter adapter = new CloudFileBrowserAdapter(CloudFileBrowser.this, storageReferenceList);
-                lv.setAdapter(adapter);
-                for (int i = 0; i < totalFiles; i++) {
-                    getSizeStored(storageReferenceList.get(i));
-                }
-            }
-        });
-
+        CloudFileBrowserAdapter adapter = new CloudFileBrowserAdapter(CloudFileBrowser.this, cloudFileList);
+        lv.setAdapter(adapter);
     }
 
     @SuppressLint("DefaultLocale")
@@ -71,7 +59,6 @@ public class CloudFileBrowser extends AppCompatActivity {
         }).addOnCompleteListener(CloudFileBrowser.this, task -> {
             loopCount++;
             if (loopCount == totalFiles) {
-                actionBar.setSubtitle(String.format("%4.2f MB/ 5 MB", sizeUploaded / 1e6));
             }
         });
     }

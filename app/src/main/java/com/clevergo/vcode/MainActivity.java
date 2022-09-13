@@ -1,6 +1,9 @@
 package com.clevergo.vcode;
 
+import static com.clevergo.vcode.Helper.checkPermissions;
 import static com.clevergo.vcode.Helper.cloudFileList;
+import static com.clevergo.vcode.Helper.getDifference_progress;
+import static com.clevergo.vcode.Helper.isPrivacyPolicyAccepted;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -9,8 +12,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -46,6 +51,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        finalLogIn();
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -59,59 +71,14 @@ public class MainActivity extends AppCompatActivity {
         Objects.requireNonNull(getSupportActionBar()).hide();
         progressIndicator = findViewById(R.id.progressBar);
 
-        long current_time = System.currentTimeMillis();
-
         workerThread = new CustomWorkerThread();
-        workerThread.addWork(() -> Helper.setThisIsMobile(MainActivity.this));
-        workerThread.addWork(() -> Helper.initializeFile(MainActivity.this));
-        workerThread.addWork(Helper::updateSettingsMap);
-        workerThread.addWork(() -> {
-            if (Helper.isPrivacyPolicyAccepted() && Helper.checkPermissions(MainActivity.this)) {
-                auth = FirebaseAuth.getInstance();
-                storage = FirebaseStorage.getInstance();
-                FirebaseUser currentUser = auth.getCurrentUser();
-
-                if (currentUser != null) {
-                    UID = currentUser.getUid();
-                    storageRef_UserFiles = storage.getReference().child("Users_Files/" + UID);
-                    storageRef_UserFiles.listAll().addOnSuccessListener(MainActivity.this, listResult -> {
-                        List<StorageReference> storageReferenceList = listResult.getItems();
-                        totalCloudFiles = storageReferenceList.size();
-                        float temp = totalCloudFiles * 3;
-                        progressIndicator.setMax((int) (temp * 3f));
-                        for (StorageReference file : storageReferenceList) {
-                            loopCount_1++;
-                            progressIndicator.setProgress((int) temp + progressIndicator.getProgress());
-                            String fileName = file.getName();
-                            AtomicReference<Uri> downloadUrl = new AtomicReference<>();
-                            file.getDownloadUrl().addOnSuccessListener(MainActivity.this, downloadUrl::set).addOnCompleteListener(MainActivity.this, task -> {
-                                loopCount_2++;
-                                progressIndicator.setProgress((int) temp + progressIndicator.getProgress());
-                            });
-                            file.getMetadata().addOnSuccessListener(MainActivity.this, storageMetadata -> {
-                                CloudFile cloudFile = new CloudFile(MainActivity.this,
-                                        fileName,
-                                        storageMetadata.getSizeBytes(),
-                                        storageMetadata.getCreationTimeMillis(),
-                                        storageMetadata.getUpdatedTimeMillis(),
-                                        downloadUrl.get(),
-                                        5, //TODO : Set total file size limit according to subscription plan
-                                        storageMetadata.getCustomMetadata("Email"));
-
-                                cloudFileList.add(cloudFile);
-                                loopCount_3++;
-                                progressIndicator.setProgress((int) temp + progressIndicator.getProgress());
-                                if ((loopCount_1 == loopCount_2) && (loopCount_2 == loopCount_3)) {
-                                    Log.println(Log.ASSERT, "TIME TAKEN -\t", (System.currentTimeMillis() - current_time) / 1e3 + " seconds");
-                                }
-                            });
-                        }
-                    });
-                } else {
-                    subscriptionModel = SubscriptionModel.Free;
-                }
-            }
-        });
+        Helper.setThisIsMobile(MainActivity.this);
+        Helper.initializeFile(MainActivity.this);
+        Helper.updateSettingsMap();
+        if (!Helper.checkPermissions(MainActivity.this)) Helper.launchPermission(MainActivity.this);
+        if (checkPermissions(MainActivity.this) && !isPrivacyPolicyAccepted()) {
+            privacyPolicyDialog();
+        }
     }
 
     @Override
@@ -122,20 +89,9 @@ public class MainActivity extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 privacyPolicyDialog();
             }
+        } else {
+            Helper.launchPermission(MainActivity.this);
         }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        if (!Helper.checkPermissions(MainActivity.this)) Helper.launchPermission(MainActivity.this);
-
-        workerThread.addWork(() -> {
-            if (!Helper.isPrivacyPolicyAccepted()) {
-                runOnUiThread(this::privacyPolicyDialog);
-            }
-        });
     }
 
     private void privacyPolicyDialog() {
@@ -148,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
             if (!Helper.checkPermissions(MainActivity.this)) {
                 Helper.launchPermission(MainActivity.this);
             } else {
-                timerToLoad(1000);
+                finalLogIn();
             }
         });
         alertDialog.setNeutralButton(getString(R.string.disagree), (a, b) -> finish());
@@ -170,5 +126,73 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, CodeViewActivity.class));
             }
         }, time);
+    }
+
+    private void finalLogIn() {
+        Log.println(Log.ASSERT, "IS IT RUN", "YES");
+        Log.println(Log.ASSERT, "PRIVACY POLICY  1", String.valueOf(isPrivacyPolicyAccepted()));
+        workerThread.addWork(() -> {
+            if (Helper.isPrivacyPolicyAccepted() && Helper.checkPermissions(MainActivity.this)) {
+                auth = FirebaseAuth.getInstance();
+                storage = FirebaseStorage.getInstance();
+                FirebaseUser currentUser = auth.getCurrentUser();
+
+                if (currentUser != null) {
+                    UID = currentUser.getUid();
+                    storageRef_UserFiles = storage.getReference().child("Users_Files/" + UID);
+                    storageRef_UserFiles.listAll().addOnSuccessListener(MainActivity.this, listResult -> {
+                        List<StorageReference> storageReferenceList = listResult.getItems();
+                        totalCloudFiles = storageReferenceList.size();
+                        int temp = totalCloudFiles * 3;
+                        int step = getDifference_progress(temp);
+                        progressIndicator.setMax((int) (temp * 3f));
+                        progressIndicator.setProgressCompat(0, true);
+                        for (StorageReference file : storageReferenceList) {
+                            loopCount_1++;
+                            progressIndicator.setProgress(step + progressIndicator.getProgress());
+                            String fileName = file.getName();
+                            AtomicReference<Uri> downloadUrl = new AtomicReference<>();
+                            file.getDownloadUrl().addOnSuccessListener(MainActivity.this, downloadUrl::set).addOnCompleteListener(MainActivity.this, task -> {
+                                loopCount_2++;
+                                progressIndicator.setProgress(step + progressIndicator.getProgress());
+                            });
+                            file.getMetadata().addOnSuccessListener(MainActivity.this, storageMetadata -> {
+                                CloudFile cloudFile = new CloudFile(MainActivity.this,
+                                        fileName,
+                                        storageMetadata.getSizeBytes(),
+                                        storageMetadata.getCreationTimeMillis(),
+                                        storageMetadata.getUpdatedTimeMillis(),
+                                        downloadUrl.get(),
+                                        5, //TODO : Set total file size limit according to subscription plan
+                                        storageMetadata.getCustomMetadata("Email"));
+
+                                cloudFileList.add(cloudFile);
+                                loopCount_3++;
+                                progressIndicator.setProgress(step + progressIndicator.getProgress());
+                                if ((loopCount_1 == loopCount_2) && (loopCount_2 == loopCount_3)) {
+                                    if (Helper.checkPermissions(MainActivity.this) && Helper.isPrivacyPolicyAccepted()) {
+                                        startActivity(new Intent(MainActivity.this, CodeViewActivity.class));
+                                    } else if (!Helper.checkPermissions(MainActivity.this)) {
+                                        Helper.launchPermission(MainActivity.this);
+                                    } else if (!Helper.isPrivacyPolicyAccepted()) {
+                                        privacyPolicyDialog();
+                                    }
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    subscriptionModel = SubscriptionModel.Free;
+                    Log.println(Log.ASSERT, "PRIVACY POLICY  2", String.valueOf(isPrivacyPolicyAccepted()));
+                    if (Helper.checkPermissions(MainActivity.this) && Helper.isPrivacyPolicyAccepted()) {
+                        timerToLoad(3000);
+                    } else if (!Helper.checkPermissions(MainActivity.this)) {
+                        Helper.launchPermission(MainActivity.this);
+                    } else if (!Helper.isPrivacyPolicyAccepted()) {
+                        privacyPolicyDialog();
+                    }
+                }
+            }
+        });
     }
 }

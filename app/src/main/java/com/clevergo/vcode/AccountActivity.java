@@ -13,12 +13,15 @@ import static com.clevergo.vcode.Helper.GOOGLE_SIGN_IN;
 import static com.clevergo.vcode.Helper.createGoogleSignInClient;
 import static com.clevergo.vcode.Helper.uiHandler;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -37,7 +40,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.function.Function;
 
 public class AccountActivity extends AppCompatActivity {
     private ActionBar actionBar;
@@ -142,6 +147,31 @@ public class AccountActivity extends AppCompatActivity {
             signIn_page_constraintLayout.setVisibility(View.VISIBLE);
 
             signInButton.setOnClickListener(a -> createGoogleSignInClient(AccountActivity.this));
+        }
+    }
+
+    private class LoadingScreen extends AsyncTask<Method, Integer, String> {
+        private ProgressDialog progressDialog;
+        @Override
+        protected void onPreExecute() {
+            progressDialog = ProgressDialog.show(AccountActivity.this, "Loading", "Please Wait", false, false);
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+        }
+
+        @Override
+        protected String doInBackground(Method... methods) {
+
+            return null;
         }
     }
 }
