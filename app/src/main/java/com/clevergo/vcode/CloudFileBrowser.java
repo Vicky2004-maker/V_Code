@@ -46,23 +46,6 @@ public class CloudFileBrowser extends AppCompatActivity {
         lv.setAdapter(adapter);
     }
 
-    @SuppressLint("DefaultLocale")
-    private void getSizeStored(StorageReference file) {
-        file.getMetadata().addOnSuccessListener(CloudFileBrowser.this, storageMetadata -> {
-            sizeUploaded += storageMetadata.getSizeBytes();
-            long timeMillis = storageMetadata.getUpdatedTimeMillis();
-            Date date = new Date(timeMillis);
-            DateFormat dateFormat = DateFormat.getInstance();
-            dateFormat.setTimeZone(TimeZone.getDefault());
-
-            Log.e("FORMATTED TIME", dateFormat.format(date));
-        }).addOnCompleteListener(CloudFileBrowser.this, task -> {
-            loopCount++;
-            if (loopCount == totalFiles) {
-            }
-        });
-    }
-
     @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();

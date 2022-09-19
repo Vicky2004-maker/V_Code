@@ -8,16 +8,19 @@ package com.clevergo.vcode;
 import static com.clevergo.vcode.Helper.ALL_FILES_MIME;
 import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_NORMAL;
 import static com.clevergo.vcode.Helper.CHOOSE_DIRECTORY_PDF;
+import static com.clevergo.vcode.Helper.COMPILER_SDKs_LOCATION;
 import static com.clevergo.vcode.Helper.CREATE_FILE_NORMAL_CODE;
 import static com.clevergo.vcode.Helper.CREATE_FILE_PDF_CODE;
 import static com.clevergo.vcode.Helper.PDF_MIME;
 import static com.clevergo.vcode.Helper.PICK_FILE_CODE;
 import static com.clevergo.vcode.Helper.chooseDirectory;
 import static com.clevergo.vcode.Helper.copyCode;
+import static com.clevergo.vcode.Helper.copyFile;
 import static com.clevergo.vcode.Helper.createACodeViewFile;
 import static com.clevergo.vcode.Helper.createFile;
 import static com.clevergo.vcode.Helper.findProgrammingLanguage;
 import static com.clevergo.vcode.Helper.generatePDF;
+import static com.clevergo.vcode.Helper.getAllCompilerSDKs;
 import static com.clevergo.vcode.Helper.getCurrentColumn;
 import static com.clevergo.vcode.Helper.getFileExtension;
 import static com.clevergo.vcode.Helper.getFileName;
@@ -36,7 +39,6 @@ import static com.clevergo.vcode.Helper.setBtnIcon;
 import static com.clevergo.vcode.Helper.showAlertDialog;
 import static com.clevergo.vcode.Helper.uiHandler;
 import static com.clevergo.vcode.Helper.writeFile;
-import static com.clevergo.vcode.MainActivity.UID;
 import static com.clevergo.vcode.MainActivity.auth;
 import static com.clevergo.vcode.MainActivity.storage;
 import static com.clevergo.vcode.MainActivity.storageRef_UserFiles;
@@ -55,6 +57,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -86,6 +89,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.clevergo.vcode.codeviewer.CodeView;
 import com.clevergo.vcode.codeviewer.Language;
 import com.clevergo.vcode.codeviewer.Theme;
+import com.clevergo.vcode.compiler.JavaCompiler;
 import com.clevergo.vcode.editorfiles.Token;
 import com.clevergo.vcode.editorfiles.syntax.LanguageManager;
 import com.clevergo.vcode.editorfiles.syntax.LanguageName;
@@ -98,14 +102,16 @@ import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.perf.metrics.AddTrace;
-import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import org.eclipse.jdt.internal.compiler.Compiler;
+import org.eclipse.jdt.internal.compiler.batch.Main;
+
+import java.io.File;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -114,6 +120,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import dalvik.system.DexClassLoader;
 
 //TODO : Add Firebase controls
 //TODO : Add Firebase Authentication then Firebase Storage
@@ -1620,6 +1628,19 @@ public class CodeViewActivity extends AppCompatActivity
         });
     }
 
+    private void downloadCompileSDK() {
+        File sdkFile = new File(COMPILER_SDKs_LOCATION, "android_sdk.jar");
+        if (!sdkFile.exists()) {
+            StorageReference sdk_storage = storage.getReference().child("SDKs/Android/android-4.1.1.4.jar");
+            sdk_storage.getFile(sdkFile).addOnSuccessListener(this, taskSnapshot -> {
+                Toast.makeText(CodeViewActivity.this, "FILE DOWNLOADED" + taskSnapshot.getTotalByteCount(), Toast.LENGTH_SHORT).show();
+                Log.println(Log.ASSERT, "FILE EXIST", String.valueOf(sdkFile.exists()));
+            });
+        } else {
+            Toast.makeText(CodeViewActivity.this, "File already exist", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void checkUpdateErrors(String code) {
         AtomicInteger errors = new AtomicInteger();
         errors.addAndGet(JavaManager.getSemiColonErrors(code));
@@ -2010,6 +2031,8 @@ public class CodeViewActivity extends AppCompatActivity
             case R.id.account:
                 startActivity(new Intent(CodeViewActivity.this, AccountActivity.class));
                 break;
+            case R.id.compile_sdk_download:
+                downloadCompileSDK();
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -2193,7 +2216,33 @@ public class CodeViewActivity extends AppCompatActivity
                     i.setClass(CodeViewActivity.this, CompileLinkActivity.class);
                     startActivity(i);
                 } else {
-                    //TODO : Compile Case
+                    String fileName = fileNames.get(currentActiveID);
+                    JavaCompiler javaCompiler = new JavaCompiler(CodeViewActivity.this, fileName, Uri.parse(fileList.get(currentActiveID).getUri()));
+                    javaCompiler.compile();
+                    /*
+                    String fileName_without_extension = fileName.substring(0, fileName.indexOf("."));
+                    Log.println(Log.ASSERT, "FILE NAME", fileName + "\t::\t" + fileName_without_extension);
+                    File javaCompile_sdk = getAllCompilerSDKs(getFileExtension(fileName));
+                    File tempFile = new File(String.valueOf(getExternalFilesDir("Compile")), fileName);
+                    copyFile(this, Uri.parse(fileList.get(currentActiveID).getUri()), tempFile);
+
+                    Main ecjMain = new Main(new PrintWriter(System.out), new PrintWriter(System.err), false, null, null);
+                    ecjMain.compile(new String[]{"-classpath", javaCompile_sdk.getPath(), tempFile.getPath()});
+
+                    com.android.dx.command.Main.main(new String[]{"--dex", "--output=" + getExternalFilesDir("Compile").getPath() + "/"+ fileName_without_extension + ".zip", getExternalFilesDir("Compile").getPath() + "/./"+ fileName_without_extension +".class"});
+
+                    DexClassLoader cl = new DexClassLoader(getExternalFilesDir("Compile").getPath() + "/"+ fileName_without_extension + ".zip", getExternalFilesDir("Compile").getPath(), null, CodeViewActivity.class.getClassLoader());
+
+                    try {
+                        Class libProviderClazz = cl.loadClass(fileName_without_extension);
+                        Object instance = libProviderClazz.newInstance();
+                        instance.getClass().getDeclaredMethod("main", String[].class).invoke(null, (Object) new String[0]);
+                    } catch (Exception e) {
+                        Log.println(Log.ASSERT, "ERROR INIT", "Error while instantiating object: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+
+                     */
                 }
                 break;
             case Edit:

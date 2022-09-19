@@ -25,7 +25,7 @@ import java.util.TimeZone;
 public class CloudFileBrowserAdapter implements ListAdapter {
 
     private final Context context;
-    private List<CloudFile> cloudFiles = new ArrayList<>();
+    private List<CloudFile> cloudFiles;
     private ImageView fileLanguageDisplay_imageView;
 
     public CloudFileBrowserAdapter(Context context, List<CloudFile> cloudFiles) {

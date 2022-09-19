@@ -61,6 +61,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -94,12 +95,18 @@ public class Helper {
     public static final Handler uiHandler = new Handler(Looper.getMainLooper());
     private static final String SETTING_DELIMITER = "-";
     private static final int WRAP_LINE_LIMIT = 65;
+    public static String COMPILER_SDKs_LOCATION = "";
     public static List<CloudFile> cloudFileList = new ArrayList<>();
     public static boolean isFullScreen = false;
     public static boolean thisIsMobile = true;
     public static HashMap<String, String> settingsMap;
     private static File settingsFile;
     private static BufferedWriter bufferedWriter;
+
+    public static void initializeFile(AppCompatActivity activity) {
+        settingsFile = new File(activity.getExternalFilesDir("Settings"), "settings.txt");
+        COMPILER_SDKs_LOCATION = activity.getExternalFilesDir("Compiler SDKs").getPath();
+    }
 
     public static int getDifference_progress(int totalCount) {
         return (int) (100f / Float.parseFloat(String.valueOf(totalCount)));
@@ -121,6 +128,35 @@ public class Helper {
         }
 
         return (total / 1024f) / 1024f;
+    }
+
+    public static void copyFile(Context context, Uri source, File destination) {
+        try (InputStream in = context.getContentResolver().openInputStream(source)) {
+            try (OutputStream out = new FileOutputStream(destination)) {
+                // Transfer bytes from in to out
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static File getAllCompilerSDKs(String fileExtension) {
+        String child = null;
+        switch (fileExtension) {
+            case "java":
+                child = "android_sdk.jar";
+                break;
+        }
+
+        assert child != null;
+        return new File(COMPILER_SDKs_LOCATION, child);
     }
 
     public static void createGoogleSignInClient(AppCompatActivity activity) {
@@ -151,10 +187,6 @@ public class Helper {
         float xInches = getScreenHeight_DP(context);
         double diagonalInches = Math.sqrt(xInches * xInches + yInches * yInches);
         thisIsMobile = diagonalInches <= 6.5;
-    }
-
-    public static void initializeFile(AppCompatActivity activity) {
-        settingsFile = new File(activity.getExternalFilesDir("Settings"), "settings.txt");
     }
 
     public static void updateSettingsMap() {
@@ -475,6 +507,16 @@ public class Helper {
         String fileName = returnCursor.getString(nameIndex);
 
         return fileName.substring(fileName.indexOf(".") + 1);
+    }
+
+    public static String getFileName_withoutExtension(String fileName) {
+        StringBuilder stringBuilder = new StringBuilder();
+        String[] tempSplit = fileName.split("\\.");
+        for(int i = 0; i < tempSplit.length - 1; i++) {
+            stringBuilder.append(tempSplit[i]).append(i == tempSplit.length - 2 ? "" : ".");
+        }
+
+        return stringBuilder.toString();
     }
 
     public static String getFileExtension(Context context, Uri uri) {

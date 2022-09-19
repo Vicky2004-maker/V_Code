@@ -13,6 +13,10 @@
         android:title="@string/setting"
         app:showAsAction="ifRoom" />
 
+    <item android:id="@+id/compile_sdk_download"
+        android:title="@string/download_compilers"
+        app:showAsAction="collapseActionView"/>
+
     <item
         android:id="@+id/cloud_browser"
         android:title="@string/cloud_browser"

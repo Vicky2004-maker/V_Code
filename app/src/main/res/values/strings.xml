@@ -160,5 +160,6 @@
     <string name="created_time">File created at:</string>
     <string name="lastUpdated_time">Last updated:</string>
     <string name="uploaded_from">Uploaded from:</string>
+    <string name="download_compilers">Download compilers</string>
 
 </resources>
