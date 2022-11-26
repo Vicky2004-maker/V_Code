@@ -17,4 +17,5 @@
     <dimen name="dimen10dp">10dp</dimen>
     <dimen name="dimen8dp">8dp</dimen>
     <dimen name="dimen4dp">4dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
 </resources>

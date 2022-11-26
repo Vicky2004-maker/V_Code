@@ -1628,6 +1628,8 @@ public class CodeViewActivity extends AppCompatActivity
         });
     }
 
+    //TODO: Complete UI design file and it's Backend
+    //TODO: Find some other compile sdk and try to integrate it
     private void downloadCompileSDK() {
         File sdkFile = new File(COMPILER_SDKs_LOCATION, "android_sdk.jar");
         if (!sdkFile.exists()) {

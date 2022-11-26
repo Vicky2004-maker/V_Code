@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Created by Viknesh on 2022.
+  ~ Copyright (c) 2022. All rights reserved.
+  -->
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/monokai_background"
+    android:elevation="8px">
+
+
+    <TextView
+        android:id="@+id/compiler_sdk_name_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="Android"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView_compiler_sdk_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/grey"
+        android:textSize="15sp"
+        android:text="33"
+        app:layout_constraintStart_toStartOf="@+id/compiler_sdk_name_textview"
+        app:layout_constraintTop_toBottomOf="@+id/compiler_sdk_name_textview" />
+
+    <TextView
+        android:id="@+id/textView_compiler_sdk_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="This is used to compile java Programming Files"
+        android:textSize="@dimen/dimen15sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/textView_compiler_sdk_version"
+        app:layout_constraintTop_toBottomOf="@+id/textView_compiler_sdk_version" />
+
+    <ImageButton
+        android:id="@+id/imageButton_delete_sdk"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/ic_delete_file"
+        tools:layout_editor_absoluteX="251dp"
+        tools:layout_editor_absoluteY="16dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
