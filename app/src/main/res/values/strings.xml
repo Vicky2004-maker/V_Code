@@ -170,5 +170,6 @@
 
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="copyAll_message">This will copy code from all the split screened files. Is it okay ?</string>
 
 </resources>

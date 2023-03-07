@@ -1891,11 +1891,9 @@ public class CodeViewActivity extends AppCompatActivity
     private void copyAll() {
         customWorkerThread.addWork(() -> {
             if (isScreenSplit) {
-                if (isEditorMode) {
-                    //TODO : Copy All for Split Screen
-                } else {
-
-                }
+                showAlertDialog(getString(R.string.copy),
+                        getString(R.string.copyAll_message),
+                        CodeViewActivity.this);
             } else {
                 if (isEditorMode) {
                     copyCode(CodeViewActivity.this, editorList.get(0).getText().toString());
