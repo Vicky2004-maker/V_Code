@@ -566,6 +566,7 @@ public class Helper {
 
     public static int getLines(String code) {
         int toReturn = 0;
+
         BufferedReader bufferedReader = new BufferedReader(new StringReader(code));
         try {
             while (bufferedReader.readLine() != null) {

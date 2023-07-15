@@ -95,6 +95,7 @@ import com.clevergo.vcode.editorfiles.syntax.LanguageManager;
 import com.clevergo.vcode.editorfiles.syntax.LanguageName;
 import com.clevergo.vcode.editorfiles.syntax.ThemeName;
 import com.clevergo.vcode.regex.JavaManager;
+import com.google.android.datatransport.BuildConfig;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.button.MaterialButton;
